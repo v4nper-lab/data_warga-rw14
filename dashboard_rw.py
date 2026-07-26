@@ -38,7 +38,7 @@ with container_spanduk:
     st.markdown("""
     <style>
     .judul-tegas {
-        font-size: 30px !important;
+        font-size: 60px !important;
         font-weight: 900 !important;
         margin: 0 !important;
         padding-top: 10px !important;
