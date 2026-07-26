@@ -7,20 +7,57 @@ import os
 # 1. PENGATURAN HALAMAN & KOSMETIK
 st.set_page_config(page_title="Dashboard RW 14", layout="wide", page_icon="📊")
 
-st.markdown("""
+st.markdown(f"""
 <style>
-.stApp { background-color: #F4F9F9; }
-.spanduk-judul { display: flex; align-items: center; background: linear-gradient(135deg, #008080, #20B2AA); padding: 25px 35px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.1); margin-bottom: 25px; transition: all 0.4s ease-in-out; }
-.spanduk-judul:hover { transform: scale(1.01); box-shadow: 0px 15px 25px rgba(0, 128, 128, 0.4); }
-.logo-rw { width: 140px !important; height: 140px !important; margin-right: 30px; filter: drop-shadow(3px 5px 10px rgba(0,0,0,0.3)); object-fit: contain; }
-.teks-judul { color: white !important; font-size: 45px !important; font-weight: 900 !important; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
-div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #008080; }
-div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 45px !important; color: #008080 !important; font-weight: 900 !important; }
-div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 22px !important; font-weight: bold !important; color: #2C3E50 !important; }
-h3 { font-size: 26px !important; color: #2C3E50; }
-button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 20px !important; font-weight: bold; }
-.stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
+.tabel-spanduk {{
+    width: 100%;
+    background: linear-gradient(135deg, #008080, #20B2AA);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 8px 15px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+    border-collapse: collapse;
+}}
+.tabel-spanduk td {{
+    vertical-align: middle;
+    border: none;
+    background: transparent;
+}}
+.kolom-logo {{
+    width: 100px;
+    text-align: center;
+    padding-right: 20px;
+}}
+.logo-rw {{
+    width: 80px !important;
+    height: 80px !important;
+    object-fit: contain;
+    filter: drop-shadow(3px 5px 10px rgba(0,0,0,0.3));
+}}
+.teks-judul {{
+    color: white !important;
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    line-height: 1.2 !important;
+}}
+@media (max-width: 640px) {{
+    .kolom-logo {{ width: 65px; padding-right: 12px; }}
+    .logo-rw {{ width: 55px !important; height: 55px !important; }}
+    .teks-judul {{ font-size: 18px !important; }}
+}}
 </style>
+<table class="tabel-spanduk">
+    <tr>
+        <td class="kolom-logo">
+            <img class="logo-rw" src="{sumber_logo}" alt="Logo">
+        </td>
+        <td>
+            <h1 class="teks-judul">Dashboard Interaktif Data Warga RW 14</h1>
+        </td>
+    </tr>
+</table>
 """, unsafe_allow_html=True)
 
 def ambil_logo_lokal(nama_file):
