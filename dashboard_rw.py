@@ -32,34 +32,34 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Spanduk dengan Teks Kuning Emas Tebal dan Jelas
+# Spanduk dengan Background Biru dan Teks Kuning Emas Jelas
 container_spanduk = st.container()
 with container_spanduk:
     st.markdown("""
     <style>
-    .judul-tegas {
-        font-size: 60px !important;
+    .judul-biru-tegas {
+        font-size: 30px !important;
         font-weight: 900 !important;
         margin: 0 !important;
         padding-top: 10px !important;
-        color: #FFEB3B !important; /* Kuning emas cerah yang sangat kontras */
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6); /* Efek bayangan gelap agar teks timbul dan sangat tajam */
+        color: #FFEB3B !important; /* Kuning emas cerah agar sangat kontras dengan background biru */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Bayangan teks agar timbul dan tajam */
     }
     @media (max-width: 640px) {
-        .judul-tegas { font-size: 19px !important; padding-top: 8px !important; }
+        .judul-biru-tegas { font-size: 19px !important; padding-top: 8px !important; }
     }
     </style>
-    <div style="background: linear-gradient(135deg, #004D40, #00796B); padding: 22px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.2); margin-bottom: 25px;">
+    <!-- Background gradasi warna biru -->
+    <div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 22px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.2); margin-bottom: 25px;">
     """, unsafe_allow_html=True)
     
     col_logo, col_teks = st.columns([1, 6])
     with col_logo:
         st.image(sumber_logo, width=80)
     with col_teks:
-        st.markdown("<h2 class='judul-tegas'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 class='judul-biru-tegas'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
-
 @st.cache_data
 def load_data():
     df = pd.read_excel("datawarga.xlsx")
