@@ -10,10 +10,10 @@ st.set_page_config(page_title="Dashboard RW 14", layout="wide", page_icon="📊"
 st.markdown("""
 <style>
 .stApp { background-color: #F4F9F9; }
-div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #008080; }
-div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 45px !important; color: #008080 !important; font-weight: 900 !important; }
+div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1976D2; }
+div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 45px !important; color: #0D47A1 !important; font-weight: 900 !important; }
 div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 22px !important; font-weight: bold !important; color: #2C3E50 !important; }
-h3 { font-size: 26px !important; color: #2C3E50; }
+h3 { font-size: 26px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 20px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
@@ -32,34 +32,6 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Spanduk dengan Background Biru dan Teks Kuning Emas Jelas
-container_spanduk = st.container()
-with container_spanduk:
-    st.markdown("""
-    <style>
-    .judul-biru-tegas {
-        font-size: 30px !important;
-        font-weight: 900 !important;
-        margin: 0 !important;
-        padding-top: 10px !important;
-        color: #FFEB3B !important; /* Kuning emas cerah agar sangat kontras dengan background biru */
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Bayangan teks agar timbul dan tajam */
-    }
-    @media (max-width: 640px) {
-        .judul-biru-tegas { font-size: 19px !important; padding-top: 8px !important; }
-    }
-    </style>
-    <!-- Background gradasi warna biru -->
-    <div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 22px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.2); margin-bottom: 25px;">
-    """, unsafe_allow_html=True)
-    
-    col_logo, col_teks = st.columns([1, 6])
-    with col_logo:
-        st.image(sumber_logo, width=80)
-    with col_teks:
-        st.markdown("<h2 class='judul-biru-tegas'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
 @st.cache_data
 def load_data():
     df = pd.read_excel("datawarga.xlsx")
@@ -74,16 +46,12 @@ df = load_data()
 
 st.sidebar.header("🛠️ Panel Filter")
 if "RT" in df.columns:
-    # Mengubah data RT menjadi format teks rapi seperti "RT01", "RT02", dst.
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
-    
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
-    
     if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
         st.stop()
-        
     df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
 else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
@@ -103,32 +71,26 @@ if mode_admin:
     elif password_input != "":
         st.sidebar.error("❌ Password salah!")
 
+# ================= BLOK UTAMA BACKGROUND BIRU MUDA / CERAH =================
+# Membuka satu area besar berwarna biru cerah yang menyatukan judul hingga menu tab
+st.markdown("""
+<div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
+""", unsafe_allow_html=True)
+
+# Bagian Judul di dalam blok biru
+col_logo, col_teks = st.columns([1, 6])
+with col_logo:
+    st.image(sumber_logo, width=80)
+with col_teks:
+    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 15px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
+
+st.write("---")
+
 # ================= MENU TAB MENYESUAIKAN STATUS ADMIN =================
 if admin_terverifikasi:
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK", "⚙️ Edit Data (Admin)"])
 else:
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK"])
-
-# ================= TAB 1: RINGKASAN =================
-with tab1:
-    st.subheader("Angka Kunci Terkini")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("👥 Total Warga", f"{len(df_filtered)} Jiwa")
-    kk_count = len(df_filtered[df_filtered["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]) if "HUBUNGAN" in df_filtered.columns else 0
-    col2.metric("👨‍💼 Kepala Keluarga", kk_count)
-    laki_count = len(df_filtered[df_filtered["JENIS KELAMIN"].astype(str).str.upper() == "LAKI-LAKI"]) if "JENIS KELAMIN" in df_filtered.columns else 0
-    col3.metric("👨 Laki-laki", laki_count)
-    pr_count = len(df_filtered[df_filtered["JENIS KELAMIN"].astype(str).str.upper() == "PEREMPUAN"]) if "JENIS KELAMIN" in df_filtered.columns else 0
-    col4.metric("👩 Perempuan", pr_count)
-
-    st.write("---")
-    st.subheader("Sebaran Penduduk per RT")
-    df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
-    df_rt = df_rt.sort_values("RT_FORMAT")
-    fig_rt = px.bar(df_rt, x="RT_FORMAT", y="Jumlah Warga", color="RT_FORMAT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
-    fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis=dict(title="", tickfont=dict(size=24, color="black", weight="bold")), yaxis=dict(title="Jumlah Penduduk (Jiwa)"), margin=dict(t=40)) 
-    fig_rt.update_traces(textfont_size=28, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
-    st.plotly_chart(fig_rt, use_container_width=True)
 
 # ================= TAB 2: DEMOGRAFI & AGAMA =================
 with tab2:
