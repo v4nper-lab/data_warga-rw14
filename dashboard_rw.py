@@ -32,34 +32,31 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Spanduk menggunakan kolom resmi Streamlit dengan gradasi teks Biru & Kuning
+# Spanduk dengan Teks Kuning Emas Tebal dan Jelas
 container_spanduk = st.container()
 with container_spanduk:
     st.markdown("""
     <style>
-    .judul-gradasi {
-        font-size: 32px !important;
+    .judul-tegas {
+        font-size: 30px !important;
         font-weight: 900 !important;
         margin: 0 !important;
         padding-top: 10px !important;
-        /* Membuat efek gradasi warna dari Biru terang ke Kuning emas */
-        background: linear-gradient(135deg, #E0F7FA 0%, #FFF59D 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        color: #FFEB3B !important; /* Kuning emas cerah yang sangat kontras */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6); /* Efek bayangan gelap agar teks timbul dan sangat tajam */
     }
     @media (max-width: 640px) {
-        .judul-gradasi { font-size: 20px !important; padding-top: 5px !important; }
+        .judul-tegas { font-size: 19px !important; padding-top: 8px !important; }
     }
     </style>
-    <div style="background: linear-gradient(135deg, #008080, #20B2AA); padding: 20px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.1); margin-bottom: 25px;">
+    <div style="background: linear-gradient(135deg, #004D40, #00796B); padding: 22px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.2); margin-bottom: 25px;">
     """, unsafe_allow_html=True)
     
     col_logo, col_teks = st.columns([1, 6])
     with col_logo:
         st.image(sumber_logo, width=80)
     with col_teks:
-        st.markdown("<h2 class='judul-gradasi'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 class='judul-tegas'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
