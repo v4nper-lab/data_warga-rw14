@@ -57,12 +57,17 @@ df = load_data()
 
 st.sidebar.header("🛠️ Panel Filter")
 if "RT" in df.columns:
-    semua_rt = df["RT"].dropna().unique()
-    pilihan_rt = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt, default=semua_rt)
-    if not pilihan_rt:
+    # Mengubah data RT menjadi format teks rapi seperti "RT01", "RT02", dst.
+    df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
+    
+    semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
+    pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
+    
+    if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
         st.stop()
-    df_filtered = df[df["RT"].isin(pilihan_rt)].copy()
+        
+    df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
 else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
     st.stop()
@@ -75,7 +80,6 @@ mode_admin = st.sidebar.checkbox("Masuk Mode Admin (Edit Data)")
 admin_terverifikasi = False
 if mode_admin:
     password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
-    # Password default di bawah ini adalah "rw14jaya", silakan ganti sesuka Anda nanti
     if password_input == "V@nadminrw14":
         admin_terverifikasi = True
         st.sidebar.success("✅ Login Admin Berhasil!")
@@ -84,10 +88,8 @@ if mode_admin:
 
 # ================= MENU TAB MENYESUAIKAN STATUS ADMIN =================
 if admin_terverifikasi:
-    # Jika jadi admin, muncul 6 Tab (Termasuk Edit Data)
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK", "⚙️ Edit Data (Admin)"])
 else:
-    # Jika warga biasa yang buka, hanya muncul 5 Tab (Menu Edit disembunyikan total)
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK"])
 
 # ================= TAB 1: RINGKASAN =================
@@ -104,10 +106,9 @@ with tab1:
 
     st.write("---")
     st.subheader("Sebaran Penduduk per RT")
-    df_rt = df_filtered.groupby("RT").size().reset_index(name="Jumlah Warga")
-    df_rt["NAMA_RT"] = "RT " + df_rt["RT"].astype(str)
-    df_rt = df_rt.sort_values("RT")
-    fig_rt = px.bar(df_rt, x="NAMA_RT", y="Jumlah Warga", color="NAMA_RT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
+    df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
+    df_rt = df_rt.sort_values("RT_FORMAT")
+    fig_rt = px.bar(df_rt, x="RT_FORMAT", y="Jumlah Warga", color="RT_FORMAT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
     fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis=dict(title="", tickfont=dict(size=24, color="black", weight="bold")), yaxis=dict(title="Jumlah Penduduk (Jiwa)"), margin=dict(t=40)) 
     fig_rt.update_traces(textfont_size=28, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
@@ -169,7 +170,7 @@ with tab3:
 with tab4:
     st.subheader("Tabel Seluruh Warga")
     st.markdown("💡 *Data sensitif (NIK & No. KK) disembunyikan untuk keamanan publik.*")
-    kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia"]
+    kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
     df_tabel = df_filtered.drop(columns=kolom_dibuang, errors="ignore")
     st.dataframe(df_tabel, use_container_width=True, hide_index=True)
 
@@ -198,7 +199,7 @@ with tab5:
                             nama_kepala = "Keluarga Bpk/Ibu " + str(kepala_df.iloc[0]["NAMA"]).title()
                     
                     st.markdown(f"### 🏠 {nama_kepala}")
-                    kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia"]
+                    kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
                     df_tampil = df_keluarga.drop(columns=kolom_dibuang, errors="ignore")
                     st.dataframe(df_tampil, use_container_width=True, hide_index=True)
             else:
@@ -211,7 +212,7 @@ if admin_terverifikasi:
     with tab6:
         st.subheader("⚙️ Edit Data Warga (Admin)")
         st.warning("⚠️ Anda berada dalam mode Admin. Setiap perubahan akan memperbarui file **datawarga.xlsx**.")
-        data_terbaru = st.data_editor(df, num_rows="dynamic", use_container_width=True)
+        data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
         if st.button("💾 Simpan Perubahan ke Excel", type="primary"):
             try:
                 data_terbaru.to_excel("datawarga.xlsx", index=False)
