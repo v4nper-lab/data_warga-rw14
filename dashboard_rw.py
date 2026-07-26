@@ -32,10 +32,26 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Spanduk menggunakan kolom resmi Streamlit agar aman & rapi di HP
+# Spanduk menggunakan kolom resmi Streamlit dengan gradasi teks Biru & Kuning
 container_spanduk = st.container()
 with container_spanduk:
     st.markdown("""
+    <style>
+    .judul-gradasi {
+        font-size: 32px !important;
+        font-weight: 900 !important;
+        margin: 0 !important;
+        padding-top: 10px !important;
+        /* Membuat efek gradasi warna dari Biru terang ke Kuning emas */
+        background: linear-gradient(135deg, #E0F7FA 0%, #FFF59D 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    }
+    @media (max-width: 640px) {
+        .judul-gradasi { font-size: 20px !important; padding-top: 5px !important; }
+    }
+    </style>
     <div style="background: linear-gradient(135deg, #008080, #20B2AA); padding: 20px; border-radius: 15px; box-shadow: 0px 8px 15px rgba(0,0,0,0.1); margin-bottom: 25px;">
     """, unsafe_allow_html=True)
     
@@ -43,7 +59,7 @@ with container_spanduk:
     with col_logo:
         st.image(sumber_logo, width=80)
     with col_teks:
-        st.markdown("<h2 style='color: white; margin: 0; padding-top: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 class='judul-gradasi'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
