@@ -51,33 +51,13 @@ st.markdown(f"""
 <table class="tabel-spanduk">
     <tr>
         <td class="kolom-logo">
-            <img class="logo-rw" src="{sumber_logo}" alt="Logo">
+            <img class="logo-rw" src=""" + sumber_logo + """" alt="Logo">
         </td>
         <td>
-            <h1 class="teks-judul">Dashboard Interaktif Data Warga RW 14</h1>
+            <span class="teks-judul">Dashboard Interaktif Data Warga RW 14</span>
         </td>
     </tr>
 </table>
-""", unsafe_allow_html=True)
-
-def ambil_logo_lokal(nama_file):
-    if os.path.exists(nama_file):
-        with open(nama_file, "rb") as img_file:
-            encoded_string = base64.b64encode(img_file.read()).decode()
-        ext = nama_file.split('.')[-1].lower()
-        if ext in ['jpg', 'jpeg']: mime = 'jpeg'
-        else: mime = 'png'
-        return f"data:image/{mime};base64,{encoded_string}"
-    else:
-        return "https://cdn-icons-png.flaticon.com/512/3135/3135673.png"
-
-sumber_logo = ambil_logo_lokal("logo rw.png")
-
-st.markdown(f"""
-<div class="spanduk-judul">
-    <img class="logo-rw" src="{sumber_logo}" alt="Logo">
-    <h1 class="teks-judul">Dashboard Interaktif Data Warga RW 14</h1>
-</div>
 """, unsafe_allow_html=True)
 
 @st.cache_data
