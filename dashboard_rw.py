@@ -24,10 +24,10 @@ h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 
-/* CSS khusus agar seluruh foto pengurus inti ukurannya sama seragam */
-.pengurus-img-container img {
+/* Memaksa seluruh foto pengurus inti berukuran sama seragam dan rapi */
+[data-testid="column"] img {
     width: 100% !important;
-    height: 180px !important;
+    height: 190px !important;
     object-fit: cover !important;
     border-radius: 10px !important;
     border: 2px solid #90CAF9 !important;
@@ -295,33 +295,27 @@ with tab0:
             return None
 
         with col_pengurus1:
-            st.markdown('<div class="pengurus-img-container">', unsafe_allow_html=True)
             foto_rw = cari_foto_pengurus("ketuarw")
             if foto_rw:
                 st.image(muat_gambar_tegak(foto_rw), use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>Bapak {nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
 
         with col_pengurus2:
-            st.markdown('<div class="pengurus-img-container">', unsafe_allow_html=True)
             foto_sek = cari_foto_pengurus("sekretaris")
             if foto_sek:
                 st.image(muat_gambar_tegak(foto_sek), use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_sek}<br><span style='font-size: 12px; color: #555;'>Sekretaris</span></div>", unsafe_allow_html=True)
 
         with col_pengurus3:
-            st.markdown('<div class="pengurus-img-container">', unsafe_allow_html=True)
             foto_bend = cari_foto_pengurus("bendahara")
             if foto_bend:
                 st.image(muat_gambar_tegak(foto_bend), use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_bend}<br><span style='font-size: 12px; color: #555;'>Bendahara</span></div>", unsafe_allow_html=True)
 
     with col_p2:
