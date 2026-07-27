@@ -23,15 +23,6 @@ div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[
 h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
-
-/* Memaksa seluruh foto pengurus inti berukuran sama seragam dan rapi */
-[data-testid="column"] img {
-    width: 100% !important;
-    height: 190px !important;
-    object-fit: cover !important;
-    border-radius: 10px !important;
-    border: 2px solid #90CAF9 !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -48,11 +39,13 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk memuat gambar dengan perbaikan orientasi otomatis (agar tegak lurus sempurna)
-def muat_gambar_tegak(path_file):
+# Fungsi untuk meluruskan orientasi HP dan menyeragamkan ukuran foto secara presisi
+def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
     try:
         img = Image.open(path_file)
-        img = ImageOps.exif_transpose(img) # Otomatis meluruskan orientasi foto HP
+        img = ImageOps.exif_transpose(img) # Luruskan posisi foto HP
+        # Ubah ukuran gambar agar persis sama rata menggunakan thumbnail / cover
+        img = ImageOps.fit(img, ukuran, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
         return img
     except Exception:
         return path_file
@@ -171,7 +164,7 @@ if "RT" in df.columns:
             </div>
             """, unsafe_allow_html=True)
             
-            img_terluruskan = muat_gambar_tegak(path_foto)
+            img_terluruskan = muat_dan_seragamkan_foto(path_foto, ukuran=(250, 300))
             st.sidebar.image(img_terluruskan, use_container_width=True)
             
             st.sidebar.markdown(f"""
@@ -265,7 +258,7 @@ with tab0:
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
         
-        # ================= TAMPILAN FOTO PENGURUS INTI DI BERANDA (UKURAN SAMA RATA) =================
+        # ================= TAMPILAN FOTO PENGURUS INTI DI BERANDA (UKURAN SAMA RATA PERSIS) =================
         st.markdown("---")
         st.markdown("### 🏛️ Jajaran Pengurus Inti RW 14")
         
@@ -297,7 +290,8 @@ with tab0:
         with col_pengurus1:
             foto_rw = cari_foto_pengurus("ketuarw")
             if foto_rw:
-                st.image(muat_gambar_tegak(foto_rw), use_container_width=True)
+                img_rw = muat_dan_seragamkan_foto(foto_rw, ukuran=(300, 360))
+                st.image(img_rw, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>Bapak {nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
@@ -305,7 +299,8 @@ with tab0:
         with col_pengurus2:
             foto_sek = cari_foto_pengurus("sekretaris")
             if foto_sek:
-                st.image(muat_gambar_tegak(foto_sek), use_container_width=True)
+                img_sek = muat_dan_seragamkan_foto(foto_sek, ukuran=(300, 360))
+                st.image(img_sek, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_sek}<br><span style='font-size: 12px; color: #555;'>Sekretaris</span></div>", unsafe_allow_html=True)
@@ -313,7 +308,8 @@ with tab0:
         with col_pengurus3:
             foto_bend = cari_foto_pengurus("bendahara")
             if foto_bend:
-                st.image(muat_gambar_tegak(foto_bend), use_container_width=True)
+                img_bend = muat_dan_seragamkan_foto(foto_bend, ukuran=(300, 360))
+                st.image(img_bend, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_bend}<br><span style='font-size: 12px; color: #555;'>Bendahara</span></div>", unsafe_allow_html=True)
