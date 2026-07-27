@@ -38,11 +38,20 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk menampilkan PDF langsung di web secara aman tanpa blokir Chrome
-def tampilkan_pdf(file_path):
+# Fungsi untuk menampilkan tombol buka PDF di tab baru browser (anti-blank & anti-blokir)
+def render_pdf_viewer(file_path, key_id):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf">'
+    
+    # Membuat link HTML interaktif agar warga bisa langsung buka atau baca di tab baru tanpa kendala
+    pdf_display = f'''
+    <div style="border: 2px solid #90CAF9; padding: 15px; border-radius: 10px; background-color: #ffffff; text-align: center; margin-bottom: 10px;">
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #0D47A1;">📄 Dokumen PDF Tersedia untuk Dibaca</p>
+        <a href="data:application/pdf;base64,{base64_pdf}" target="_blank" style="background-color: #1976D2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            👁️ Buka & Baca Dokumen di Tab Baru
+        </a>
+    </div>
+    '''
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 @st.cache_data
@@ -189,8 +198,8 @@ with tab0:
         * Melihat struktur kepengurusan RW dan RT.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
-        * Memantau transparansi laporan keuangan kas RW (langsung melihat dokumen PDF di layar).
-        * Membaca hasil rapat, agenda kegiatan, melihat langsung dokumen PDF resmi, serta galeri foto lingkungan.
+        * Memantau transparansi laporan keuangan kas RW (dengan tombol baca langsung dan unduh PDF).
+        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -342,7 +351,7 @@ with tab5:
 # ================= TAB 6: KAS RW =================
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
-    st.markdown("Berikut adalah ringkasan keuangan, rincian transaksi, serta dokumen PDF laporan keuangan resmi yang dapat langsung dilihat.")
+    st.markdown("Berikut adalah ringkasan keuangan, rincian transaksi, serta dokumen PDF laporan keuangan resmi.")
     
     if not df_kas.empty and "JUMLAH" in df_kas.columns and "JENIS" in df_kas.columns:
         df_kas["JUMLAH_ANGKA"] = pd.to_numeric(df_kas["JUMLAH"], errors="coerce").fillna(0)
@@ -360,9 +369,9 @@ with tab6:
     else:
         st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
         
-    # Bagian Preview & Unduh PDF Kas
+    # Bagian Viewer & Unduh PDF Kas
     st.write("---")
-    st.subheader("📄 Preview & Dokumen Laporan Kas (PDF)")
+    st.subheader("📄 Dokumen Laporan Kas (PDF)")
     folder_pdf_kas = "pdf_kas"
     if not os.path.exists(folder_pdf_kas):
         os.makedirs(folder_pdf_kas)
@@ -371,16 +380,17 @@ with tab6:
     if daftar_pdf_kas:
         for pdf_file in daftar_pdf_kas:
             path_pdf = os.path.join(folder_pdf_kas, pdf_file)
-            with st.expander(f"👁️ Lihat Dokumen: {pdf_file}"):
-                tampilkan_pdf(path_pdf)
-                with open(path_pdf, "rb") as f:
-                    st.download_button(
-                        label=f"📥 Download {pdf_file}",
-                        data=f,
-                        file_name=pdf_file,
-                        mime="application/pdf",
-                        key=f"dl_kas_{pdf_file}"
-                    )
+            st.markdown(f"**📂 {pdf_file}**")
+            render_pdf_viewer(path_pdf, f"kas_{pdf_file}")
+            with open(path_pdf, "rb") as f:
+                st.download_button(
+                    label=f"📥 Download {pdf_file}",
+                    data=f,
+                    file_name=pdf_file,
+                    mime="application/pdf",
+                    key=f"dl_kas_{pdf_file}"
+                )
+            st.write("---")
     else:
         st.markdown("*Belum ada file PDF laporan kas yang diunggah oleh pengurus.*")
 
@@ -400,9 +410,9 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada pengumuman atau hasil rapat yang dipublikasikan.")
 
-    # Bagian Preview & Unduh PDF Info / Hasil Rapat
+    # Bagian Viewer & Unduh PDF Info / Hasil Rapat
     st.write("---")
-    st.subheader("📄 Preview Dokumen & Notulen Hasil Rapat (PDF)")
+    st.subheader("📄 Dokumen & Notulen Hasil Rapat (PDF)")
     folder_pdf_info = "pdf_info"
     if not os.path.exists(folder_pdf_info):
         os.makedirs(folder_pdf_info)
@@ -411,16 +421,17 @@ with tab7:
     if daftar_pdf_info:
         for pdf_file in daftar_pdf_info:
             path_pdf = os.path.join(folder_pdf_info, pdf_file)
-            with st.expander(f"👁️ Lihat Dokumen: {pdf_file}"):
-                tampilkan_pdf(path_pdf)
-                with open(path_pdf, "rb") as f:
-                    st.download_button(
-                        label=f"📥 Download {pdf_file}",
-                        data=f,
-                        file_name=pdf_file,
-                        mime="application/pdf",
-                        key=f"dl_info_{pdf_file}"
-                    )
+            st.markdown(f"**📂 {pdf_file}**")
+            render_pdf_viewer(path_pdf, f"info_{pdf_file}")
+            with open(path_pdf, "rb") as f:
+                st.download_button(
+                    label=f"📥 Download {pdf_file}",
+                    data=f,
+                    file_name=pdf_file,
+                    mime="application/pdf",
+                    key=f"dl_info_{pdf_file}"
+                )
+            st.write("---")
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
