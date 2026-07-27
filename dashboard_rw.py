@@ -111,26 +111,26 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= PENCARIAN FOTO KETUA RT OTOMATIS (DARI FOLDER rt/) =================
+    # ================= FOTO KETUA RT FORMAT VERTIKAL (TEGAK BERURUT KE BAWAH) =================
     st.sidebar.markdown("---")
-    st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px;'>👨‍✈️ Foto Ketua RT Terpilih:</p>", unsafe_allow_html=True)
+    st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
     folder_foto_rt = "rt"
     if not os.path.exists(folder_foto_rt):
         os.makedirs(folder_foto_rt)
 
     for rt_pilih in pilihan_rt_format:
-        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" jadi "1"
+        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" -> "1"
         
         path_foto = None
+        # Opsi lokasi pencarian foto (di folder rt/ maupun di folder utama)
         kemungkinan_nama = [
-            f"rt{rt_num}.jpg", f"rt{rt_num}.jpeg", f"rt{rt_num}.png",
-            f"rt0{rt_num}.jpg", f"rt0{rt_num}.jpeg", f"rt0{rt_num}.png",
-            f"rt{rt_pilih.lower()}.jpg", f"rt{rt_pilih.lower()}.png"
+            os.path.join(folder_foto_rt, f"rt{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num}.png"),
+            os.path.join(folder_foto_rt, f"rt0{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num}.png"),
+            f"rt{rt_num}.jpg", f"rt{rt_num}.png", f"rt0{rt_num}.jpg", f"rt0{rt_num}.png"
         ]
         
-        for nama_file in kemungkinan_nama:
-            lokasi_file = os.path.join(folder_foto_rt, nama_file)
+        for lokasi_file in kemungkinan_nama:
             if os.path.exists(lokasi_file):
                 path_foto = lokasi_file
                 break
@@ -140,13 +140,24 @@ if "RT" in df.columns:
         if not df_struktur.empty:
             match_rt = df_struktur[df_struktur["JABATAN"].astype(str).str.upper().str.contains(f"RT {rt_num}|RT0{rt_num}|RT {rt_pilih}", na=False)]
             if not match_rt.empty:
-                nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)} ({rt_pilih})"
+                nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)}"
 
-        # Tampilkan foto di sidebar jika ada, jika tidak kosongkan atau beri keterangan rapi
+        # Tampilan Vertikal (Kartu Profil Tegak)
         if path_foto and os.path.exists(path_foto):
-            st.sidebar.image(path_foto, caption=nama_ketua, width=120)
+            st.sidebar.markdown(f"""
+            <div style="background-color: #ffffff; padding: 12px; border-radius: 12px; border: 2px solid #90CAF9; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
+                <span style="background-color: #0D47A1; color: white; padding: 3px 10px; border-radius: 15px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.sidebar.image(path_foto, caption=f"👨‍✈️ {nama_ketua}", use_container_width=True)
+            st.sidebar.markdown("<br>", unsafe_allow_html=True)
         else:
-            st.sidebar.info(f"ℹ️ Foto {nama_ketua} belum diunggah lewat menu Admin.")
+            st.sidebar.markdown(f"""
+            <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 12px;">
+                <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto belum diunggah via Admin)</i></p>
+            </div>
+            """, unsafe_allow_html=True)
 
     if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
@@ -217,7 +228,7 @@ with tab0:
         Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
         
         Melalui portal digital ini, Anda dapat:
-        * Melihat struktur kepengurusan RW dan foto profil Ketua RT di panel sebelah kiri.
+        * Melihat struktur kepengurusan RW dan profil Ketua RT secara vertikal di panel sebelah kiri.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW (lengkap dengan dokumen PDF resmi).
@@ -542,12 +553,12 @@ if admin_terverifikasi:
                 if not os.path.exists(folder_rt_dir):
                     os.makedirs(folder_rt_dir)
                 
-                # Simpan dengan nama terstandarisasi misal rt1.jpg
+                # Simpan di folder rt/ dengan nama rt1.jpg
                 nama_file_simpan = f"rt{rt_num_up}.jpg"
                 path_simpan_rt = os.path.join(folder_rt_dir, nama_file_simpan)
                 
                 with open(path_simpan_rt, "wb") as f:
-                    f.write(foto_upload_bytes := foto_rt_upload.getbuffer())
+                    f.write(foto_rt_upload.getbuffer())
                 
                 st.success(f"✅ Foto untuk {pilih_rt_upload} berhasil diunggah dan disimpan!")
                 st.rerun()
