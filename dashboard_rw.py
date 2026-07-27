@@ -183,15 +183,9 @@ with tab5:
         kunci_bersih = kata_kunci.strip().lower()
         
         if "NAMA" in df_filtered.columns:
-            # Mengubah data Excel dan ketikan user ke huruf kecil agar pencarian tidak gagal karena beda kapital
-            nama_seragam = df_filtered["NAMA"].astype(str).str.lower().str.strip()
-            mask_nama = nama_seragam.str.contains(kunci_bersih, na=False)
-            
-            if kunci_bersih.isdigit():
-                mask_umum = df_filtered.astype(str).apply(lambda x: x.str.lower().str.contains(kunci_bersih, na=False)).any(axis=1)
-                hasil_pencarian = df_filtered[mask_nama | mask_umum]
-            else:
-                hasil_pencarian = df_filtered[mask_nama]
+            # Pencarian lebih fleksibel di seluruh baris kolom NAMA
+            mask_nama = df_filtered["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
+            hasil_pencarian = df_filtered[mask_nama]
         else:
             hasil_pencarian = pd.DataFrame()
         
