@@ -44,7 +44,6 @@ def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
     try:
         img = Image.open(path_file)
         img = ImageOps.exif_transpose(img) # Luruskan posisi foto HP
-        # Ubah ukuran gambar agar persis sama rata menggunakan thumbnail / cover
         img = ImageOps.fit(img, ukuran, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
         return img
     except Exception:
@@ -248,7 +247,7 @@ with tab0:
         Assalamu’alaikum Warahmatullahi Wabarakatuh,  
         Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
         
-        Melalui portal digital ini, Anda dapat:
+        Melalui portal digital ini, ynag dapat Anda akses:
         * Melihat struktur kepengurusan RW dan profil Ketua RT secara vertikal di panel sebelah kiri.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
@@ -258,7 +257,7 @@ with tab0:
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
         
-        # ================= TAMPILAN FOTO PENGURUS INTI DI BERANDA (UKURAN SAMA RATA PERSIS) =================
+        # ================= TAMPILAN FOTO PENGURUS INTI DI BERANDA =================
         st.markdown("---")
         st.markdown("### 🏛️ Jajaran Pengurus Inti RW 14")
         
@@ -294,7 +293,7 @@ with tab0:
                 st.image(img_rw, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
-            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>Bapak {nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
 
         with col_pengurus2:
             foto_sek = cari_foto_pengurus("sekretaris")
