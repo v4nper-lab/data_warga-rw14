@@ -20,7 +20,7 @@ div[data-testid="metric-container"] { background-color: white; padding: 15px; bo
 div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
 div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
 h3 { font-size: 24px !important; color: #0D47A1; }
-button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 15px !important; font-weight: bold; }
+button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 14px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -67,9 +67,25 @@ def load_info():
     else:
         return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
 
+@st.cache_data
+def load_struktur():
+    if os.path.exists("datastruktur.xlsx"):
+        df_struk = pd.read_excel("datastruktur.xlsx")
+        df_struk.columns = df_struk.columns.str.strip().str.upper()
+        return df_struk
+    else:
+        # Data dummy awal jika file belum ada
+        data_awal = {
+            "JABATAN": ["Ketua RW 14", "Wakil Ketua RW", "Sekretaris", "Bendahara", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03"],
+            "NAMA PENGURUS": ["Bapak Ketua RW", "Bapak Wakil", "Bapak Sekretaris", "Ibu Bendahara", "Bapak RT 01", "Bapak RT 02", "Bapak RT 03"],
+            "KONTAK / HP": ["0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx"]
+        }
+        return pd.DataFrame(data_awal)
+
 df = load_data()
 df_kas = load_kas()
 df_info = load_info()
+df_struktur = load_struktur()
 
 # ================= WAKTU REAL-TIME DI SIDEBAR =================
 st.sidebar.markdown("---")
@@ -140,14 +156,14 @@ st.write("---")
 
 # ================= MENU UTAMA WEBSITE PORTAL =================
 if admin_terverifikasi:
-    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
+    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+        "🏠 Beranda", "👥 Struktur Organisasi", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
         "📢 Info & Rapat", "🖼️ Galeri Kegiatan", "⚙️ Edit Data (Admin)"
     ])
 else:
-    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
+    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        "🏠 Beranda", "👥 Struktur Organisasi", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
         "📢 Info & Rapat", "🖼️ Galeri Kegiatan"
     ])
@@ -164,11 +180,11 @@ with tab0:
         Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
         
         Melalui portal digital ini, Anda dapat:
-        * Melihat statistik kependudukan dan sebaran RT.
-        * Memeriksa data Kartu Keluarga (KK) dengan mudah menggunakan fitur pencarian nama.
-        * Memantau transparansi laporan keuangan kas RW secara terbuka.
-        * Membaca hasil rapat, pengumuman, dan agenda kegiatan lingkungan.
-        * Menyimak tingkat pendidikan warga serta dokumentasi foto kegiatan di galeri.
+        * Melihat struktur kepengurusan RW dan RT.
+        * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
+        * Mencari data Kartu Keluarga (KK) dengan mudah.
+        * Memantau transparansi laporan keuangan kas RW.
+        * Membaca hasil rapat, agenda kegiatan, serta galeri foto lingkungan.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -183,6 +199,16 @@ with tab0:
             <p style="margin: 0; font-size: 12px; color: #666; text-align: center;"><b>RW 14 Bersih, Rukun, & Sejahtera</b></p>
         </div>
         """, unsafe_allow_html=True)
+
+# ================= TAB STRUKTUR ORGANISASI =================
+with tab_struk:
+    st.subheader("👥 Bagan Struktur Organisasi Pengurus RW 14")
+    st.markdown("Daftar jajaran pengurus Rukun Warga (RW) dan Rukun Tetangga (RT) yang berdedikasi melayani warga.")
+    
+    if not df_struktur.empty:
+        st.dataframe(df_struktur, use_container_width=True, hide_index=True)
+    else:
+        st.info("ℹ️ Belum ada data struktur pengurus yang dimasukkan.")
 
 # ================= TAB 1: STATISTIK =================
 with tab1:
@@ -368,9 +394,9 @@ with tab8:
 if admin_terverifikasi:
     with tab9:
         st.subheader("⚙️ Panel Pengaturan & Edit Data (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat memperbarui data warga, kas, informasi rapat, maupun mengunggah foto galeri.")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat memperbarui data warga, kas, informasi rapat, struktur organisasi, maupun galeri.")
         
-        menu_admin = st.selectbox("Pilih Data yang Ingin Dikelola:", ["Data Warga", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Galeri"])
+        menu_admin = st.selectbox("Pilih Data yang Ingin Dikelola:", ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Galeri"])
         
         if menu_admin == "Data Warga":
             data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
@@ -382,6 +408,17 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan data: {e}")
+                    
+        elif menu_admin == "Struktur Organisasi":
+            struk_terbaru = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
+            if st.button("💾 Simpan Perubahan Struktur Organisasi", type="primary"):
+                try:
+                    struk_terbaru.to_excel("datastruktur.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Struktur organisasi berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
             kas_terbaru = st.data_editor(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
