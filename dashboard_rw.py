@@ -71,13 +71,11 @@ if mode_admin:
     elif password_input != "":
         st.sidebar.error("❌ Password salah!")
 
-# ================= BLOK UTAMA BACKGROUND BIRU MUDA / CERAH =================
-# Membuka satu area besar berwarna biru cerah yang menyatukan judul hingga menu tab
+# ================= BLOK UTAMA BACKGROUND BIRU MUDA =================
 st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
 """, unsafe_allow_html=True)
 
-# Bagian Judul di dalam blok biru
 col_logo, col_teks = st.columns([1, 6])
 with col_logo:
     st.image(sumber_logo, width=80)
@@ -91,6 +89,27 @@ if admin_terverifikasi:
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK", "⚙️ Edit Data (Admin)"])
 else:
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK"])
+
+# ================= TAB 1: RINGKASAN =================
+with tab1:
+    st.subheader("Angka Kunci Terkini")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("👥 Total Warga", f"{len(df_filtered)} Jiwa")
+    kk_count = len(df_filtered[df_filtered["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]) if "HUBUNGAN" in df_filtered.columns else 0
+    col2.metric("👨‍💼 Kepala Keluarga", kk_count)
+    laki_count = len(df_filtered[df_filtered["JENIS KELAMIN"].astype(str).str.upper() == "LAKI-LAKI"]) if "JENIS KELAMIN" in df_filtered.columns else 0
+    col3.metric("👨 Laki-laki", laki_count)
+    pr_count = len(df_filtered[df_filtered["JENIS KELAMIN"].astype(str).str.upper() == "PEREMPUAN"]) if "JENIS KELAMIN" in df_filtered.columns else 0
+    col4.metric("👩 Perempuan", pr_count)
+
+    st.write("---")
+    st.subheader("Sebaran Penduduk per RT")
+    df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
+    df_rt = df_rt.sort_values("RT_FORMAT")
+    fig_rt = px.bar(df_rt, x="RT_FORMAT", y="Jumlah Warga", color="RT_FORMAT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
+    fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis=dict(title="", tickfont=dict(size=24, color="black", weight="bold")), yaxis=dict(title="Jumlah Penduduk (Jiwa)"), margin=dict(t=40)) 
+    fig_rt.update_traces(textfont_size=28, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
+    st.plotly_chart(fig_rt, use_container_width=True)
 
 # ================= TAB 2: DEMOGRAFI & AGAMA =================
 with tab2:
@@ -200,3 +219,6 @@ if admin_terverifikasi:
                 st.rerun()
             except Exception as e:
                 st.error(f"❌ Gagal menyimpan data: {e}")
+
+# Penutup blok div utama biru muda
+st.markdown("</div>", unsafe_allow_html=True)
