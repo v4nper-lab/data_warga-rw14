@@ -255,7 +255,8 @@ with tab0:
             <p style="margin: 8px 0; font-size: 14px;">🏥 <b>Kesehatan / Posyandu:</b> 0813-XXXX-XXXX</p>
             <p style="margin: 8px 0; font-size: 14px;">🧹 <b>Kebersihan / RT:</b> Hubungi RT Masing-masing</p>
             <hr style="margin: 10px 0;">
-            <p style="margin: 0; font-size: 12px; color: #666; text-align: center;"><b>RW 14 Bersih, Rukun, & Sejahtera</b></p>
+            <p style="margin: 0 0 4px 0; font-size: 12px; color: #666; text-align: center;"><b>RW 14 Bersih, Rukun, & Sejahtera</b></p>
+            <p style="margin: 0; font-size: 13px; color: #0D47A1; text-align: center; font-weight: 900; letter-spacing: 1px;">GPR NGAHIJI</p>
         </div>
         """, unsafe_allow_html=True)
 
