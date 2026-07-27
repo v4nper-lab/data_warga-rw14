@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 
 # 1. PENGATURAN HALAMAN & KOSMETIK
-st.set_page_config(page_title="Dashboard RW 14", layout="wide", page_icon="📊")
+st.set_page_config(page_title="Portal Resmi RW 14", layout="wide", page_icon="🌐")
 
 st.markdown("""
 <style>
@@ -15,7 +15,7 @@ div[data-testid="metric-container"] { background-color: white; padding: 15px; bo
 div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 45px !important; color: #0D47A1 !important; font-weight: 900 !important; }
 div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 22px !important; font-weight: bold !important; color: #2C3E50 !important; }
 h3 { font-size: 26px !important; color: #0D47A1; }
-button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 20px !important; font-weight: bold; }
+button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 16px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -43,7 +43,27 @@ def load_data():
     if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
     return df
 
+@st.cache_data
+def load_kas():
+    if os.path.exists("datakas.xlsx"):
+        df_kas = pd.read_excel("datakas.xlsx")
+        df_kas.columns = df_kas.columns.str.strip().str.upper()
+        return df_kas
+    else:
+        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "JENIS", "JUMLAH"])
+
+@st.cache_data
+def load_info():
+    if os.path.exists("datainfo.xlsx"):
+        df_info = pd.read_excel("datainfo.xlsx")
+        df_info.columns = df_info.columns.str.strip().str.upper()
+        return df_info
+    else:
+        return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
+
 df = load_data()
+df_kas = load_kas()
+df_info = load_info()
 
 # ================= WAKTU REAL-TIME DISESUAIKAN KE WIB (+7 JAM) =================
 st.sidebar.markdown("---")
@@ -64,7 +84,7 @@ st.sidebar.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.sidebar.header("🛠️ Panel Filter")
+st.sidebar.header("🛠️ Panel Filter Data")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
@@ -94,7 +114,7 @@ st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
 """, unsafe_allow_html=True)
 
-# ================= TEKS BERJALAN (MARQUEE) KHUSUS KETUA RT =================
+# ================= TEKS BERJALAN (MARQUEE) =================
 st.markdown("""
 <div style="background-color: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #90CAF9; margin-bottom: 15px; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
     <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 15px;">
@@ -107,19 +127,53 @@ col_logo, col_teks = st.columns([1, 6])
 with col_logo:
     st.image(sumber_logo, width=80)
 with col_teks:
-    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 15px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);'>Dashboard Interaktif Data Warga RW 14</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 10px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);'>Portal Resmi & Dashboard Warga RW 14</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #333; font-weight: bold; margin: 0;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
 
 st.write("---")
 
-# ================= MENU TAB MENYESUAIKAN STATUS ADMIN =================
+# ================= MENU TAB WEBSITE RW =================
 if admin_terverifikasi:
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK", "⚙️ Edit Data (Admin)"])
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        "🏠 Beranda / Profil", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
+        "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
+        "📢 Info & Rapat", "⚙️ Edit Data (Admin)"
+    ])
 else:
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📋 Ringkasan", "👫 Demografi & Agama", "💼 Usia & Profesi", "🗂️ Semua Data", "🏠 Pencarian KK"])
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "🏠 Beranda / Profil", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
+        "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
+        "📢 Info & Rapat"
+    ])
 
-# ================= TAB 1: RINGKASAN =================
+# ================= TAB 0: BERANDA / PROFIL WEBSITE =================
+with tab0:
+    st.subheader("👋 Selamat Datang di Portal Warga RW 14")
+    
+    col_p1, col_p2 = st.columns([2, 1])
+    with col_p1:
+        st.markdown("""
+        ### 🌟 Sambutan Pengurus RW 14
+        Assalamu’alaikum Warahmatullahi Wabarakatuh,  
+        Selamat datang di website resmi **Portal & Dashboard Warga RW 14**. Website ini dikembangkan untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
+        
+        Melalui portal digital ini, Anda dapat melihat statistik kependudukan, memeriksa data Kartu Keluarga (KK), memantau transparansi laporan keuangan kas RW, serta membaca hasil rapat dan pengumuman kegiatan lingkungan secara langsung dari handphone atau komputer Anda.
+        
+        Mari bersama-sama kita wujudkan kerukunan, keterbukanan, dan pelayanan warga yang semakin prima!
+        """)
+    with col_p2:
+        st.markdown("""
+        <div style="background-color: white; padding: 15px; border-radius: 10px; border: 1px solid #90CAF9;">
+            <h4 style="color: #0D47A1; margin-top:0;">📞 Kontak Penting RW</h4>
+            <p style="margin: 5px 0; font-size: 14px;">🚨 <b>Darurat / Satpam:</b> 0812-XXXX-XXXX</p>
+            <p style="margin: 5px 0; font-size: 14px;">🏥 <b>Kesehatan / Posyandu:</b> 0813-XXXX-XXXX</p>
+            <p style="margin: 5px 0; font-size: 14px;">🧹 <b>Kebersihan / RT:</b> Hubungi RT Masing-masing</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ================= TAB 1: RINGKASAN / STATISTIK =================
 with tab1:
-    st.subheader("Angka Kunci Terkini")
+    st.subheader("Angka Kunci Kependudukan Terkini")
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("👥 Total Warga", f"{len(df_filtered)} Jiwa")
     kk_count = len(df_filtered[df_filtered["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]) if "HUBUNGAN" in df_filtered.columns else 0
@@ -134,8 +188,8 @@ with tab1:
     df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
     df_rt = df_rt.sort_values("RT_FORMAT")
     fig_rt = px.bar(df_rt, x="RT_FORMAT", y="Jumlah Warga", color="RT_FORMAT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
-    fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis=dict(title="", tickfont=dict(size=24, color="black", weight="bold")), yaxis=dict(title="Jumlah Penduduk (Jiwa)"), margin=dict(t=40)) 
-    fig_rt.update_traces(textfont_size=28, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
+    fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis=dict(title="", tickfont=dict(size=20, color="black", weight="bold")), yaxis=dict(title="Jumlah Penduduk (Jiwa)"), margin=dict(t=40)) 
+    fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
 # ================= TAB 2: DEMOGRAFI & AGAMA =================
@@ -250,20 +304,83 @@ with tab5:
         else:
             st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
 
-# ================= TAB 6: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
+# ================= TAB 6: LAPORAN KAS RW =================
+with tab6:
+    st.subheader("💰 Transparansi Laporan Kas RW 14")
+    st.markdown("Berikut adalah ringkasan keuangan dan rincian transaksi Kas RW yang dapat diakses oleh seluruh warga.")
+    
+    if not df_kas.empty and "JUMLAH" in df_kas.columns and "JENIS" in df_kas.columns:
+        df_kas["JUMLAH_ANGKA"] = pd.to_numeric(df_kas["JUMLAH"], errors="coerce").fillna(0)
+        total_masuk = df_kas[df_kas["JENIS"].astype(str).str.upper().str.contains("MASUK", na=False)]["JUMLAH_ANGKA"].sum()
+        total_keluar = df_kas[df_kas["JENIS"].astype(str).str.upper().str.contains("KELUAR", na=False)]["JUMLAH_ANGKA"].sum()
+        saldo_akhir = total_masuk - total_keluar
+        
+        c1, c2, c3 = st.columns(3)
+        c1.metric("💵 Total Pemasukan", f"Rp {total_masuk:,.0f}".replace(",", "."))
+        c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
+        c3.metric("💰 Saldo Kas Bersih", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
+        
+        st.write("---")
+        st.dataframe(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
+    else:
+        st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
+
+# ================= TAB 7: INFORMASI & RAPAT =================
+with tab7:
+    st.subheader("📢 Informasi Kegiatan & Hasil Rapat RW 14")
+    st.markdown("Pusat informasi resmi seputar hasil rapat pengurus, pengumuman warga, dan agenda kegiatan lingkungan.")
+    
+    if not df_info.empty:
+        for index, row in df_info.iterrows():
+            tgl = row.get("TANGGAL", " Agenda RW")
+            judul = row.get("JUDUL", "Informasi Penting")
+            isi = row.get("ISI / KATEGORI", "-")
+            
+            with st.expander(f"📌 [{tgl}] — {judul}"):
+                st.write(isi)
+    else:
+        st.info("ℹ️ Belum ada pengumuman atau hasil rapat yang dipublikasikan.")
+
+# ================= TAB 8: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
 if admin_terverifikasi:
-    with tab6:
-        st.subheader("⚙️ Edit Data Warga (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Setiap perubahan akan memperbarui file **datawarga.xlsx**.")
-        data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-        if st.button("💾 Simpan Perubahan ke Excel", type="primary"):
-            try:
-                data_terbaru.to_excel("datawarga.xlsx", index=False)
-                st.cache_data.clear()
-                st.success("✅ Data berhasil disimpan!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"❌ Gagal menyimpan data: {e}")
+    with tab8:
+        st.subheader("⚙️ Panel Pengaturan & Edit Data (Admin)")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat memperbarui data warga, kas, maupun informasi rapat.")
+        
+        menu_admin = st.selectbox("Pilih Data yang Ingin Diedit:", ["Data Warga", "Laporan Kas RW", "Informasi & Hasil Rapat"])
+        
+        if menu_admin == "Data Warga":
+            data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            if st.button("💾 Simpan Perubahan Data Warga", type="primary"):
+                try:
+                    data_terbaru.to_excel("datawarga.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Data warga berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan data: {e}")
+                    
+        elif menu_admin == "Laporan Kas RW":
+            kas_terbaru = st.data_editor(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            if st.button("💾 Simpan Perubahan Kas RW", type="primary"):
+                try:
+                    kas_terbaru.to_excel("datakas.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Laporan Kas RW berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan kas: {e}")
+                    
+        elif menu_admin == "Informasi & Hasil Rapat":
+            info_terbaru = st.data_editor(df_info, num_rows="dynamic", use_container_width=True)
+            if st.button("💾 Simpan Perubahan Informasi", type="primary"):
+                try:
+                    info_terbaru.to_excel("datainfo.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Informasi kegiatan berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan informasi: {e}")
 
 # Penutup blok div utama biru muda
 st.markdown("</div>", unsafe_allow_html=True)
