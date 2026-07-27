@@ -118,10 +118,16 @@ st.sidebar.markdown(f"""
 st.sidebar.header("🛠️ Panel Filter Data RT")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
-    semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
+    
+    # Mengurutkan secara numerik yang benar (RT01, RT02, RT03, dst.)
+    semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique(), key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+    
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= FOTO KETUA RT FORMAT VERTIKAL DENGAN NAMA PRESISI =================
+    # Mengurutkan pilihan RT agar tetap berurutan dari RT 01 ke atas secara vertikal
+    pilihan_rt_format = sorted(pilihan_rt_format, key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+
+    # ================= FOTO KETUA RT FORMAT VERTIKAL DENGAN URUTAN BENAR & NAMA PRESISI =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
