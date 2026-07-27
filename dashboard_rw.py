@@ -46,6 +46,7 @@ def load_data():
     if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
     if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
     if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
+    if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
     return df
 
 @st.cache_data
@@ -95,7 +96,7 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     if not pilihan_rt_format:
-        st.warning("⚠️ Silخاب silakan pilih minimal satu RT di menu sebelah kiri.")
+        st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
         st.stop()
     df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
 else:
@@ -140,13 +141,13 @@ st.write("---")
 # ================= MENU UTAMA WEBSITE PORTAL =================
 if admin_terverifikasi:
     tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
+        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
         "📢 Info & Rapat", "🖼️ Galeri Kegiatan", "⚙️ Edit Data (Admin)"
     ])
 else:
     tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
+        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
         "📢 Info & Rapat", "🖼️ Galeri Kegiatan"
     ])
@@ -167,7 +168,7 @@ with tab0:
         * Memeriksa data Kartu Keluarga (KK) dengan mudah menggunakan fitur pencarian nama.
         * Memantau transparansi laporan keuangan kas RW secara terbuka.
         * Membaca hasil rapat, pengumuman, dan agenda kegiatan lingkungan.
-        * Menyimak dokumentasi foto kegiatan warga di menu Galeri.
+        * Menyimak tingkat pendidikan warga serta dokumentasi foto kegiatan di galeri.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -231,31 +232,21 @@ with tab2:
             fig_status.update_traces(textfont_size=18, textangle=0)
             st.plotly_chart(fig_status, use_container_width=True)
 
-# ================= TAB 3: PROFESI & USIA =================
+# ================= TAB 3: PENDIDIKAN =================
 with tab3:
-    kolom_kiri2, kolom_kanan2 = st.columns(2)
-    with kolom_kiri2:
-        st.subheader("Pengelompokan Usia")
-        if "USIA" in df_filtered.columns:
-            df_filtered['USIA_ANGKA'] = pd.to_numeric(df_filtered['USIA'], errors='coerce')
-            batas_usia = [0, 5, 12, 25, 45, 60, 150]
-            label_usia = ['Balita (0-5)', 'Anak-anak (6-12)', 'Remaja (13-25)', 'Dewasa (26-45)', 'Pra-Lansia (46-60)', 'Lansia (>60)']
-            df_filtered['Kelompok Usia'] = pd.cut(df_filtered['USIA_ANGKA'], bins=batas_usia, labels=label_usia, right=True)
-            df_kelompok = df_filtered['Kelompok Usia'].value_counts().reset_index()
-            df_kelompok.columns = ["Kelompok Usia", "Jumlah"]
-            fig_kel_usia = px.bar(df_kelompok, x="Kelompok Usia", y="Jumlah", color="Kelompok Usia", text_auto=True, color_discrete_sequence=px.colors.qualitative.Safe)
-            fig_kel_usia.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis={'categoryorder':'array', 'categoryarray':label_usia}, font=dict(size=15))
-            fig_kel_usia.update_traces(textfont_size=18, textangle=0)
-            st.plotly_chart(fig_kel_usia, use_container_width=True)
-    with kolom_kanan2:
-        st.subheader("Top 10 Profesi Warga")
-        if "PEKERJAAN" in df_filtered.columns:
-            df_pekerjaan = df_filtered["PEKERJAAN"].astype(str).str.title().value_counts().reset_index().head(10)
-            df_pekerjaan.columns = ["Profesi", "Jumlah"]
-            fig_profesi = px.bar(df_pekerjaan, x="Jumlah", y="Profesi", orientation='h', color="Profesi", text_auto=True)
-            fig_profesi.update_layout(yaxis={'categoryorder':'total ascending'}, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=15))
-            fig_profesi.update_traces(textfont_size=16)
-            st.plotly_chart(fig_profesi, use_container_width=True)
+    st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
+    st.markdown("Grafik sebaran tingkat pendidikan formal warga di lingkungan RW.")
+    
+    if "PENDIDIKAN" in df_filtered.columns:
+        df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
+        df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
+        
+        fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Prism)
+        fig_pendidikan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=15))
+        fig_pendidikan.update_traces(textfont_size=18, textangle=0)
+        st.plotly_chart(fig_pendidikan, use_container_width=True)
+    else:
+        st.info("ℹ️ Kolom 'PENDIDIKAN' atau 'PENDIDIKAN TERAKHIR' belum tersedia di file Excel datawarga.")
 
 # ================= TAB 4: SEMUA DATA =================
 with tab4:
@@ -358,7 +349,6 @@ with tab8:
     st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
     st.markdown("Dokumentasi foto kegiatan warga, kerja bakti, posyandu, dan acara kebersamaan di lingkungan Perum Griya Permata Raya.")
     
-    # Folder penyimpanan galeri
     folder_galeri = "galeri"
     if not os.path.exists(folder_galeri):
         os.makedirs(folder_galeri)
