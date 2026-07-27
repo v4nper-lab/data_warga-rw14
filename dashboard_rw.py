@@ -175,27 +175,28 @@ with tab4:
 # ================= TAB 5: PENCARIAN KK =================
 with tab5:
     st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
-    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat.")
+    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat (mencakup seluruh RT).")
     
     kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
     
     if kata_kunci:
         kunci_bersih = kata_kunci.strip().lower()
         
-        if "NAMA" in df_filtered.columns:
-            # Pencarian lebih fleksibel di seluruh baris kolom NAMA
-            mask_nama = df_filtered["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
-            hasil_pencarian = df_filtered[mask_nama]
+        # Menggunakan 'df' (seluruh data tanpa filter RT) agar pencarian tidak meleset
+        if "NAMA" in df.columns:
+            mask_nama = df["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
+            hasil_pencarian = df[mask_nama]
         else:
             hasil_pencarian = pd.DataFrame()
         
         if not hasil_pencarian.empty:
-            if "NO. KK" in df_filtered.columns:
+            if "NO. KK" in df.columns:
                 list_kk = hasil_pencarian["NO. KK"].dropna().unique()
                 st.success(f"✅ Ditemukan {len(list_kk)} Kartu Keluarga terkait.")
                 
                 for kk in list_kk:
-                    df_keluarga = df_filtered[df_filtered["NO. KK"] == kk].copy()
+                    # Mengambil anggota keluarga dari seluruh data mentah 'df'
+                    df_keluarga = df[df["NO. KK"] == kk].copy()
                     
                     nama_kepala = "Satu Keluarga"
                     if "HUBUNGAN" in df_keluarga.columns and "NAMA" in df_keluarga.columns:
