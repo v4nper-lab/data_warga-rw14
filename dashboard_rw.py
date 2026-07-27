@@ -5,16 +5,21 @@ import base64
 import os
 from datetime import datetime, timedelta
 
-# 1. PENGATURAN HALAMAN & KOSMETIK
-st.set_page_config(page_title="Portal Resmi RW 14", layout="wide", page_icon="🌐")
+# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL
+st.set_page_config(
+    page_title="Portal Resmi RW 14 Griya Permata Raya",
+    layout="wide",
+    page_icon="🏛️",
+    initial_sidebar_state="expanded"
+)
 
 st.markdown("""
 <style>
 .stApp { background-color: #F4F9F9; }
 div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1976D2; }
-div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 45px !important; color: #0D47A1 !important; font-weight: 900 !important; }
-div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 22px !important; font-weight: bold !important; color: #2C3E50 !important; }
-h3 { font-size: 26px !important; color: #0D47A1; }
+div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
+div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
+h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 16px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
@@ -65,7 +70,7 @@ df = load_data()
 df_kas = load_kas()
 df_info = load_info()
 
-# ================= WAKTU REAL-TIME DISESUAIKAN KE WIB (+7 JAM) =================
+# ================= WAKTU REAL-TIME DI SIDEBAR =================
 st.sidebar.markdown("---")
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 
@@ -109,12 +114,12 @@ if password_input == "V@nadminrw14":
 elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
-# ================= BLOK UTAMA BACKGROUND BIRU MUDA =================
+# ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
 """, unsafe_allow_html=True)
 
-# ================= TEKS BERJALAN (MARQUEE) =================
+# Teks Berjalan Motivasi RT
 st.markdown("""
 <div style="background-color: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #90CAF9; margin-bottom: 15px; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
     <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 15px;">
@@ -127,12 +132,12 @@ col_logo, col_teks = st.columns([1, 6])
 with col_logo:
     st.image(sumber_logo, width=80)
 with col_teks:
-    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 10px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);'>Portal Resmi & Dashboard Warga RW 14</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #333; font-weight: bold; margin: 0;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 5px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-size: 24px;'>Portal Resmi & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #333; font-weight: bold; margin: 5px 0 0 0;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
 
 st.write("---")
 
-# ================= MENU TAB WEBSITE RW =================
+# ================= MENU UTAMA WEBSITE PORTAL =================
 if admin_terverifikasi:
     tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "🏠 Beranda / Profil", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
@@ -146,7 +151,7 @@ else:
         "📢 Info & Rapat"
     ])
 
-# ================= TAB 0: BERANDA / PROFIL WEBSITE =================
+# ================= TAB 0: BERANDA / PROFIL =================
 with tab0:
     st.subheader("👋 Selamat Datang di Portal Warga RW 14")
     
@@ -155,23 +160,29 @@ with tab0:
         st.markdown("""
         ### 🌟 Sambutan Pengurus RW 14
         Assalamu’alaikum Warahmatullahi Wabarakatuh,  
-        Selamat datang di website resmi **Portal & Dashboard Warga RW 14**. Website ini dikembangkan untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
+        Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
         
-        Melalui portal digital ini, Anda dapat melihat statistik kependudukan, memeriksa data Kartu Keluarga (KK), memantau transparansi laporan keuangan kas RW, serta membaca hasil rapat dan pengumuman kegiatan lingkungan secara langsung dari handphone atau komputer Anda.
+        Melalui portal digital ini, Anda dapat:
+        * Melihat statistik kependudukan dan sebaran RT.
+        * Memeriksa data Kartu Keluarga (KK) dengan mudah menggunakan fitur pencarian nama.
+        * Memantau transparansi laporan keuangan kas RW secara terbuka.
+        * Membaca hasil rapat, pengumuman, dan agenda kegiatan lingkungan langsung dari perangkat Anda.
         
-        Mari bersama-sama kita wujudkan kerukunan, keterbukanan, dan pelayanan warga yang semakin prima!
+        Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
     with col_p2:
         st.markdown("""
-        <div style="background-color: white; padding: 15px; border-radius: 10px; border: 1px solid #90CAF9;">
-            <h4 style="color: #0D47A1; margin-top:0;">📞 Kontak Penting RW</h4>
-            <p style="margin: 5px 0; font-size: 14px;">🚨 <b>Darurat / Satpam:</b> 0812-XXXX-XXXX</p>
-            <p style="margin: 5px 0; font-size: 14px;">🏥 <b>Kesehatan / Posyandu:</b> 0813-XXXX-XXXX</p>
-            <p style="margin: 5px 0; font-size: 14px;">🧹 <b>Kebersihan / RT:</b> Hubungi RT Masing-masing</p>
+        <div style="background-color: white; padding: 15px; border-radius: 10px; border: 1px solid #90CAF9; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
+            <h4 style="color: #0D47A1; margin-top:0;">📞 Kontak Penting RW 14</h4>
+            <p style="margin: 8px 0; font-size: 14px;">🚨 <b>Keamanan / Satpam:</b> 0812-XXXX-XXXX</p>
+            <p style="margin: 8px 0; font-size: 14px;">🏥 <b>Kesehatan / Posyandu:</b> 0813-XXXX-XXXX</p>
+            <p style="margin: 8px 0; font-size: 14px;">🧹 <b>Kebersihan / RT:</b> Hubungi RT Masing-masing</p>
+            <hr style="margin: 10px 0;">
+            <p style="margin: 0; font-size: 12px; color: #666; text-align: center;"><b>RW 14 Bersih, Rukun, & Sejahtera</b></p>
         </div>
         """, unsafe_allow_html=True)
 
-# ================= TAB 1: RINGKASAN / STATISTIK =================
+# ================= TAB 1: STATISTIK =================
 with tab1:
     st.subheader("Angka Kunci Kependudukan Terkini")
     col1, col2, col3, col4 = st.columns(4)
@@ -192,7 +203,7 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI & AGAMA =================
+# ================= TAB 2: DEMOGRAFI =================
 with tab2:
     col_a, col_b, col_c = st.columns(3)
     with col_a:
@@ -219,7 +230,7 @@ with tab2:
             fig_status.update_traces(textfont_size=18, textangle=0)
             st.plotly_chart(fig_status, use_container_width=True)
 
-# ================= TAB 3: KELOMPOK USIA & PROFESI =================
+# ================= TAB 3: PROFESI & USIA =================
 with tab3:
     kolom_kiri2, kolom_kanan2 = st.columns(2)
     with kolom_kiri2:
@@ -245,7 +256,7 @@ with tab3:
             fig_profesi.update_traces(textfont_size=16)
             st.plotly_chart(fig_profesi, use_container_width=True)
 
-# ================= TAB 4: TABEL DATA =================
+# ================= TAB 4: SEMUA DATA =================
 with tab4:
     st.subheader("Tabel Seluruh Warga")
     st.markdown("💡 *Data sensitif (NIK & No. KK) disembunyikan untuk keamanan publik.*")
@@ -304,7 +315,7 @@ with tab5:
         else:
             st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
 
-# ================= TAB 6: LAPORAN KAS RW =================
+# ================= TAB 6: KAS RW =================
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
     st.markdown("Berikut adalah ringkasan keuangan dan rincian transaksi Kas RW yang dapat diakses oleh seluruh warga.")
@@ -325,14 +336,14 @@ with tab6:
     else:
         st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
 
-# ================= TAB 7: INFORMASI & RAPAT =================
+# ================= TAB 7: INFO & RAPAT =================
 with tab7:
     st.subheader("📢 Informasi Kegiatan & Hasil Rapat RW 14")
     st.markdown("Pusat informasi resmi seputar hasil rapat pengurus, pengumuman warga, dan agenda kegiatan lingkungan.")
     
     if not df_info.empty:
         for index, row in df_info.iterrows():
-            tgl = row.get("TANGGAL", " Agenda RW")
+            tgl = row.get("TANGGAL", "Agenda RW")
             judul = row.get("JUDUL", "Informasi Penting")
             isi = row.get("ISI / KATEGORI", "-")
             
@@ -341,7 +352,7 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada pengumuman atau hasil rapat yang dipublikasikan.")
 
-# ================= TAB 8: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
+# ================= TAB 8: EDIT DATA (HANYA ADMIN) =================
 if admin_terverifikasi:
     with tab8:
         st.subheader("⚙️ Panel Pengaturan & Edit Data (Admin)")
@@ -384,3 +395,11 @@ if admin_terverifikasi:
 
 # Penutup blok div utama biru muda
 st.markdown("</div>", unsafe_allow_html=True)
+
+# ================= FOOTER PORTAL RESMI =================
+st.markdown("""
+<div style="text-align: center; padding: 20px; color: #555; font-size: 14px; border-top: 1px solid #ddd; margin-top: 30px;">
+    <p style="margin: 0; font-weight: bold;">Portal Resmi RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</p>
+    <p style="margin: 5px 0 0 0; font-size: 12px; color: #777;">Dikelola oleh Pengurus RW 14 &bull; Didukung oleh Sistem Dashboard Digital Warga</p>
+</div>
+""", unsafe_allow_html=True)
