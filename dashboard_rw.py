@@ -180,27 +180,39 @@ with tab5:
     kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
     
     if kata_kunci:
-        # Perbaikan: Pencarian difokuskan secara khusus pada kolom "NAMA" saja 
-        # (atau NIK/No KK jika diketik angka), agar tidak asal mencocokkan kolom lain.
+        # Bersihkan spasi berlebih pada kata kunci ketikan
+        kunci_bersih = kata_kunci.strip().lower()
+        
+        # Filter ketat khusus pada kolom NAMA (membersihkan spasi di Excel juga)
         if "NAMA" in df_filtered.columns:
-            pencarian_nama = df_filtered["NAMA"].astype(str).str.contains(kata_kunci, case=False, na=False)
-            pencarian_lain = df_filtered.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False, na=False)).any(axis=1)
+            # Ubah kolom NAMA menjadi string kecil semua dan hilangkan spasi ganda
+            nama_seragam = df_filtered["NAMA"].astype(str).str.lower().str.strip()
+            mask_nama = nama_seragam.str.contains(kunci_bersih, na=False)
             
-            # Prioritaskan pencarian berdasarkan Nama, atau NIK/No.KK jika berupa angka
-            if kata_kunci.isdigit():
-                hasil_pencarian = df_filtered[pencarian_lain]
+            # Jika user mengetik angka (misal No KK / NIK), izinkan pencarian umum
+            if kunci_bersih.isdigit():
+                mask_umum = df_filtered.astype(str).apply(lambda x: x.str.lower().str.contains(kunci_bersih, na=False)).any(axis=1)
+                hasil_pencarian = df_filtered[mask_nama | mask_umum]
             else:
-                hasil_pencarian = df_filtered[pencarian_nama]
+                hasil_pencarian = df_filtered[mask_nama]
         else:
-            hasil_pencarian = df_filtered[df_filtered.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False, na=False)).any(axis=1)]
+            hasil_pencarian = pd.DataFrame()
         
         if not hasil_pencarian.empty:
             if "NO. KK" in df_filtered.columns:
+                # Ambil daftar No KK yang benar-benar valid dari hasil temuan nama
                 list_kk = hasil_pencarian["NO. KK"].dropna().unique()
                 st.success(f"✅ Ditemukan {len(list_kk)} Kartu Keluarga terkait.")
                 
                 for kk in list_kk:
                     df_keluarga = df_filtered[df_filtered["NO. KK"] == kk].copy()
+                    
+                    # Pastikan sekali lagi: Apakah di dalam 1 KK ini benar-benar ada nama yang cocok?
+                    # Jika karena suatu hal tidak ada, lewati KK tersebut
+                    cek_lagi = df_keluarga["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
+                    if not cek_lagi.any() and not kunci_bersih.isdigit():
+                        continue
+                        
                     nama_kepala = "Satu Keluarga"
                     if "HUBUNGAN" in df_keluarga.columns and "NAMA" in df_keluarga.columns:
                         kepala_df = df_keluarga[df_keluarga["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]
@@ -209,9 +221,9 @@ with tab5:
                     
                     st.markdown(f"### 🏠 {nama_kepala}")
                     
-                    # Penanda warna kuning untuk baris nama yang cocok
+                    # Penanda warna kuning lembut untuk baris nama yang persis cocok
                     def highlight_pencarian(row):
-                        match = kata_kunci.lower() in str(row.get("NAMA", "")).lower()
+                        match = kunci_bersih in str(row.get("NAMA", "")).lower()
                         return ['background-color: #FFF9C4' if match else '' for _ in row]
 
                     kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
@@ -221,7 +233,7 @@ with tab5:
             else:
                 st.error("Kolom 'NO. KK' tidak ditemukan.")
         else:
-            st.warning(f"❌ Tidak ada warga dengan nama yang cocok dengan pencarian '{kata_kunci}'.")
+            st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
 
 # ================= TAB 6: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
 if admin_terverifikasi:
