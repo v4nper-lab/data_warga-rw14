@@ -177,12 +177,22 @@ with tab5:
     st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
     st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya.")
     
-    kata_kunci = st.text_input("🔎 Masukkan Nama Warga / NIK / No. KK:")
+    kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
     
     if kata_kunci:
-        # 1. Cari warga yang persis datanya cocok dengan kata kunci
-        pencarian = df_filtered.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False, na=False)).any(axis=1)
-        hasil_pencarian = df_filtered[pencarian]
+        # Perbaikan: Pencarian difokuskan secara khusus pada kolom "NAMA" saja 
+        # (atau NIK/No KK jika diketik angka), agar tidak asal mencocokkan kolom lain.
+        if "NAMA" in df_filtered.columns:
+            pencarian_nama = df_filtered["NAMA"].astype(str).str.contains(kata_kunci, case=False, na=False)
+            pencarian_lain = df_filtered.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False, na=False)).any(axis=1)
+            
+            # Prioritaskan pencarian berdasarkan Nama, atau NIK/No.KK jika berupa angka
+            if kata_kunci.isdigit():
+                hasil_pencarian = df_filtered[pencarian_lain]
+            else:
+                hasil_pencarian = df_filtered[pencarian_nama]
+        else:
+            hasil_pencarian = df_filtered[df_filtered.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False, na=False)).any(axis=1)]
         
         if not hasil_pencarian.empty:
             if "NO. KK" in df_filtered.columns:
@@ -199,21 +209,19 @@ with tab5:
                     
                     st.markdown(f"### 🏠 {nama_kepala}")
                     
-                    # --- TAMBAHAN PENANDA WARNA ---
-                    # Agar Anda tahu siapa warga yang namanya cocok dengan pencarian di dalam KK tersebut
+                    # Penanda warna kuning untuk baris nama yang cocok
                     def highlight_pencarian(row):
-                        match = str(row.get("NAMA", "")).lower() == kata_kunci.lower() or kata_kunci.lower() in str(row.get("NAMA", "")).lower()
+                        match = kata_kunci.lower() in str(row.get("NAMA", "")).lower()
                         return ['background-color: #FFF9C4' if match else '' for _ in row]
 
                     kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
                     df_tampil = df_keluarga.drop(columns=kolom_dibuang, errors="ignore")
                     
-                    # Menampilkan tabel dengan baris yang cocok diberi warna kuning lembut
                     st.dataframe(df_tampil.style.apply(highlight_pencarian, axis=1), use_container_width=True, hide_index=True)
             else:
                 st.error("Kolom 'NO. KK' tidak ditemukan.")
         else:
-            st.warning(f"❌ Tidak ada warga yang cocok dengan pencarian '{kata_kunci}'.")
+            st.warning(f"❌ Tidak ada warga dengan nama yang cocok dengan pencarian '{kata_kunci}'.")
 
 # ================= TAB 6: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
 if admin_terverifikasi:
