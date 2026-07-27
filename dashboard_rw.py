@@ -121,7 +121,7 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= FOTO KETUA RT FORMAT VERTIKAL DENGAN AUTO-LURUS =================
+    # ================= FOTO KETUA RT FORMAT VERTIKAL DENGAN NAMA PRESISI =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
@@ -130,7 +130,7 @@ if "RT" in df.columns:
         os.makedirs(folder_foto_rt)
 
     for rt_pilih in pilihan_rt_format:
-        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" -> "1"
+        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "02" -> "2"
         
         path_foto = None
         kemungkinan_nama = [
@@ -144,27 +144,36 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
-        # Cari nama ketua RT dari data struktur
+        # Pencarian nama ketua RT yang akurat dari tabel struktur
         nama_ketua = f"Ketua {rt_pilih}"
         if not df_struktur.empty:
-            match_rt = df_struktur[df_struktur["JABATAN"].astype(str).str.upper().str.contains(f"RT {rt_num}|RT0{rt_num}|RT {rt_pilih}", na=False)]
-            if not match_rt.empty:
-                nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)}"
+            for _, row in df_struktur.iterrows():
+                jabatan_str = str(row.get("JABATAN", "")).upper()
+                if f"RT {rt_num}" in jabatan_str or f"RT0{rt_num}" in jabatan_str or f"RT {rt_pilih}" in jabatan_str or f"RT{rt_num}" in jabatan_str:
+                    nama_pengurus_val = row.get("NAMA PENGURUS", "")
+                    if pd.notnull(nama_pengurus_val) and str(nama_pengurus_val).strip() != "":
+                        nama_ketua = str(nama_pengurus_val).strip()
+                        break
 
         # Tampilan Vertikal Tegak Lurus
         if path_foto and os.path.exists(path_foto):
             st.sidebar.markdown(f"""
-            <div style="background-color: #ffffff; padding: 12px; border-radius: 12px; border: 2px solid #90CAF9; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
-                <span style="background-color: #0D47A1; color: white; padding: 3px 10px; border-radius: 15px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
+            <div style="background-color: #ffffff; padding: 10px; border-radius: 10px 10px 0 0; border: 2px solid #90CAF9; border-bottom: none; text-align: center;">
+                <span style="background-color: #0D47A1; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
             </div>
             """, unsafe_allow_html=True)
             
             img_terluruskan = muat_gambar_tegak(path_foto)
-            st.sidebar.image(img_terluruskan, caption=f"👨‍✈️ {nama_ketua}", use_container_width=True)
-            st.sidebar.markdown("<br>", unsafe_allow_html=True)
+            st.sidebar.image(img_terluruskan, use_container_width=True)
+            
+            st.sidebar.markdown(f"""
+            <div style="background-color: #ffffff; padding: 8px; border-radius: 0 0 10px 10px; border: 2px solid #90CAF9; border-top: none; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
+                <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 14px;">👨‍✈️ {nama_ketua}</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.sidebar.markdown(f"""
-            <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 12px;">
+            <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 15px;">
                 <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
                 <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto belum diunggah via Admin)</i></p>
             </div>
