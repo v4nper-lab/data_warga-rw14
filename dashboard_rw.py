@@ -183,6 +183,7 @@ with tab5:
         kunci_bersih = kata_kunci.strip().lower()
         
         if "NAMA" in df_filtered.columns:
+            # Mengubah data Excel dan ketikan user ke huruf kecil agar pencarian tidak gagal karena beda kapital
             nama_seragam = df_filtered["NAMA"].astype(str).str.lower().str.strip()
             mask_nama = nama_seragam.str.contains(kunci_bersih, na=False)
             
@@ -202,10 +203,6 @@ with tab5:
                 for kk in list_kk:
                     df_keluarga = df_filtered[df_filtered["NO. KK"] == kk].copy()
                     
-                    cek_lagi = df_keluarga["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
-                    if not cek_lagi.any() and not kunci_bersih.isdigit():
-                        continue
-                        
                     nama_kepala = "Satu Keluarga"
                     if "HUBUNGAN" in df_keluarga.columns and "NAMA" in df_keluarga.columns:
                         kepala_df = df_keluarga[df_keluarga["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]
