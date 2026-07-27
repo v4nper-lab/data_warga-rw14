@@ -38,11 +38,11 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk menampilkan PDF langsung di web
+# Fungsi untuk menampilkan PDF langsung di web secara aman tanpa blokir Chrome
 def tampilkan_pdf(file_path):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
+    pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf">'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 @st.cache_data
