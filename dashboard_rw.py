@@ -175,21 +175,17 @@ with tab4:
 # ================= TAB 5: PENCARIAN KK =================
 with tab5:
     st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
-    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya.")
+    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat.")
     
     kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
     
     if kata_kunci:
-        # Bersihkan spasi berlebih pada kata kunci ketikan
         kunci_bersih = kata_kunci.strip().lower()
         
-        # Filter ketat khusus pada kolom NAMA (membersihkan spasi di Excel juga)
         if "NAMA" in df_filtered.columns:
-            # Ubah kolom NAMA menjadi string kecil semua dan hilangkan spasi ganda
             nama_seragam = df_filtered["NAMA"].astype(str).str.lower().str.strip()
             mask_nama = nama_seragam.str.contains(kunci_bersih, na=False)
             
-            # Jika user mengetik angka (misal No KK / NIK), izinkan pencarian umum
             if kunci_bersih.isdigit():
                 mask_umum = df_filtered.astype(str).apply(lambda x: x.str.lower().str.contains(kunci_bersih, na=False)).any(axis=1)
                 hasil_pencarian = df_filtered[mask_nama | mask_umum]
@@ -200,15 +196,12 @@ with tab5:
         
         if not hasil_pencarian.empty:
             if "NO. KK" in df_filtered.columns:
-                # Ambil daftar No KK yang benar-benar valid dari hasil temuan nama
                 list_kk = hasil_pencarian["NO. KK"].dropna().unique()
                 st.success(f"✅ Ditemukan {len(list_kk)} Kartu Keluarga terkait.")
                 
                 for kk in list_kk:
                     df_keluarga = df_filtered[df_filtered["NO. KK"] == kk].copy()
                     
-                    # Pastikan sekali lagi: Apakah di dalam 1 KK ini benar-benar ada nama yang cocok?
-                    # Jika karena suatu hal tidak ada, lewati KK tersebut
                     cek_lagi = df_keluarga["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
                     if not cek_lagi.any() and not kunci_bersih.isdigit():
                         continue
@@ -221,7 +214,6 @@ with tab5:
                     
                     st.markdown(f"### 🏠 {nama_kepala}")
                     
-                    # Penanda warna kuning lembut untuk baris nama yang persis cocok
                     def highlight_pencarian(row):
                         match = kunci_bersih in str(row.get("NAMA", "")).lower()
                         return ['background-color: #FFF9C4' if match else '' for _ in row]
