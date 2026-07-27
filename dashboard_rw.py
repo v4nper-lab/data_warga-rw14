@@ -20,7 +20,7 @@ div[data-testid="metric-container"] { background-color: white; padding: 15px; bo
 div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
 div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
 h3 { font-size: 24px !important; color: #0D47A1; }
-button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 14px !important; font-weight: bold; }
+button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -74,7 +74,6 @@ def load_struktur():
         df_struk.columns = df_struk.columns.str.strip().str.upper()
         return df_struk
     else:
-        # Data dummy awal jika file belum ada
         data_awal = {
             "JABATAN": ["Ketua RW 14", "Wakil Ketua RW", "Sekretaris", "Bendahara", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03"],
             "NAMA PENGURUS": ["Bapak Ketua RW", "Bapak Wakil", "Bapak Sekretaris", "Ibu Bendahara", "Bapak RT 01", "Bapak RT 02", "Bapak RT 03"],
@@ -157,15 +156,15 @@ st.write("---")
 # ================= MENU UTAMA WEBSITE PORTAL =================
 if admin_terverifikasi:
     tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "🏠 Beranda", "👥 Struktur Organisasi", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
+        "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "🖼️ Galeri Kegiatan", "⚙️ Edit Data (Admin)"
+        "📢 Info & Rapat", "🖼️ Galeri", "⚙️ Edit & Upload (Admin)"
     ])
 else:
     tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "🏠 Beranda", "👥 Struktur Organisasi", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
+        "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "🖼️ Galeri Kegiatan"
+        "📢 Info & Rapat", "🖼️ Galeri"
     ])
 
 # ================= TAB 0: BERANDA / PROFIL =================
@@ -183,8 +182,8 @@ with tab0:
         * Melihat struktur kepengurusan RW dan RT.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
-        * Memantau transparansi laporan keuangan kas RW.
-        * Membaca hasil rapat, agenda kegiatan, serta galeri foto lingkungan.
+        * Memantau transparansi laporan keuangan kas RW (lengkap dengan unduhan dokumen PDF).
+        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -336,7 +335,7 @@ with tab5:
 # ================= TAB 6: KAS RW =================
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
-    st.markdown("Berikut adalah ringkasan keuangan dan rincian transaksi Kas RW yang dapat diakses oleh seluruh warga.")
+    st.markdown("Berikut adalah ringkasan keuangan, rincian transaksi, serta dokumen PDF laporan keuangan resmi.")
     
     if not df_kas.empty and "JUMLAH" in df_kas.columns and "JENIS" in df_kas.columns:
         df_kas["JUMLAH_ANGKA"] = pd.to_numeric(df_kas["JUMLAH"], errors="coerce").fillna(0)
@@ -353,11 +352,32 @@ with tab6:
         st.dataframe(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
     else:
         st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
+        
+    # Bagian Unduh Dokumen PDF Kas
+    st.write("---")
+    st.subheader("📄 Unduh Dokumen Laporan Kas (PDF)")
+    folder_pdf_kas = "pdf_kas"
+    if not os.path.exists(folder_pdf_kas):
+        os.makedirs(folder_pdf_kas)
+    daftar_pdf_kas = [f for f in os.listdir(folder_pdf_kas) if f.lower().endswith('.pdf')]
+    
+    if daftar_pdf_kas:
+        for pdf_file in daftar_pdf_kas:
+            path_pdf = os.path.join(folder_pdf_kas, pdf_file)
+            with open(path_pdf, "rb") as f:
+                st.download_button(
+                    label=f"📥 Unduh Laporan Kas: {pdf_file}",
+                    data=f,
+                    file_name=pdf_file,
+                    mime="application/pdf"
+                )
+    else:
+        st.markdown("*Belum ada file PDF laporan kas yang diunggah oleh pengurus.*")
 
 # ================= TAB 7: INFO & RAPAT =================
 with tab7:
     st.subheader("📢 Informasi Kegiatan & Hasil Rapat RW 14")
-    st.markdown("Pusat informasi resmi seputar hasil rapat pengurus, pengumuman warga, dan agenda kegiatan lingkungan.")
+    st.markdown("Pusat informasi resmi seputar hasil rapat pengurus, pengumuman warga, agenda kegiatan, serta dokumen PDF resmi.")
     
     if not df_info.empty:
         for index, row in df_info.iterrows():
@@ -369,6 +389,27 @@ with tab7:
                 st.write(isi)
     else:
         st.info("ℹ️ Belum ada pengumuman atau hasil rapat yang dipublikasikan.")
+
+    # Bagian Dokumen PDF Info / Hasil Rapat
+    st.write("---")
+    st.subheader("📄 Dokumen & Notulen Hasil Rapat (PDF)")
+    folder_pdf_info = "pdf_info"
+    if not os.path.exists(folder_pdf_info):
+        os.makedirs(folder_pdf_info)
+    daftar_pdf_info = [f for f in os.listdir(folder_pdf_info) if f.lower().endswith('.pdf')]
+    
+    if daftar_pdf_info:
+        for pdf_file in daftar_pdf_info:
+            path_pdf = os.path.join(folder_pdf_info, pdf_file)
+            with open(path_pdf, "rb") as f:
+                st.download_button(
+                    label=f"📥 Unduh Dokumen Rapat: {pdf_file}",
+                    data=f,
+                    file_name=pdf_file,
+                    mime="application/pdf"
+                )
+    else:
+        st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
 # ================= TAB 8: GALERI KEGIATAN =================
 with tab8:
@@ -390,13 +431,16 @@ with tab8:
     else:
         st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah foto melalui menu Admin.")
 
-# ================= TAB 9: EDIT DATA (HANYA ADMIN) =================
+# ================= TAB 9: EDIT & UPLOAD (HANYA ADMIN) =================
 if admin_terverifikasi:
     with tab9:
-        st.subheader("⚙️ Panel Pengaturan & Edit Data (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat memperbarui data warga, kas, informasi rapat, struktur organisasi, maupun galeri.")
+        st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, informasi, galeri foto, hingga mengunggah file PDF.")
         
-        menu_admin = st.selectbox("Pilih Data yang Ingin Dikelola:", ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Galeri"])
+        menu_admin = st.selectbox(
+            "Pilih Menu Pengelolaan:", 
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
+        )
         
         if menu_admin == "Data Warga":
             data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
@@ -441,6 +485,26 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan informasi: {e}")
+                    
+        elif menu_admin == "Upload File PDF (Kas & Rapat)":
+            st.markdown("Unggah dokumen resmi berformat PDF untuk Warga:")
+            kategori_pdf = st.radio("Pilih Kategori Dokumen PDF:", ["Laporan Kas RW", "Hasil Rapat / Informasi RW"])
+            pdf_upload = st.file_uploader("Pilih File PDF", type=["pdf"])
+            
+            if pdf_upload is not None:
+                if kategori_pdf == "Laporan Kas RW":
+                    folder_tujuan = "pdf_kas"
+                else:
+                    folder_tujuan = "pdf_info"
+                    
+                if not os.path.exists(folder_tujuan):
+                    os.makedirs(folder_tujuan)
+                    
+                path_simpan_pdf = os.path.join(folder_tujuan, pdf_upload.name)
+                with open(path_simpan_pdf, "wb") as f:
+                    f.write(pdf_upload.getbuffer())
+                st.success(f"✅ Dokumen PDF '{pdf_upload.name}' berhasil diunggah!")
+                st.rerun()
                     
         elif menu_admin == "Upload Foto Galeri":
             st.markdown("Unggah foto kegiatan baru ke galeri RW:")
