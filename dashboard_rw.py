@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import base64
 import os
+from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
 # 1. PENGATURAN HALAMAN & KOSMETIK PORTAL
@@ -37,6 +38,15 @@ def ambil_logo_lokal(nama_file):
         return "https://cdn-icons-png.flaticon.com/512/3135/3135673.png"
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
+
+# Fungsi untuk memuat gambar dengan perbaikan orientasi otomatis (agar tegak lurus sempurna)
+def muat_gambar_tegak(path_file):
+    try:
+        img = Image.open(path_file)
+        img = ImageOps.exif_transpose(img) # Otomatis meluruskan orientasi foto HP
+        return img
+    except Exception:
+        return path_file
 
 @st.cache_data
 def load_data():
@@ -111,7 +121,7 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= FOTO KETUA RT FORMAT VERTIKAL (TEGAK BERURUT KE BAWAH) =================
+    # ================= FOTO KETUA RT FORMAT VERTIKAL DENGAN AUTO-LURUS =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
@@ -123,9 +133,8 @@ if "RT" in df.columns:
         rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" -> "1"
         
         path_foto = None
-        # Opsi lokasi pencarian foto (di folder rt/ maupun di folder utama)
         kemungkinan_nama = [
-            os.path.join(folder_foto_rt, f"rt{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num}.png"),
+            os.path.join(folder_foto_rt, f"rt{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num}.png"),
             f"rt{rt_num}.jpg", f"rt{rt_num}.png", f"rt0{rt_num}.jpg", f"rt0{rt_num}.png"
         ]
@@ -142,14 +151,16 @@ if "RT" in df.columns:
             if not match_rt.empty:
                 nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)}"
 
-        # Tampilan Vertikal (Kartu Profil Tegak)
+        # Tampilan Vertikal Tegak Lurus
         if path_foto and os.path.exists(path_foto):
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 12px; border-radius: 12px; border: 2px solid #90CAF9; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
                 <span style="background-color: #0D47A1; color: white; padding: 3px 10px; border-radius: 15px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
             </div>
             """, unsafe_allow_html=True)
-            st.sidebar.image(path_foto, caption=f"👨‍✈️ {nama_ketua}", use_container_width=True)
+            
+            img_terluruskan = muat_gambar_tegak(path_foto)
+            st.sidebar.image(img_terluruskan, caption=f"👨‍✈️ {nama_ketua}", use_container_width=True)
             st.sidebar.markdown("<br>", unsafe_allow_html=True)
         else:
             st.sidebar.markdown(f"""
