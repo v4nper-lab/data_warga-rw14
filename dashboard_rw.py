@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import base64
 import os
+from datetime import datetime
+import pytz
 
 # 1. PENGATURAN HALAMAN & KOSMETIK
 st.set_page_config(page_title="Dashboard RW 14", layout="wide", page_icon="📊")
@@ -44,6 +46,29 @@ def load_data():
 
 df = load_data()
 
+# ================= WAKTU REAL-TIME DI SIDEBAR =================
+st.sidebar.markdown("---")
+try:
+    zona_wib = pytz.timezone('Asia/Jakarta')
+    waktu_sekarang = datetime.now(zona_wib)
+except:
+    waktu_sekarang = datetime.now()
+
+hari_list = {"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu", "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"}
+bulan_list = {1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November", 12: "Desember"}
+
+nama_hari = hari_list.get(waktu_sekarang.strftime("%A"), waktu_sekarang.strftime("%A"))
+nama_bulan = bulan_list.get(waktu_sekarang.month, "")
+tanggal_indo = f"{nama_hari}, {waktu_sekarang.day} {nama_bulan} {waktu_sekarang.year}"
+jam_indo = waktu_sekarang.strftime("%H:%M:%S") + " WIB"
+
+st.sidebar.markdown(f"""
+<div style="background-color: #E3F2FD; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #90CAF9; margin-bottom: 10px;">
+    <p style="margin: 0; font-size: 13px; color: #555; font-weight: bold;">📅 {tanggal_indo}</p>
+    <p style="margin: 5px 0 0 0; font-size: 16px; color: #0D47A1; font-weight: 900;">⏰ {jam_indo}</p>
+</div>
+""", unsafe_allow_html=True)
+
 st.sidebar.header("🛠️ Panel Filter")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
@@ -57,11 +82,9 @@ else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
     st.stop()
 
-# ================= KONTROL KEAMANAN ADMIN DI SIDEBAR =================
+# ================= KONTROL KEAMANAN ADMIN (LANGSUNG PASSWORD) =================
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔐 Menu Pengurus (Admin)")
-
-# Langsung sediakan kolom input password tanpa perlu checkbox centang
 password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
 
 admin_terverifikasi = False
@@ -70,6 +93,7 @@ if password_input == "V@nadminrw14":
     st.sidebar.success("✅ Login Admin Berhasil!")
 elif password_input != "":
     st.sidebar.error("❌ Password salah!")
+
 # ================= BLOK UTAMA BACKGROUND BIRU MUDA =================
 st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
@@ -172,7 +196,6 @@ with tab4:
     st.dataframe(df_tabel, use_container_width=True, hide_index=True)
 
 # ================= TAB 5: PENCARIAN KK =================
-# ================= TAB 5: PENCARIAN KK =================
 with tab5:
     st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
     st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat.")
@@ -181,13 +204,10 @@ with tab5:
     
     if kata_kunci:
         kunci_bersih = kata_kunci.strip().lower()
-        
-        # Cek kolom apa saja yang ada di dataframe untuk memastikan kolom nama benar
         kolom_nama_opsi = [col for col in df.columns if "NAMA" in col]
         
         if kolom_nama_opsi:
             nama_kolom_aktif = kolom_nama_opsi[0]
-            # Pencarian menggunakan kolom nama yang terdeteksi
             mask_nama = df[nama_kolom_aktif].astype(str).str.lower().str.contains(kunci_bersih, na=False)
             hasil_pencarian = df[mask_nama]
         else:
@@ -195,7 +215,6 @@ with tab5:
             nama_kolom_aktif = None
         
         if not hasil_pencarian.empty:
-            # Cari kolom No. KK secara fleksibel
             kolom_kk_opsi = [col for col in df.columns if "KK" in col]
             if kolom_kk_opsi:
                 kk_kolom_aktif = kolom_kk_opsi[0]
@@ -226,15 +245,6 @@ with tab5:
                 st.error("Kolom yang mengandung kata 'KK' tidak ditemukan di Excel.")
         else:
             st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
-            
-            # --- FITUR BANTUAN DEBUG ---
-            # Jika tidak ketemu, tampilkan 5 contoh nama teratas dari file Excel Anda
-            if kolom_nama_opsi:
-                with st.expander("🛠️ Klik di sini untuk melihat contoh penulisan nama di Excel"):
-                    contoh_nama = df[nama_kolom_aktif].dropna().head(5).tolist()
-                    st.write(f"Kolom nama di Excel terdeteksi sebagai: **{nama_kolom_aktif}**")
-                    st.write("Contoh 5 nama pertama di database:", contoh_nama)
-                    st.markdown("💡 *Pastikan nama yang Anda cari ejaannya mirip dengan data yang ada di file Excel.*")
 
 # ================= TAB 6: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
 if admin_terverifikasi:
