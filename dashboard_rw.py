@@ -60,17 +60,16 @@ else:
 # ================= KONTROL KEAMANAN ADMIN DI SIDEBAR =================
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔐 Menu Pengurus (Admin)")
-mode_admin = st.sidebar.checkbox("Masuk Mode Admin (Edit Data)")
+
+# Langsung sediakan kolom input password tanpa perlu checkbox centang
+password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
 
 admin_terverifikasi = False
-if mode_admin:
-    password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
-    if password_input == "V@nadminrw14":
-        admin_terverifikasi = True
-        st.sidebar.success("✅ Login Admin Berhasil!")
-    elif password_input != "":
-        st.sidebar.error("❌ Password salah!")
-
+if password_input == "V@nadminrw14":
+    admin_terverifikasi = True
+    st.sidebar.success("✅ Login Admin Berhasil!")
+elif password_input != "":
+    st.sidebar.error("❌ Password salah!")
 # ================= BLOK UTAMA BACKGROUND BIRU MUDA =================
 st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
