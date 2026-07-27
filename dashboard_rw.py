@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import base64
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 1. PENGATURAN HALAMAN & KOSMETIK
 st.set_page_config(page_title="Dashboard RW 14", layout="wide", page_icon="📊")
@@ -45,9 +45,10 @@ def load_data():
 
 df = load_data()
 
-# ================= WAKTU REAL-TIME DI SIDEBAR =================
+# ================= WAKTU REAL-TIME DISESUAIKAN KE WIB (+7 JAM) =================
 st.sidebar.markdown("---")
-waktu_sekarang = datetime.now()
+# Menambahkan timedelta(hours=7) untuk mengonversi waktu server ke Waktu Indonesia Barat (WIB)
+waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 
 hari_list = {"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu", "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"}
 bulan_list = {1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November", 12: "Desember"}
