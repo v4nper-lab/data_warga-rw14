@@ -111,24 +111,25 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= FOTO KETUA RT DARI FOLDER 'rt' =================
+    # ================= FOTO KETUA RT DI LUAR (SEJAJAR PROJECT) =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px;'>👨‍✈️ Foto Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
     for rt_pilih in pilihan_rt_format:
         rt_num = ''.join(filter(str.isdigit, rt_pilih))
         
-        # Cek file foto di dalam folder 'rt/'
+        # Cek file foto di luar (sejajar file python)
         path_foto = None
-        for ext in ['.jpg', '.jpeg', '.png']:
-            coba_path = os.path.join("rt", f"rt{rt_num}{ext}")
-            if os.path.exists(coba_path):
-                path_foto = coba_path
+        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+            # Cek format rt1.jpg
+            file1 = f"rt{rt_num}{ext}"
+            if os.path.exists(file1):
+                path_foto = file1
                 break
-            # Coba alternatif nama (misal rt01.jpg)
-            coba_path_nol = os.path.join("rt", f"rt0{rt_num}{ext}" if len(rt_num)==1 else f"rt{rt_num}{ext}")
-            if os.path.exists(coba_path_nol):
-                path_foto = coba_path_nol
+            # Cek format rt01.jpg
+            file2 = f"rt0{rt_num}{ext}" if len(rt_num)==1 else f"rt{rt_num}{ext}"
+            if os.path.exists(file2):
+                path_foto = file2
                 break
 
         # Cari nama ketua RT dari data struktur
@@ -138,11 +139,11 @@ if "RT" in df.columns:
             if not match_rt.empty:
                 nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)} ({rt_pilih})"
 
-        # Tampilkan foto dari folder rt/ di sidebar
+        # Tampilkan foto di sidebar
         if path_foto and os.path.exists(path_foto):
             st.sidebar.image(path_foto, caption=nama_ketua, width=120)
         else:
-            st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", caption=f"{nama_ketua}\n(Foto di folder 'rt/' belum ada)", width=100)
+            st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", caption=f"{nama_ketua}\n(File rt{rt_num}.jpg belum di-upload)", width=100)
 
     if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
