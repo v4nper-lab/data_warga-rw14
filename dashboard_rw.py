@@ -105,11 +105,42 @@ st.sidebar.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.sidebar.header("🛠️ Panel Filter Data")
+st.sidebar.header("🛠️ Panel Filter Data RT")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
+    
+    # ================= FOTO KETUA RT DI SIDEBAR =================
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px;'>👨‍✈️ Foto Ketua RT Terpilih:</p>", unsafe_allow_html=True)
+    
+    for rt_pilih in pilihan_rt_format:
+        # Mengambil angka RT saja (misal "RT01" jadi "1")
+        rt_num = ''.join(filter(str.isdigit, rt_pilih))
+        nama_file_foto = f"rt{int(rt_num)}.jpg" if rt_num.isdigit() else f"rt{rt_pilih.lower()}.jpg"
+        
+        # Cek format alternatif .png jika .jpg tidak ada
+        if not os.path.exists(nama_file_foto):
+            nama_file_foto_png = f"rt{int(rt_num)}.png" if rt_num.isdigit() else f"rt{rt_pilih.lower()}.png"
+            if os.path.exists(nama_file_foto_png):
+                nama_file_foto = nama_file_foto_png
+            else:
+                nama_file_foto = None
+
+        # Cari nama ketua RT dari data struktur jika ada
+        nama_ketua = f"Ketua {rt_pilih}"
+        if not df_struktur.empty:
+            match_rt = df_struktur[df_struktur["JABATAN"].astype(str).str.upper().str.contains(f"RT {rt_num}|RT0{rt_num}|RT {rt_pilih}", na=False)]
+            if not match_rt.empty:
+                nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)} ({rt_pilih})"
+
+        # Tampilkan foto di sidebar
+        if nama_file_foto and os.path.exists(nama_file_foto):
+            st.sidebar.image(nama_file_foto, caption=nama_ketua, width=120)
+        else:
+            st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", caption=f"{nama_ketua}\n(Foto belum diunggah)", width=100)
+
     if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
         st.stop()
@@ -179,7 +210,7 @@ with tab0:
         Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
         
         Melalui portal digital ini, Anda dapat:
-        * Melihat struktur kepengurusan RW dan RT.
+        * Melihat struktur kepengurusan RW dan foto profil Ketua RT di panel sebelah kiri.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW (lengkap dengan dokumen PDF resmi).
@@ -353,7 +384,6 @@ with tab6:
     else:
         st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
         
-    # Bagian Dokumen PDF Kas (Aman & Stabil)
     st.write("---")
     st.subheader("📄 Dokumen Laporan Kas Resmi (PDF)")
     folder_pdf_kas = "pdf_kas"
@@ -393,7 +423,6 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada pengumuman atau hasil rapat yang dipublikasikan.")
 
-    # Bagian Dokumen PDF Info / Hasil Rapat (Aman & Stabil)
     st.write("---")
     st.subheader("📄 Dokumen & Notulen Hasil Rapat (PDF)")
     folder_pdf_info = "pdf_info"
