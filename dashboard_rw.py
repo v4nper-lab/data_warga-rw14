@@ -118,16 +118,11 @@ st.sidebar.markdown(f"""
 st.sidebar.header("🛠️ Panel Filter Data RT")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
-    
-    # Mengurutkan secara numerik yang benar (RT01, RT02, RT03, dst.)
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique(), key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
-    
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
-    
-    # Mengurutkan pilihan RT agar tetap berurutan dari RT 01 ke atas secara vertikal
     pilihan_rt_format = sorted(pilihan_rt_format, key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
 
-    # ================= FOTO KETUA RT FORMAT VERTIKAL DENGAN URUTAN BENAR & NAMA PRESISI =================
+    # ================= FOTO KETUA RT FORMAT VERTIKAL DI SIDEBAR =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
@@ -136,7 +131,7 @@ if "RT" in df.columns:
         os.makedirs(folder_foto_rt)
 
     for rt_pilih in pilihan_rt_format:
-        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "02" -> "2"
+        rt_num = ''.join(filter(str.isdigit, rt_pilih))
         
         path_foto = None
         kemungkinan_nama = [
@@ -150,7 +145,6 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
-        # Pencarian nama ketua RT yang akurat dari tabel struktur
         nama_ketua = f"Ketua {rt_pilih}"
         if not df_struktur.empty:
             for _, row in df_struktur.iterrows():
@@ -161,7 +155,6 @@ if "RT" in df.columns:
                         nama_ketua = str(nama_pengurus_val).strip()
                         break
 
-        # Tampilan Vertikal Tegak Lurus
         if path_foto and os.path.exists(path_foto):
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 10px; border-radius: 10px 10px 0 0; border: 2px solid #90CAF9; border-bottom: none; text-align: center;">
@@ -262,6 +255,61 @@ with tab0:
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
+        
+        # ================= TAMPILAN FOTO PENGURUS INTI DI BERANDA =================
+        st.markdown("---")
+        st.markdown("### 🏛️ Jajaran Pengurus Inti RW 14")
+        
+        # Ambil nama pengurus dari file struktur jika ada
+        nama_rw = "Ketua RW 14"
+        nama_sek = "Sekretaris"
+        nama_bend = "Bendahara"
+        if not df_struktur.empty:
+            for _, row in df_struktur.iterrows():
+                jab = str(row.get("JABATAN", "")).upper()
+                nama_val = str(row.get("NAMA PENGURUS", ""))
+                if "KETUA RW" in jab: nama_rw = nama_val
+                elif "SEKRETARIS" in jab: nama_sek = nama_val
+                elif "BENDAHARA" in jab: nama_bend = nama_val
+
+        col_pengurus1, col_pengurus2, col_pengurus3 = st.columns(3)
+        
+        folder_pengurus = "pengurus"
+        if not os.path.exists(folder_pengurus):
+            os.makedirs(folder_pengurus)
+
+        def cari_foto_pengurus(nama_file_dasar):
+            for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+                p = os.path.join(folder_pengurus, f"{nama_file_dasar}{ext}")
+                if os.path.exists(p): return p
+                p2 = f"{nama_file_dasar}{ext}"
+                if os.path.exists(p2): return p2
+            return None
+
+        with col_pengurus1:
+            foto_rw = cari_foto_pengurus("ketuarw")
+            if foto_rw:
+                st.image(muat_gambar_tegak(foto_rw), use_container_width=True)
+            else:
+                st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1;'>Bapak {nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
+
+        with col_pengurus2:
+            foto_sek = cari_foto_pengurus("sekretaris")
+            if foto_sek:
+                st.image(muat_gambar_tegak(foto_sek), use_container_width=True)
+            else:
+                st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1;'>{nama_sek}<br><span style='font-size: 12px; color: #555;'>Sekretaris</span></div>", unsafe_allow_html=True)
+
+        with col_pengurus3:
+            foto_bend = cari_foto_pengurus("bendahara")
+            if foto_bend:
+                st.image(muat_gambar_tegak(foto_bend), use_container_width=True)
+            else:
+                st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1;'>{nama_bend}<br><span style='font-size: 12px; color: #555;'>Bendahara</span></div>", unsafe_allow_html=True)
+
     with col_p2:
         st.markdown("""
         <div style="background-color: white; padding: 15px; border-radius: 10px; border: 1px solid #90CAF9; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
@@ -515,11 +563,11 @@ with tab8:
 if admin_terverifikasi:
     with tab9:
         st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, informasi, galeri foto, foto ketua RT, hingga mengunggah file PDF.")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, informasi, galeri foto, foto pengurus, hingga mengunggah file PDF.")
         
         menu_admin = st.selectbox(
             "Pilih Menu Pengelolaan:", 
-            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
         )
         
         if menu_admin == "Data Warga":
@@ -565,6 +613,25 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan informasi: {e}")
+
+        elif menu_admin == "Upload Foto Pengurus Inti":
+            st.markdown("### 📸 Unggah Foto Pengurus Inti (Ketua RW, Sekretaris, Bendahara)")
+            pilih_posisi = st.selectbox("Pilih Jabatan Pengurus:", ["Ketua RW", "Sekretaris", "Bendahara"])
+            
+            mapping_nama = {"Ketua RW": "ketuarw", "Sekretaris": "sekretaris", "Bendahara": "bendahara"}
+            file_key = mapping_nama[pilih_posisi]
+            
+            foto_pengurus_up = st.file_uploader(f"Pilih Foto untuk {pilih_posisi} (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            if foto_pengurus_up is not None:
+                folder_pengurus_dir = "pengurus"
+                if not os.path.exists(folder_pengurus_dir):
+                    os.makedirs(folder_pengurus_dir)
+                
+                path_simpan_p = os.path.join(folder_pengurus_dir, f"{file_key}.jpg")
+                with open(path_simpan_p, "wb") as f:
+                    f.write(foto_pengurus_up.getbuffer())
+                st.success(f"✅ Foto {pilih_posisi} berhasil diunggah dan disimpan!")
+                st.rerun()
                     
         elif menu_admin == "Upload Foto Ketua RT":
             st.markdown("### 📸 Unggah Foto Profil Ketua RT")
@@ -580,7 +647,6 @@ if admin_terverifikasi:
                 if not os.path.exists(folder_rt_dir):
                     os.makedirs(folder_rt_dir)
                 
-                # Simpan di folder rt/ dengan nama rt1.jpg
                 nama_file_simpan = f"rt{rt_num_up}.jpg"
                 path_simpan_rt = os.path.join(folder_rt_dir, nama_file_simpan)
                 
