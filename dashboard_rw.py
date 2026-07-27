@@ -173,51 +173,69 @@ with tab4:
     st.dataframe(df_tabel, use_container_width=True, hide_index=True)
 
 # ================= TAB 5: PENCARIAN KK =================
+# ================= TAB 5: PENCARIAN KK =================
 with tab5:
     st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
-    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat (mencakup seluruh RT).")
+    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat.")
     
     kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
     
     if kata_kunci:
         kunci_bersih = kata_kunci.strip().lower()
         
-        # Menggunakan 'df' (seluruh data tanpa filter RT) agar pencarian tidak meleset
-        if "NAMA" in df.columns:
-            mask_nama = df["NAMA"].astype(str).str.lower().str.contains(kunci_bersih, na=False)
+        # Cek kolom apa saja yang ada di dataframe untuk memastikan kolom nama benar
+        kolom_nama_opsi = [col for col in df.columns if "NAMA" in col]
+        
+        if kolom_nama_opsi:
+            nama_kolom_aktif = kolom_nama_opsi[0]
+            # Pencarian menggunakan kolom nama yang terdeteksi
+            mask_nama = df[nama_kolom_aktif].astype(str).str.lower().str.contains(kunci_bersih, na=False)
             hasil_pencarian = df[mask_nama]
         else:
             hasil_pencarian = pd.DataFrame()
+            nama_kolom_aktif = None
         
         if not hasil_pencarian.empty:
-            if "NO. KK" in df.columns:
-                list_kk = hasil_pencarian["NO. KK"].dropna().unique()
+            # Cari kolom No. KK secara fleksibel
+            kolom_kk_opsi = [col for col in df.columns if "KK" in col]
+            if kolom_kk_opsi:
+                kk_kolom_aktif = kolom_kk_opsi[0]
+                list_kk = hasil_pencarian[kk_kolom_aktif].dropna().unique()
                 st.success(f"✅ Ditemukan {len(list_kk)} Kartu Keluarga terkait.")
                 
                 for kk in list_kk:
-                    # Mengambil anggota keluarga dari seluruh data mentah 'df'
-                    df_keluarga = df[df["NO. KK"] == kk].copy()
+                    df_keluarga = df[df[kk_kolom_aktif] == kk].copy()
                     
                     nama_kepala = "Satu Keluarga"
-                    if "HUBUNGAN" in df_keluarga.columns and "NAMA" in df_keluarga.columns:
-                        kepala_df = df_keluarga[df_keluarga["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]
+                    kolom_hub = [col for col in df.columns if "HUBUNGAN" in col or "STATUS" in col]
+                    if kolom_hub and kolom_nama_opsi:
+                        kepala_df = df_keluarga[df_keluarga[kolom_hub[0]].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)]
                         if not kepala_df.empty:
-                            nama_kepala = "Keluarga Bpk/Ibu " + str(kepala_df.iloc[0]["NAMA"]).title()
+                            nama_kepala = "Keluarga Bpk/Ibu " + str(kepala_df.iloc[0][nama_kolom_aktif]).title()
                     
                     st.markdown(f"### 🏠 {nama_kepala}")
                     
                     def highlight_pencarian(row):
-                        match = kunci_bersih in str(row.get("NAMA", "")).lower()
+                        match = kunci_bersih in str(row.get(nama_kolom_aktif, "")).lower()
                         return ['background-color: #FFF9C4' if match else '' for _ in row]
 
-                    kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
-                    df_tampil = df_keluarga.drop(columns=kolom_dibuang, errors="ignore")
+                    kolom_dibuang = [kk_kolom_aktif, "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
+                    df_tampil = df_keluarga.drop(columns=[c for c in kolom_dibuang if c in df_keluarga.columns], errors="ignore")
                     
                     st.dataframe(df_tampil.style.apply(highlight_pencarian, axis=1), use_container_width=True, hide_index=True)
             else:
-                st.error("Kolom 'NO. KK' tidak ditemukan.")
+                st.error("Kolom yang mengandung kata 'KK' tidak ditemukan di Excel.")
         else:
             st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
+            
+            # --- FITUR BANTUAN DEBUG ---
+            # Jika tidak ketemu, tampilkan 5 contoh nama teratas dari file Excel Anda
+            if kolom_nama_opsi:
+                with st.expander("🛠️ Klik di sini untuk melihat contoh penulisan nama di Excel"):
+                    contoh_nama = df[nama_kolom_aktif].dropna().head(5).tolist()
+                    st.write(f"Kolom nama di Excel terdeteksi sebagai: **{nama_kolom_aktif}**")
+                    st.write("Contoh 5 nama pertama di database:", contoh_nama)
+                    st.markdown("💡 *Pastikan nama yang Anda cari ejaannya mirip dengan data yang ada di file Excel.*")
 
 # ================= TAB 6: EDIT DATA (HANYA MUNCUL JIKA ADMIN LOGIN) =================
 if admin_terverifikasi:
