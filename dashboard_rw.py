@@ -20,7 +20,7 @@ div[data-testid="metric-container"] { background-color: white; padding: 15px; bo
 div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
 div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
 h3 { font-size: 24px !important; color: #0D47A1; }
-button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 16px !important; font-weight: bold; }
+button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 15px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -95,7 +95,7 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     if not pilihan_rt_format:
-        st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
+        st.warning("⚠️ Silخاب silakan pilih minimal satu RT di menu sebelah kiri.")
         st.stop()
     df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
 else:
@@ -132,23 +132,23 @@ col_logo, col_teks = st.columns([1, 6])
 with col_logo:
     st.image(sumber_logo, width=80)
 with col_teks:
-    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 5px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-size: 24px;'>Portal Resmi & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 5px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-size: 22px;'>Portal Resmi & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #333; font-weight: bold; margin: 5px 0 0 0;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
 
 st.write("---")
 
 # ================= MENU UTAMA WEBSITE PORTAL =================
 if admin_terverifikasi:
-    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "🏠 Beranda / Profil", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "⚙️ Edit Data (Admin)"
+        "📢 Info & Rapat", "🖼️ Galeri Kegiatan", "⚙️ Edit Data (Admin)"
     ])
 else:
-    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "🏠 Beranda / Profil", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        "🏠 Beranda", "📋 Statistik", "👫 Demografi", "💼 Profesi", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat"
+        "📢 Info & Rapat", "🖼️ Galeri Kegiatan"
     ])
 
 # ================= TAB 0: BERANDA / PROFIL =================
@@ -166,7 +166,8 @@ with tab0:
         * Melihat statistik kependudukan dan sebaran RT.
         * Memeriksa data Kartu Keluarga (KK) dengan mudah menggunakan fitur pencarian nama.
         * Memantau transparansi laporan keuangan kas RW secara terbuka.
-        * Membaca hasil rapat, pengumuman, dan agenda kegiatan lingkungan langsung dari perangkat Anda.
+        * Membaca hasil rapat, pengumuman, dan agenda kegiatan lingkungan.
+        * Menyimak dokumentasi foto kegiatan warga di menu Galeri.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -352,13 +353,34 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada pengumuman atau hasil rapat yang dipublikasikan.")
 
-# ================= TAB 8: EDIT DATA (HANYA ADMIN) =================
-if admin_terverifikasi:
-    with tab8:
-        st.subheader("⚙️ Panel Pengaturan & Edit Data (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat memperbarui data warga, kas, maupun informasi rapat.")
+# ================= TAB 8: GALERI KEGIATAN =================
+with tab8:
+    st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
+    st.markdown("Dokumentasi foto kegiatan warga, kerja bakti, posyandu, dan acara kebersamaan di lingkungan Perum Griya Permata Raya.")
+    
+    # Folder penyimpanan galeri
+    folder_galeri = "galeri"
+    if not os.path.exists(folder_galeri):
+        os.makedirs(folder_galeri)
         
-        menu_admin = st.selectbox("Pilih Data yang Ingin Diedit:", ["Data Warga", "Laporan Kas RW", "Informasi & Hasil Rapat"])
+    daftar_foto = [f for f in os.listdir(folder_galeri) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
+    
+    if daftar_foto:
+        cols = st.columns(3)
+        for idx, nama_foto in enumerate(daftar_foto):
+            path_foto = os.path.join(folder_galeri, nama_foto)
+            with cols[idx % 3]:
+                st.image(path_foto, caption=nama_foto.rsplit('.', 1)[0].replace('_', ' ').title(), use_container_width=True)
+    else:
+        st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah foto melalui menu Admin.")
+
+# ================= TAB 9: EDIT DATA (HANYA ADMIN) =================
+if admin_terverifikasi:
+    with tab9:
+        st.subheader("⚙️ Panel Pengaturan & Edit Data (Admin)")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat memperbarui data warga, kas, informasi rapat, maupun mengunggah foto galeri.")
+        
+        menu_admin = st.selectbox("Pilih Data yang Ingin Dikelola:", ["Data Warga", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Galeri"])
         
         if menu_admin == "Data Warga":
             data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
@@ -392,6 +414,19 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan informasi: {e}")
+                    
+        elif menu_admin == "Upload Foto Galeri":
+            st.markdown("Unggah foto kegiatan baru ke galeri RW:")
+            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            if foto_upload is not None:
+                folder_galeri = "galeri"
+                if not os.path.exists(folder_galeri):
+                    os.makedirs(folder_galeri)
+                path_simpan = os.path.join(folder_galeri, foto_upload.name)
+                with open(path_simpan, "wb") as f:
+                    f.write(foto_upload.getbuffer())
+                st.success(f"✅ Foto '{foto_upload.name}' berhasil diunggah ke galeri!")
+                st.rerun()
 
 # Penutup blok div utama biru muda
 st.markdown("</div>", unsafe_allow_html=True)
