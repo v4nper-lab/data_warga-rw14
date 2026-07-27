@@ -4,7 +4,6 @@ import plotly.express as px
 import base64
 import os
 from datetime import datetime
-import pytz
 
 # 1. PENGATURAN HALAMAN & KOSMETIK
 st.set_page_config(page_title="Dashboard RW 14", layout="wide", page_icon="📊")
@@ -48,11 +47,7 @@ df = load_data()
 
 # ================= WAKTU REAL-TIME DI SIDEBAR =================
 st.sidebar.markdown("---")
-try:
-    zona_wib = pytz.timezone('Asia/Jakarta')
-    waktu_sekarang = datetime.now(zona_wib)
-except:
-    waktu_sekarang = datetime.now()
+waktu_sekarang = datetime.now()
 
 hari_list = {"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu", "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"}
 bulan_list = {1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November", 12: "Desember"}
