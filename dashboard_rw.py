@@ -47,7 +47,6 @@ df = load_data()
 
 # ================= WAKTU REAL-TIME DISESUAIKAN KE WIB (+7 JAM) =================
 st.sidebar.markdown("---")
-# Menambahkan timedelta(hours=7) untuk mengonversi waktu server ke Waktu Indonesia Barat (WIB)
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 
 hari_list = {"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu", "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"}
@@ -93,6 +92,15 @@ elif password_input != "":
 # ================= BLOK UTAMA BACKGROUND BIRU MUDA =================
 st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
+""", unsafe_allow_html=True)
+
+# ================= TEKS BERJALAN (MARQUEE) KHUSUS KETUA RT =================
+st.markdown("""
+<div style="background-color: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #90CAF9; margin-bottom: 15px; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
+    <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 15px;">
+        🏡 Kepada seluruh Ketua RT RW 14 &nbsp;&bull;&nbsp; Mengurus data warga hari ini adalah investasi kemudahan untuk urusan sosial kemasyarakatan di masa depan &nbsp;&bull;&nbsp; Semangat terus melayani warga dengan sepenuh hati! ❤️
+    </marquee>
+</div>
 """, unsafe_allow_html=True)
 
 col_logo, col_teks = st.columns([1, 6])
