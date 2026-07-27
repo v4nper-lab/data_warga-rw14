@@ -111,39 +111,42 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= PENCARIAN FOTO KETUA RT OTOMATIS =================
+    # ================= PENCARIAN FOTO KETUA RT OTOMATIS (DARI FOLDER rt/) =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px;'>👨‍✈️ Foto Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
+    folder_foto_rt = "rt"
+    if not os.path.exists(folder_foto_rt):
+        os.makedirs(folder_foto_rt)
+
     for rt_pilih in pilihan_rt_format:
-        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" jadi "1" atau "01"
+        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" jadi "1"
         
         path_foto = None
-        # Daftar kemungkinan nama file foto di direktori utama
         kemungkinan_nama = [
             f"rt{rt_num}.jpg", f"rt{rt_num}.jpeg", f"rt{rt_num}.png",
             f"rt0{rt_num}.jpg", f"rt0{rt_num}.jpeg", f"rt0{rt_num}.png",
-            f"rt{rt_pilih.lower()}.jpg", f"rt{rt_pilih.lower()}.png",
-            f"RT{rt_num}.JPG", f"RT{rt_num}.PNG"
+            f"rt{rt_pilih.lower()}.jpg", f"rt{rt_pilih.lower()}.png"
         ]
         
         for nama_file in kemungkinan_nama:
-            if os.path.exists(nama_file):
-                path_foto = nama_file
+            lokasi_file = os.path.join(folder_foto_rt, nama_file)
+            if os.path.exists(lokasi_file):
+                path_foto = lokasi_file
                 break
 
-        # Cari nama ketua RT dari data struktur jika ada
+        # Cari nama ketua RT dari data struktur
         nama_ketua = f"Ketua {rt_pilih}"
         if not df_struktur.empty:
             match_rt = df_struktur[df_struktur["JABATAN"].astype(str).str.upper().str.contains(f"RT {rt_num}|RT0{rt_num}|RT {rt_pilih}", na=False)]
             if not match_rt.empty:
                 nama_ketua = f"{match_rt.iloc[0].get('NAMA PENGURUS', nama_ketua)} ({rt_pilih})"
 
-        # Tampilkan foto di sidebar
+        # Tampilkan foto di sidebar jika ada, jika tidak kosongkan atau beri keterangan rapi
         if path_foto and os.path.exists(path_foto):
             st.sidebar.image(path_foto, caption=nama_ketua, width=120)
         else:
-            st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", caption=f"{nama_ketua}\n(File rt{rt_num}.jpg belum di-upload)", width=100)
+            st.sidebar.info(f"ℹ️ Foto {nama_ketua} belum diunggah lewat menu Admin.")
 
     if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
@@ -474,11 +477,11 @@ with tab8:
 if admin_terverifikasi:
     with tab9:
         st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, informasi, galeri foto, hingga mengunggah file PDF.")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, informasi, galeri foto, foto ketua RT, hingga mengunggah file PDF.")
         
         menu_admin = st.selectbox(
             "Pilih Menu Pengelolaan:", 
-            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
         )
         
         if menu_admin == "Data Warga":
@@ -524,6 +527,30 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan informasi: {e}")
+                    
+        elif menu_admin == "Upload Foto Ketua RT":
+            st.markdown("### 📸 Unggah Foto Profil Ketua RT")
+            st.markdown("Pilih nomor RT dan unggah foto profil resminya:")
+            
+            pilih_rt_upload = st.selectbox("Pilih RT untuk Foto:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07", "RT 08", "RT 09", "RT 10"])
+            rt_num_up = ''.join(filter(str.isdigit, pilih_rt_upload))
+            
+            foto_rt_upload = st.file_uploader(f"Pilih Foto untuk {pilih_rt_upload} (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            
+            if foto_rt_upload is not None:
+                folder_rt_dir = "rt"
+                if not os.path.exists(folder_rt_dir):
+                    os.makedirs(folder_rt_dir)
+                
+                # Simpan dengan nama terstandarisasi misal rt1.jpg
+                nama_file_simpan = f"rt{rt_num_up}.jpg"
+                path_simpan_rt = os.path.join(folder_rt_dir, nama_file_simpan)
+                
+                with open(path_simpan_rt, "wb") as f:
+                    f.write(foto_upload_bytes := foto_rt_upload.getbuffer())
+                
+                st.success(f"✅ Foto untuk {pilih_rt_upload} berhasil diunggah dan disimpan!")
+                st.rerun()
                     
         elif menu_admin == "Upload File PDF (Kas & Rapat)":
             st.markdown("Unggah dokumen resmi berformat PDF untuk Warga:")
