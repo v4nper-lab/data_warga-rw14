@@ -111,28 +111,28 @@ if "RT" in df.columns:
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique())
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
     
-    # ================= FOTO KETUA RT DI LUAR (SEJAJAR PROJECT) =================
+    # ================= PENCARIAN FOTO KETUA RT OTOMATIS =================
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px;'>👨‍✈️ Foto Ketua RT Terpilih:</p>", unsafe_allow_html=True)
     
     for rt_pilih in pilihan_rt_format:
-        rt_num = ''.join(filter(str.isdigit, rt_pilih))
+        rt_num = ''.join(filter(str.isdigit, rt_pilih)) # contoh: "01" jadi "1" atau "01"
         
-        # Cek file foto di luar (sejajar file python)
         path_foto = None
-        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
-            # Cek format rt1.jpg
-            file1 = f"rt{rt_num}{ext}"
-            if os.path.exists(file1):
-                path_foto = file1
-                break
-            # Cek format rt01.jpg
-            file2 = f"rt0{rt_num}{ext}" if len(rt_num)==1 else f"rt{rt_num}{ext}"
-            if os.path.exists(file2):
-                path_foto = file2
+        # Daftar kemungkinan nama file foto di direktori utama
+        kemungkinan_nama = [
+            f"rt{rt_num}.jpg", f"rt{rt_num}.jpeg", f"rt{rt_num}.png",
+            f"rt0{rt_num}.jpg", f"rt0{rt_num}.jpeg", f"rt0{rt_num}.png",
+            f"rt{rt_pilih.lower()}.jpg", f"rt{rt_pilih.lower()}.png",
+            f"RT{rt_num}.JPG", f"RT{rt_num}.PNG"
+        ]
+        
+        for nama_file in kemungkinan_nama:
+            if os.path.exists(nama_file):
+                path_foto = nama_file
                 break
 
-        # Cari nama ketua RT dari data struktur
+        # Cari nama ketua RT dari data struktur jika ada
         nama_ketua = f"Ketua {rt_pilih}"
         if not df_struktur.empty:
             match_rt = df_struktur[df_struktur["JABATAN"].astype(str).str.upper().str.contains(f"RT {rt_num}|RT0{rt_num}|RT {rt_pilih}", na=False)]
