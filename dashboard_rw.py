@@ -24,17 +24,19 @@ h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 
-/* Animasi bergerak real-time (efek denyut / pulse dan geser lembut) untuk banner seni budaya */
-@keyframes realTimeMotion {
-    0% { transform: scale(1); opacity: 0.85; filter: brightness(0.95); }
-    50% { transform: scale(1.02); opacity: 1; filter: brightness(1.05); }
-    100% { transform: scale(1); opacity: 0.85; filter: brightness(0.95); }
+/* Animasi Real-Time Bergerak Aktif (Zoom lembut & Efek Cahaya Berdenyut) */
+@keyframes realTimeActiveMotion {
+    0% { transform: scale(1); filter: brightness(1) drop-shadow(0px 4px 6px rgba(13,71,161,0.2)); }
+    50% { transform: scale(1.03); filter: brightness(1.08) drop-shadow(0px 8px 16px rgba(25,118,210,0.4)); }
+    100% { transform: scale(1); filter: brightness(1) drop-shadow(0px 4px 6px rgba(13,71,161,0.2)); }
 }
 .banner-realtime {
-    animation: realTimeMotion 3s infinite ease-in-out;
+    animation: realTimeActiveMotion 4s infinite ease-in-out;
     border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-    border: 2px solid #90CAF9;
+    border: 3px solid #90CAF9;
+    padding: 3px;
+    background-color: white;
+    transition: all 0.3s ease;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -52,7 +54,7 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk meluruskan dan mengecilkan ukuran foto secara proporsional (agar pas di atas)
+# Fungsi untuk meluruskan dan mengecilkan ukuran foto secara proporsional
 def muat_dan_seragamkan_foto(path_file, ukuran=(250, 160)):
     try:
         img = Image.open(path_file)
@@ -242,7 +244,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -296,7 +298,7 @@ elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
 # =========================================================================
-# ============ 2 FOTO SENI BUDAYA UKURAN PAS & ANIMASI REAL-TIME ===========
+# ============ 2 FOTO SENI BUDAYA DENGAN ANIMASI REAL-TIME AKTIF ==========
 # =========================================================================
 def cari_foto_flexible(kemungkinan_nama_file):
     for nama in kemungkinan_nama_file:
@@ -312,8 +314,7 @@ col_sb1, col_sb2 = st.columns(2)
 with col_sb1:
     if foto_sb1:
         st.markdown('<div class="banner-realtime">', unsafe_allow_html=True)
-        img1 = muat_dan_seragamkan_foto(foto_sb1, ukuran=(600, 220))
-        st.image(img1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
+        st.image(foto_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 1' belum ditemukan di folder project.")
@@ -321,8 +322,7 @@ with col_sb1:
 with col_sb2:
     if foto_sb2:
         st.markdown('<div class="banner-realtime">', unsafe_allow_html=True)
-        img2 = muat_dan_seragamkan_foto(foto_sb2, ukuran=(600, 220))
-        st.image(img2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
+        st.image(foto_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 2' belum ditemukan di folder project.")
