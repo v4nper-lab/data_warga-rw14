@@ -299,7 +299,7 @@ elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
 # =========================================================================
-# ============ 2 FOTO SENI BUDAYA KECIL & ANIMASI KLISE HIDUP ============
+# ============ 2 FOTO SENI BUDAYA DENGAN ANIMASI KLISE HIDUP ============
 # =========================================================================
 def cari_foto_flexible(kemungkinan_nama_file):
     for nama in kemungkinan_nama_file:
@@ -311,8 +311,7 @@ def cari_foto_flexible(kemungkinan_nama_file):
 foto_sb1 = cari_foto_flexible(["foto seni budaya 1", "foto_seni_budaya_1", "fotosenibudaya1", "seni budaya 1"])
 foto_sb2 = cari_foto_flexible(["foto seni budaya 2", "foto_seni_budaya_2", "fotosenibudaya2", "seni budaya 2"])
 
-# Membuat tata letak proporsional dan tidak terlalu besar di bagian atas
-col_ Kosong1, col_sb1, col_sb2, col_Kosong2 = st.columns([1, 4, 4, 1])
+col_kosong1, col_sb1, col_sb2, col_kosong2 = st.columns([1, 4, 4, 1])
 
 with col_sb1:
     if foto_sb1:
