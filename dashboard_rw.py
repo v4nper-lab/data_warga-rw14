@@ -23,22 +23,6 @@ div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[
 h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
-
-/* Animasi Real-Time Klise Hidup & Bergeser Dinamis */
-@keyframes kliseLiveMotion {
-    0% { transform: scale(1) translateX(0px); filter: brightness(0.95) contrast(1.05); box-shadow: 0px 3px 8px rgba(13,71,161,0.2); }
-    50% { transform: scale(1.02) translateX(3px); filter: brightness(1.08) contrast(1.15); box-shadow: 0px 6px 15px rgba(25,118,210,0.4); }
-    100% { transform: scale(1) translateX(0px); filter: brightness(0.95) contrast(1.05); box-shadow: 0px 3px 8px rgba(13,71,161,0.2); }
-}
-.banner-realtime-klise {
-    animation: kliseLiveMotion 2.5s infinite ease-in-out;
-    border-radius: 8px;
-    border: 2px solid #90CAF9;
-    width: 100%;
-    height: 95px;
-    object-fit: cover;
-    display: block;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -55,18 +39,8 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi konversi gambar lokal ke base64 HTML agar animasi bergerak aktif sempurna
-def konversi_gambar_ke_base64(path_file):
-    if os.path.exists(path_file):
-        with open(path_file, "rb") as img_file:
-            encoded_string = base64.b64encode(img_file.read()).decode()
-        ext = path_file.split('.')[-1].lower()
-        if ext in ['jpg', 'jpeg']: mime = 'jpeg'
-        else: mime = 'png'
-        return f"data:image/{mime};base64,{encoded_string}"
-    return ""
-
-def muat_dan_seragamkan_foto(path_file, ukuran=(250, 300)):
+# Fungsi untuk meluruskan orientasi foto secara presisi
+def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
     try:
         img = Image.open(path_file)
         img = ImageOps.exif_transpose(img)
@@ -307,47 +281,6 @@ if password_input == "V@nadminrw14":
     st.sidebar.success("✅ Login Admin Berhasil!")
 elif password_input != "":
     st.sidebar.error("❌ Password salah!")
-
-# =========================================================================
-# ============ 2 FOTO SENI BUDAYA ANIMASI KLISE HIDUP REAL-TIME ===========
-# =========================================================================
-def cari_foto_flexible(kemungkinan_nama_file):
-    for nama in kemungkinan_nama_file:
-        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
-            p = f"{nama}{ext}"
-            if os.path.exists(p): return p
-    return None
-
-foto_sb1 = cari_foto_flexible(["foto seni budaya 1", "foto_seni_budaya_1", "fotosenibudaya1", "seni budaya 1"])
-foto_sb2 = cari_foto_flexible(["foto seni budaya 2", "foto_seni_budaya_2", "fotosenibudaya2", "seni budaya 2"])
-
-col_sb1, col_sb2 = st.columns(2)
-
-with col_sb1:
-    if foto_sb1:
-        base64_img1 = konversi_gambar_ke_base64(foto_sb1)
-        st.markdown(f"""
-        <div style="text-align: center; margin-bottom: 5px;">
-            <img src="{base64_img1}" class="banner-realtime-klise">
-            <p style="margin: 2px 0 0 0; font-size: 12px; color: #0D47A1; font-weight: bold;">🎭 Dokumentasi Seni & Budaya RW 14 (1)</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.warning("⚠️ File 'foto seni budaya 1' belum ditemukan di folder project.")
-
-with col_sb2:
-    if foto_sb2:
-        base64_img2 = konversi_gambar_ke_base64(foto_sb2)
-        st.markdown(f"""
-        <div style="text-align: center; margin-bottom: 5px;">
-            <img src="{base64_img2}" class="banner-realtime-klise">
-            <p style="margin: 2px 0 0 0; font-size: 12px; color: #0D47A1; font-weight: bold;">🎨 Dokumentasi Seni & Budaya RW 14 (2)</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.warning("⚠️ File 'foto seni budaya 2' belum ditemukan di folder project.")
-
-st.markdown("<div style='margin-bottom: 5px;'></div>", unsafe_allow_html=True)
 
 # ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
