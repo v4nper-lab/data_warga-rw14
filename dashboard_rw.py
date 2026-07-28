@@ -24,19 +24,20 @@ h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 
-/* Animasi Real-Time Bergerak Aktif (Zoom lembut & Efek Cahaya Berdenyut) */
-@keyframes realTimeActiveMotion {
-    0% { transform: scale(1); filter: brightness(1) drop-shadow(0px 4px 6px rgba(13,71,161,0.2)); }
-    50% { transform: scale(1.03); filter: brightness(1.08) drop-shadow(0px 8px 16px rgba(25,118,210,0.4)); }
-    100% { transform: scale(1); filter: brightness(1) drop-shadow(0px 4px 6px rgba(13,71,161,0.2)); }
+/* Animasi Real-Time Efek Klise Hidup / Slideshow Bergerak */
+@keyframes kliseLiveMotion {
+    0% { transform: scale(1) translateY(0px); filter: brightness(0.9) contrast(1.1); box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
+    25% { transform: scale(1.015) translateY(-2px); filter: brightness(1.05) contrast(1.15); box-shadow: 0px 6px 12px rgba(13,71,161,0.3); }
+    50% { transform: scale(1) translateY(0px); filter: brightness(1) contrast(1); box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
+    75% { transform: scale(1.015) translateY(-2px); filter: brightness(1.08) contrast(1.15); box-shadow: 0px 6px 12px rgba(25,118,210,0.3); }
+    100% { transform: scale(1) translateY(0px); filter: brightness(0.9) contrast(1.1); box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
 }
 .banner-realtime {
-    animation: realTimeActiveMotion 4s infinite ease-in-out;
-    border-radius: 12px;
-    border: 3px solid #90CAF9;
-    padding: 3px;
+    animation: kliseLiveMotion 3s infinite ease-in-out;
+    border-radius: 8px;
+    border: 2px solid #90CAF9;
+    padding: 2px;
     background-color: white;
-    transition: all 0.3s ease;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -54,8 +55,8 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk meluruskan dan mengecilkan ukuran foto secara proporsional
-def muat_dan_seragamkan_foto(path_file, ukuran=(250, 160)):
+# Fungsi untuk meluruskan dan memperkecil ukuran foto agar pas & proporsional
+def muat_dan_seragamkan_foto(path_file, ukuran=(180, 110)):
     try:
         img = Image.open(path_file)
         img = ImageOps.exif_transpose(img)
@@ -298,7 +299,7 @@ elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
 # =========================================================================
-# ============ 2 FOTO SENI BUDAYA DENGAN ANIMASI REAL-TIME AKTIF ==========
+# ============ 2 FOTO SENI BUDAYA KECIL & ANIMASI KLISE HIDUP ============
 # =========================================================================
 def cari_foto_flexible(kemungkinan_nama_file):
     for nama in kemungkinan_nama_file:
@@ -310,19 +311,23 @@ def cari_foto_flexible(kemungkinan_nama_file):
 foto_sb1 = cari_foto_flexible(["foto seni budaya 1", "foto_seni_budaya_1", "fotosenibudaya1", "seni budaya 1"])
 foto_sb2 = cari_foto_flexible(["foto seni budaya 2", "foto_seni_budaya_2", "fotosenibudaya2", "seni budaya 2"])
 
-col_sb1, col_sb2 = st.columns(2)
+# Membuat tata letak proporsional dan tidak terlalu besar di bagian atas
+col_ Kosong1, col_sb1, col_sb2, col_Kosong2 = st.columns([1, 4, 4, 1])
+
 with col_sb1:
     if foto_sb1:
-        st.markdown('<div class="banner-realtime">', unsafe_allow_html=True)
-        st.image(foto_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
+        st.markdown('<div class="banner-realtime" style="text-align: center;">', unsafe_allow_html=True)
+        img_sb1 = muat_dan_seragamkan_foto(foto_sb1, ukuran=(380, 160))
+        st.image(img_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 1' belum ditemukan di folder project.")
 
 with col_sb2:
     if foto_sb2:
-        st.markdown('<div class="banner-realtime">', unsafe_allow_html=True)
-        st.image(foto_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
+        st.markdown('<div class="banner-realtime" style="text-align: center;">', unsafe_allow_html=True)
+        img_sb2 = muat_dan_seragamkan_foto(foto_sb2, ukuran=(380, 160))
+        st.image(img_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 2' belum ditemukan di folder project.")
