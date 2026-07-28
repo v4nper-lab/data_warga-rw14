@@ -78,7 +78,7 @@ def load_info():
     else:
         return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
 
-# PENGURUS UTAMA LANGSUNG DIAMBIL DARI DATA STRUKTUR GAMBAR RESMI (PERIODE 2024 - 2029)
+# STRUKTUR PENGURUS LANGSUNG PATEN DARI GAMBAR RESMI (PERIODE 2024 - 2029)
 @st.cache_data
 def load_struktur():
     data_resmi = {
@@ -106,17 +106,6 @@ def load_struktur():
         ],
         "KONTAK / HP": ["0812xxxxxxxx", "-", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
     }
-    
-    # Jika file datastruktur.xlsx ada dan ingin dipakai override, silakan; jika tidak, langsung pakai data resmi gambar
-    if os.path.exists("datastruktur.xlsx"):
-        try:
-            df_struk = pd.read_excel("datastruktur.xlsx")
-            df_struk.columns = df_struk.columns.str.strip().str.upper()
-            if not df_struk.empty:
-                return df_struk
-        except Exception:
-            pass
-            
     return pd.DataFrame(data_resmi)
 
 df = load_data()
