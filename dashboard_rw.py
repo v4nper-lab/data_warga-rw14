@@ -70,6 +70,16 @@ def load_kas():
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "JENIS", "JUMLAH"])
 
 @st.cache_data
+def load_kas_pemakaman():
+    if os.path.exists("datakaspemakaman.xlsx"):
+        df_kp = pd.read_excel("datakaspemakaman.xlsx")
+        df_kp.columns = df_kp.columns.str.strip().str.upper()
+        return df_kp
+    else:
+        # Data dummy awal jika file belum ada
+        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "JENIS", "JUMLAH"])
+
+@st.cache_data
 def load_info():
     if os.path.exists("datainfo.xlsx"):
         df_info = pd.read_excel("datainfo.xlsx")
@@ -78,13 +88,13 @@ def load_info():
     else:
         return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
 
-# STRUKTUR PENGURUS LANGSUNG PATEN DARI GAMBAR RESMI (PERIODE 2024 - 2029)
+# STRUKTUR PENGURUS LENGKAP DENGAN JOB DESCRIPTION & PROGRAM KERJA
 @st.cache_data
 def load_struktur():
     data_resmi = {
-        "JABATAN": [
+        "JABATAN / SEKSI": [
             "Ketua RW 014", 
-            "PKK & Posyandu RW 014", 
+            "PKK & Posyandu", 
             "Sekretaris", 
             "Bendahara", 
             "Keamanan & Ketertiban", 
@@ -104,12 +114,34 @@ def load_struktur():
             "Ust. Nanang (RT 03), E. Rustandi (RT 06), Ust. Juhendi (RT 07), Shulton (RT 04), Edi (RT 05), Baryanto (RT 01)", 
             "Uwa Tia (RT 06), Ridwan S (RT 01), Hary (RT 07)"
         ],
-        "KONTAK / HP": ["0812xxxxxxxx", "-", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
+        "JOB DESCRIPTION (URAIAN TUGAS)": [
+            "Memimpin, mengkoordinasikan, dan mengendalikan seluruh kegiatan penyelenggaraan rukun warga serta membina kerukunan.",
+            "Menggerakkan partisipasi kaum ibu dalam bidang kesejahteraan keluarga, kesehatan anak, balita, dan lansia.",
+            "Mengelola administrasi kesekretariatan, surat-menyurat, pendataan kependudukan, dan dokumentasi notulen.",
+            "Bertanggung jawab penuh terhadap pengelolaan keuangan, pencatatan kas masuk/keluar, dan transparansi dana.",
+            "Menjaga keamanan lingkungan perumahan, mengkoordinasikan siskamling, dan mengantisipasi gangguan ketertiban.",
+            "Mengelola kebersihan fasum/fassos, merencanakan pemeliharaan infrastruktur, dan pelestarian lingkungan hijau.",
+            "Mengembangkan minat dan bakat warga di bidang olahraga serta mempererat kebersamaan melalui turnamen.",
+            "Mengurus pelayanan sosial kemasyarakatan, penanganan musibah warga, serta koordinasi proses pemakaman.",
+            "Mengembangkan potensi seni budaya lokal serta merangkul karang taruna/pemuda dalam kegiatan positif."
+        ],
+        "BENTUK PROGRAM / KEGIATAN": [
+            "• Koordinasi rutin RT\n• Musyawarah warga",
+            "• Posyandu bulanan\n• Penyuluhan kesehatan & gizi\n• Dasawisma",
+            "• Pendataan warga\n• Arsip surat & notulen rapat",
+            "• Pengelolaan iuran & kas\n• Laporan keuangan bulanan",
+            "• Pos ronda / siskamling\n• Pengawasan tamu\n• Penanganan darurat",
+            "• Kerja bakti rutin\n• Pemeliharaan drainase",
+            "• Senam sehat warga\n• Turnamen antar-RT",
+            "• Pengelolaan dana sosial\n• Layanan takziah & pemakaman\n• Santunan duka",
+            "• Peringatan Hari Besar (PHBN)\n• Kegiatan pemuda & seni"
+        ]
     }
     return pd.DataFrame(data_resmi)
 
 df = load_data()
 df_kas = load_kas()
+df_kas_pemakaman = load_kas_pemakaman()
 df_info = load_info()
 df_struktur = load_struktur()
 
@@ -165,7 +197,7 @@ if "RT" in df.columns:
         nama_ketua = f"Ketua {rt_pilih}"
         if not df_struktur.empty:
             for _, row in df_struktur.iterrows():
-                jabatan_str = str(row.get("JABATAN", "")).upper()
+                jabatan_str = str(row.get("JABATAN / SEKSI", "")).upper()
                 if f"RT {rt_num}" in jabatan_str or f"RT0{rt_num}" in jabatan_str or f"RT {rt_pilih}" in jabatan_str or f"RT{rt_num}" in jabatan_str:
                     nama_pengurus_val = row.get("NAMA PENGURUS", "")
                     if pd.notnull(nama_pengurus_val) and str(nama_pengurus_val).strip() != "":
@@ -267,7 +299,7 @@ with tab0:
         * Melihat struktur kepengurusan RW dan profil Ketua RT secara vertikal di panel sebelah kiri.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
-        * Memantau transparansi laporan keuangan kas RW (lengkap dengan dokumen PDF resmi).
+        * Memantau transparansi laporan keuangan kas RW dan laporan khusus seksi pemakaman.
         * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
@@ -282,7 +314,7 @@ with tab0:
         nama_bend = "Aan Toni Fauyi"
         if not df_struktur.empty:
             for _, row in df_struktur.iterrows():
-                jab = str(row.get("JABATAN", "")).upper()
+                jab = str(row.get("JABATAN / SEKSI", "")).upper()
                 nama_val = str(row.get("NAMA PENGURUS", ""))
                 if "KETUA RW" in jab: nama_rw = nama_val
                 elif "SEKRETARIS" in jab: nama_sek = nama_val
@@ -342,10 +374,10 @@ with tab0:
         </div>
         """, unsafe_allow_html=True)
 
-# ================= TAB STRUKTUR ORGANISASI (DENGAN GAMBAR ORGANIGRAM & TABEL LENGKAP) =================
+# ================= TAB STRUKTUR ORGANISASI (DENGAN GAMBAR, JOBDESC, PROGRAM, & LAPORAN PEMAKAMAN) =================
 with tab_struk:
-    st.subheader("👥 Bagan Struktur Organisasi Pengurus RW 14")
-    st.markdown("Bagan organigram kepengurusan Rukun Warga (RW) 14 Perum Griya Permata Raya Periode 2024 - 2029.")
+    st.subheader("👥 Bagan & Uraian Tugas (Job Description) Struktur Pengurus RW 14")
+    st.markdown("Bagan organigram resmi, rincian tugas, serta bentuk program kerja dari masing-masing seksi Periode 2024 - 2029.")
     
     path_struktur_img = "struktur_rw.jpg"
     if not os.path.exists(path_struktur_img):
@@ -357,11 +389,32 @@ with tab_struk:
         st.info("ℹ️ File gambar struktur belum diunggah. Silakan upload file gambar dengan nama 'struktur_rw.jpg' ke folder utama project atau via menu Admin.")
     
     st.write("---")
-    st.markdown("### 📋 Rincian Tabel Pengurus Lengkap")
+    st.markdown("### 📋 Rincian Job Description & Program Kerja Masing-Masing Seksi")
     if not df_struktur.empty:
         st.dataframe(df_struktur, use_container_width=True, hide_index=True)
     else:
         st.info("ℹ️ Belum ada data struktur pengurus yang dimasukkan.")
+
+    # ================= LAPORAN KHUSUS SEKSI PEMAKAMAN & SOSIAL =================
+    st.write("---")
+    st.subheader("🕊️ Laporan Khusus Keuangan Seksi Sosial & Pemakaman")
+    st.markdown("Berikut adalah transparansi pencatatan khusus dana sosial, santunan duka, dan pemakaman warga RW 14 yang dikelola secara terpisah.")
+
+    if not df_kas_pemakaman.empty and "JUMLAH" in df_kas_pemakaman.columns and "JENIS" in df_kas_pemakaman.columns:
+        df_kas_pemakaman["JUMLAH_ANGKA"] = pd.to_numeric(df_kas_pemakaman["JUMLAH"], errors="coerce").fillna(0)
+        pemasukan_pemakaman = df_kas_pemakaman[df_kas_pemakaman["JENIS"].astype(str).str.upper().str.contains("MASUK", na=False)]["JUMLAH_ANGKA"].sum()
+        pengeluaran_pemakaman = df_kas_pemakaman[df_kas_pemakaman["JENIS"].astype(str).str.upper().str.contains("KELUAR", na=False)]["JUMLAH_ANGKA"].sum()
+        saldo_pemakaman = pemasukan_pemakaman - pengeluaran_pemakaman
+
+        cp1, cp2, cp3 = st.columns(3)
+        cp1.metric("💵 Total Dana Masuk", f"Rp {pemasukan_pemakaman:,.0f}".replace(",", "."))
+        cp2.metric("💸 Total Pengeluaran Duka/Makam", f"Rp {pengeluaran_pemakaman:,.0f}".replace(",", "."))
+        cp3.metric("💰 Saldo Kas Pemakaman/Sosial", f"Rp {saldo_pemakaman:,.0f}".replace(",", "."))
+
+        st.write("---")
+        st.dataframe(df_kas_pemakaman.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
+    else:
+        st.info("ℹ️ Belum ada data transaksi khusus pemakaman yang dimasukkan. Pengurus dapat mengelolanya melalui menu Admin.")
 
 # ================= TAB 1: STATISTIK =================
 with tab1:
@@ -593,11 +646,11 @@ with tab8:
 if admin_terverifikasi:
     with tab9:
         st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, informasi, galeri foto, foto pengurus, hingga mengunggah file PDF.")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, kas pemakaman, informasi, galeri foto, foto pengurus, hingga mengunggah file PDF.")
         
         menu_admin = st.selectbox(
             "Pilih Menu Pengelolaan:", 
-            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Laporan Kas Pemakaman/Sosial", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
         )
         
         if menu_admin == "Data Warga":
@@ -632,6 +685,17 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan kas: {e}")
+
+        elif menu_admin == "Laporan Kas Pemakaman/Sosial":
+            kp_terbaru = st.data_editor(df_kas_pemakaman.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary"):
+                try:
+                    kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Laporan Kas Pemakaman berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan kas pemakaman: {e}")
                     
         elif menu_admin == "Informasi & Hasil Rapat":
             info_terbaru = st.data_editor(df_info, num_rows="dynamic", use_container_width=True)
