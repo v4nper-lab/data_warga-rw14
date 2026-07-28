@@ -831,7 +831,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Upload Foto Galeri":
             st.markdown("Unggah foto kegiatan baru ke galeri RW:")
-            st.markdown("💡 *Tips Penamaan File:* Agar foto otomatis tersusun rapi berdasarkan tanggal, beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2026-08-17_Kerja_Bakti.jpg`)")
+            st.markdown("💡 *Tips Penamaan File:* Agar foto otomatis tersusun rapi berdasarkan tanggal, beri nama file dengan format **DD-MM-YYYY_nama_kegiatan.jpg** (Contoh: `17-08-2026_Kerja_Bakti.jpg`)")
             foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
             if foto_upload is not None:
                 folder_galeri = "galeri"
