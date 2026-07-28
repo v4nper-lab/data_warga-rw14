@@ -299,7 +299,7 @@ with tab0:
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW dan laporan khusus seksi pemakaman.
-        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan tanggal kegiatan (Format DD-MM-YYYY secara akurat).
+        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan Nama Hari, Tanggal, Bulan, dan Tahun kegiatan.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -621,10 +621,10 @@ with tab7:
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
-# ================= TAB 8: GALERI KEGIATAN (VALIDASI TAHUN LENGKAP YYYY) =================
+# ================= TAB 8: GALERI KEGIATAN (DENGAN NAMA HARI OTOMATIS) =================
 with tab8:
     st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
-    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Tahun, Bulan, dan Tanggal kegiatan (Format DD-MM-YYYY).")
+    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Nama Hari, Tanggal, Bulan, dan Tahun.")
     
     folder_galeri = "galeri"
     if not os.path.exists(folder_galeri):
@@ -639,17 +639,21 @@ with tab8:
             '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
         }
         
+        hari_indo_dict = {
+            'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu',
+            'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu', 'Sunday': 'Minggu'
+        }
+        
         galeri_arsip = {}
         
         for nama_file in daftar_foto:
             part = nama_file.split('_')[0]
             if len(part) == 10 and part.count('-') == 2:
                 tahun, bulan, tanggal = part.split('-')
-                # Validasi: pastikan tahun 4 digit valid (misal 2025, 2026). Jika tidak, jadikan 2025 default atau ambil tahun aktif
                 if not (len(tahun) == 4 and tahun.isdigit()):
-                    tahun = "2025"
+                    tahun = "2026"
             else:
-                tahun, bulan, tanggal = "2025", "Arsip", "Umum"
+                tahun, bulan, tanggal = "2026", "Arsip", "Umum"
                 for kata in nama_file.replace('_', '-').split('-'):
                     if len(kata) == 4 and kata.isdigit() and kata.startswith(('20', '19')):
                         tahun = kata
@@ -673,7 +677,17 @@ with tab8:
                 for tanggal in sorted(galeri_arsip[tahun][bulan].keys(), reverse=True):
                     if tanggal != "Umum":
                         format_ddmmyyyy = f"{tanggal}-{list(nama_bulan_dict.keys())[list(nama_bulan_dict.values()).index(bulan)]}-{tahun}" if bulan in nama_bulan_dict.values() else f"{tanggal}-{bulan}-{tahun}"
-                        st.markdown(f"**📌 Tanggal Kegiatan: {format_ddmmyyyy}**")
+                        
+                        # Hitung Nama Hari secara otomatis dari tanggal kegiatan
+                        nama_hari_kegiatan = "Hari Kegiatan"
+                        try:
+                            dt_obj = datetime(int(tahun), int(list(nama_bulan_dict.keys())[list(nama_bulan_dict.values()).index(bulan)]), int(tanggal))
+                            nama_hari_inggris = dt_obj.strftime("%A")
+                            nama_hari_kegiatan = hari_indo_dict.get(nama_hari_inggris, "")
+                        except Exception:
+                            pass
+                            
+                        st.markdown(f"**📌 Tanggal Kegiatan: {nama_hari_kegiatan}, {format_ddmmyyyy}**")
                     else:
                         st.markdown(f"**📌 Kategori: Arsip Umum / Tanpa Format Tanggal**")
                         
@@ -697,11 +711,11 @@ with tab8:
 if admin_terverifikasi:
     with tab9:
         st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, kas pemakaman, informasi, galeri foto, foto pengurus, hingga mengunggah file PDF.")
+        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, kas pemakaman, informasi, galeri foto, foto pengurus, hingga menghapus foto galeri.")
         
         menu_admin = st.selectbox(
             "Pilih Menu Pengelolaan:", 
-            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Laporan Kas Pemakaman/Sosial", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Laporan Kas Pemakaman/Sosial", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri", "Hapus Foto Galeri"]
         )
         
         if menu_admin == "Data Warga":
@@ -833,7 +847,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Upload Foto Galeri":
             st.markdown("📦 **Upload Foto Kegiatan ke Galeri**")
-            st.markdown("💡 *Tips Penamaan File:* Agar foto otomatis tersusun rapi, beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2025-08-17_Kerja_Bakti.jpg`)")
+            st.markdown("💡 *Tips Penamaan File:* Beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2026-08-17_Kerja_Bakti.jpg`)")
             foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
             if foto_upload is not None:
                 folder_galeri = "galeri"
@@ -844,6 +858,30 @@ if admin_terverifikasi:
                     f.write(foto_upload.getbuffer())
                 st.success(f"✅ Foto '{foto_upload.name}' berhasil diunggah ke galeri!")
                 st.rerun()
+
+        elif menu_admin == "Hapus Foto Galeri":
+            st.markdown("🗑️ **Kelola & Hapus Foto Galeri yang Tidak Diperlukan**")
+            folder_galeri = "galeri"
+            if os.path.exists(folder_galeri):
+                daftar_foto_del = [f for f in os.listdir(folder_galeri) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
+                if daftar_foto_del:
+                    foto_pilih_hapus = st.selectbox("Pilih Foto yang Ingin Dihapus:", options=daftar_foto_del)
+                    
+                    path_preview = os.path.join(folder_galeri, foto_pilih_hapus)
+                    st.image(path_preview, width=300, caption=f"Preview: {foto_pilih_hapus}")
+                    
+                    if st.button("🗑️ Hapus Foto Ini Permanen", type="primary"):
+                        try:
+                            os.remove(path_preview)
+                            st.cache_data.clear()
+                            st.success(f"✅ Foto '{foto_pilih_hapus}' berhasil dihapus secara permanen!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Gagal menghapus foto: {e}")
+                else:
+                    st.info("ℹ️ Belum ada foto di dalam folder galeri.")
+            else:
+                st.info("ℹ️ Folder galeri belum tersedia.")
 
 # Penutup blok div utama biru muda
 st.markdown("</div>", unsafe_allow_html=True)
