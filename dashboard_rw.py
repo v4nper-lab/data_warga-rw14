@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -230,7 +229,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -290,12 +289,39 @@ admin_terverifikasi = st.session_state["admin_logged_in"]
 if admin_terverifikasi:
     st.sidebar.success("✅ Login Admin Berhasil!")
 
+# =========================================================================
+# ============ TEKS BERITA BERJALAN ONLINE (DI ATAS JUDUL DASHBOARD) =======
+# =========================================================================
+teks_berita_online = "📢 SELAMAT DATANG DI PORTAL RESMI RW 14 GRIYA PERMATA RAYA &bull; "
+if not df_info.empty:
+    list_info_berita = []
+    for _, r in df_info.iterrows():
+        tgl_info = str(r.get("TANGGAL", ""))
+        judul_info = str(r.get("JUDUL", ""))
+        if judul_info and judul_info != "nan":
+            list_info_berita.append(f"📌 [{tgl_info}] {judul_info}")
+    if list_info_berita:
+        teks_berita_online += " &nbsp;&bull;&nbsp; ".join(list_info_berita)
+else:
+    teks_berita_online += "Pengumuman dan agenda kegiatan lingkungan akan diperbarui secara berkala oleh Pengurus."
+
+st.markdown(f"""
+<div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0px 4px 8px rgba(0,0,0,0.1); border: 1px solid #90CAF9;">
+    <div style="display: flex; align-items: center;">
+        <span style="background-color: #ff9800; color: white; padding: 2px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; margin-right: 10px; white-space: nowrap;">📰 BREAKING NEWS</span>
+        <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #ffffff; font-weight: bold; font-size: 14px;">
+            {teks_berita_online}
+        </marquee>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
 <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 20px; border-radius: 15px; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); margin-bottom: 20px; border: 2px solid #90CAF9;">
 """, unsafe_allow_html=True)
 
-# Teks Berjalan Motivasi RT
+# Teks Berjalan Motivasi RT (Di dalam frame utama)
 st.markdown("""
 <div style="background-color: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #90CAF9; margin-bottom: 10px; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
     <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 14px;">
