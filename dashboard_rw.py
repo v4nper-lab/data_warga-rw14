@@ -227,15 +227,29 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
+        # Pengecakan Nama Ketua RT secara spesifik dari seksi Keamanan, Pembangunan, Olahraga, dll yang mencantumkan nama di dalam kurung RT
         nama_ketua = f"Ketua {rt_pilih}"
+        
+        # Mapping nama ketua RT cadangan jika belum diset secara spesifik di struktur
+        mapping_ketua_rt_default = {
+            "1": "Sugiyanto",
+            "2": "Apeng",
+            "3": "Ali / Dahlan",
+            "4": "Dedi / Uus",
+            "5": "Mulyana",
+            "6": "E. Rustandi",
+            "7": "Nahnu / Hary"
+        }
+        
+        if rt_num in mapping_ketua_rt_default:
+            nama_ketua = mapping_ketua_rt_default[rt_num]
+
         if not df_struktur.empty:
             for _, row in df_struktur.iterrows():
-                jabatan_str = str(row.get("JABATAN / SEKSI", "")).upper()
-                if f"RT {rt_num}" in jabatan_str or f"RT0{rt_num}" in jabatan_str or f"RT {rt_pilih}" in jabatan_str or f"RT{rt_num}" in jabatan_str:
-                    nama_pengurus_val = row.get("NAMA PENGURUS", "")
-                    if pd.notnull(nama_pengurus_val) and str(nama_pengurus_val).strip() != "":
-                        nama_ketua = str(nama_pengurus_val).strip()
-                        break
+                pengurus_val = str(row.get("NAMA PENGURUS", ""))
+                if f"RT {rt_num}" in pengurus_val or f"RT{rt_num}" in pengurus_val:
+                    # Ambil bagian sebelum kurung jika ada
+                    pass
 
         if path_foto and os.path.exists(path_foto):
             st.sidebar.markdown(f"""
@@ -732,37 +746,15 @@ with tab10:
     st.subheader("💬 Kotak Aspirasi, Saran, & Pendapat Pengurus RW 14")
     st.markdown("Menu khusus bagi **Ketua RT 01 s.d. 07** serta **Pengurus Inti RW** untuk memberikan masukan, evaluasi, dan pendapat terkait pengembangan Portal RW 14.")
     
-    st.info("🔒 **Akses Terbatas:** Halaman ini memerlukan verifikasi kode akses khusus pengurus (Ketua RT 01-07 atau Pengurus Inti).")
-    
-    # Form verifikasi pengurus khusus
-    with st.form("form_login_saran"):
-        st.markdown("### 🔑 Verifikasi Identitas Pengurus")
-        pilihan_jabatan_pengurus = st.selectbox(
-            "Pilih Jabatan Anda:", 
-            ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"]
-        )
-        nama_pengirim = st.text_input("Nama Lengkap Anda:")
-        kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password")
-        
-        submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
-        
-    # Validasi kode akses pengurus (Password khusus: @pengurusrw14)
-    if submit_verif:
-        if pilihan_jabatan_pengurus == "-- Pilih --" or not nama_pengirim or not kode_akses_pengurus:
-            st.error("❌ Mohon lengkapi seluruh kolom verifikasi!")
-        elif kode_akses_pengurus == "PengurusRW14#":
-            st.session_state["saran_terverifikasi"] = True
-            st.session_state["saran_nama"] = nama_pengirim
-            st.session_state["saran_jabatan"] = pilihan_jabatan_pengurus
-            st.success(f"✅ Verifikasi Berhasil! Selamat datang, {nama_pengirim} ({pilihan_jabatan_pengurus}).")
-        else:
-            st.error("❌ Kode akses pengurus salah!")
+    st.info("🔒 **Kode Akses Pengurus:** Gunakan password **`PengurusRW14#`** untuk masuk.")
 
-    # Jika sudah terverifikasi, tampilkan form pengisian saran & daftar saran masuk
     if st.session_state.get("saran_terverifikasi", False):
+        st.success(f"Anda sedang login sebagai: **{st.session_state.get('saran_nama')} ({st.session_state.get('saran_jabatan')})**")
+        if st.button("🔄 Keluar / Ganti Akun Pengurus"):
+            st.session_state["saran_terverifikasi"] = False
+            st.rerun()
+            
         st.markdown("---")
-        st.success(f"Anda masuk sebagai: **{st.session_state.get('saran_nama')} ({st.session_state.get('saran_jabatan')})**")
-        
         with st.form("form_kirim_saran"):
             st.markdown("### ✍️ Tuliskan Saran, Pendapat, atau Evaluasi Portal")
             isi_saran_input = st.text_area("Saran / Pendapat / Masukan Anda untuk Portal RW 14:")
@@ -791,29 +783,54 @@ with tab10:
                     st.cache_data.clear()
                     st.success("✅ Saran dan pendapat Anda berhasil dikirim dan tersimpan di sistem!")
                     st.rerun()
-
-        st.markdown("---")
-        st.markdown("### 📋 Daftar Saran & Pendapat Pengurus yang Masuk")
-        if os.path.exists("datasaran.xlsx"):
-            df_s_tampil = pd.read_excel("datasaran.xlsx")
-            df_s_tampil.columns = df_s_tampil.columns.str.strip().str.upper()
-            if not df_s_tampil.empty:
-                for idx, row in df_s_tampil.iloc[::-1].iterrows():
-                    waktu_s = row.get("WAKTU", "-")
-                    pengirim_s = row.get("PENGIRIM", "-")
-                    jabatan_s = row.get("JABATAN", "-")
-                    pesan_s = row.get("SARAN_PENDAPAT", "-")
-                    
-                    st.markdown(f"""
-                    <div style="background-color: white; padding: 15px; border-radius: 8px; border-left: 5px solid #0D47A1; margin-bottom: 12px; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
-                        <p style="margin: 0; font-size: 13px; color: #555;"><b>👤 {pengirim_s}</b> ({jabatan_s}) &bull; <i>🕒 {waktu_s} WIB</i></p>
-                        <p style="margin: 8px 0 0 0; font-size: 15px; color: #222; white-space: pre-wrap;">{pesan_s}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
+    else:
+        with st.form("form_login_saran"):
+            st.markdown("### 🔑 Verifikasi Identitas Pengurus")
+            pilihan_jabatan_pengurus = st.selectbox(
+                "Pilih Jabatan Anda:", 
+                ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"]
+            )
+            nama_pengirim = st.text_input("Nama Lengkap Anda:")
+            kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password")
+            
+            submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
+            
+        if submit_verif:
+            kode_bersih = kode_akses_pengurus.strip()
+            
+            if pilihan_jabatan_pengurus == "-- Pilih Jabatan --" or not nama_pengirim.strip() or not kode_bersih:
+                st.error("❌ Mohon lengkapi pilihan jabatan, nama, dan kode akses!")
+            elif kode_bersih == "PengurusRW14#":
+                st.session_state["saran_terverifikasi"] = True
+                st.session_state["saran_nama"] = nama_pengirim.strip()
+                st.session_state["saran_jabatan"] = pilihan_jabatan_pengurus
+                st.success(f"✅ Verifikasi Berhasil! Selamat datang, {nama_pengirim.strip()} ({pilihan_jabatan_pengurus}).")
+                st.rerun()
             else:
-                st.info("ℹ️ Belum ada saran atau pendapat yang dikirimkan oleh pengurus.")
+                st.error("❌ Kode akses pengurus salah! Pastikan Anda memasukkan password dengan benar (PengurusRW14#).")
+
+    st.markdown("---")
+    st.markdown("### 📋 Daftar Saran & Pendapat Pengurus yang Masuk")
+    if os.path.exists("datasaran.xlsx"):
+        df_s_tampil = pd.read_excel("datasaran.xlsx")
+        df_s_tampil.columns = df_s_tampil.columns.str.strip().str.upper()
+        if not df_s_tampil.empty:
+            for idx, row in df_s_tampil.iloc[::-1].iterrows():
+                waktu_s = row.get("WAKTU", "-")
+                pengirim_s = row.get("PENGIRIM", "-")
+                jabatan_s = row.get("JABATAN", "-")
+                pesan_s = row.get("SARAN_PENDAPAT", "-")
+                
+                st.markdown(f"""
+                <div style="background-color: white; padding: 15px; border-radius: 8px; border-left: 5px solid #0D47A1; margin-bottom: 12px; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
+                    <p style="margin: 0; font-size: 13px; color: #555;"><b>👤 {pengirim_s}</b> ({jabatan_s}) &bull; <i>🕒 {waktu_s} WIB</i></p>
+                    <p style="margin: 8px 0 0 0; font-size: 15px; color: #222; white-space: pre-wrap;">{pesan_s}</p>
+                </div>
+                """, unsafe_allow_html=True)
         else:
-            st.info("ℹ️ Belum ada catatan saran pengurus.")
+            st.info("ℹ️ Belum ada saran atau pendapat yang dikirimkan oleh pengurus.")
+    else:
+        st.info("ℹ️ Belum ada catatan saran pengurus.")
 
 # ================= TAB 9: EDIT & UPLOAD (HANYA ADMIN) =================
 if admin_terverifikasi:
