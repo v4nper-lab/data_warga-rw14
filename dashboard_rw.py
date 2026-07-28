@@ -78,39 +78,46 @@ def load_info():
     else:
         return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
 
+# PENGURUS UTAMA LANGSUNG DIAMBIL DARI DATA STRUKTUR GAMBAR RESMI (PERIODE 2024 - 2029)
 @st.cache_data
 def load_struktur():
+    data_resmi = {
+        "JABATAN": [
+            "Ketua RW 014", 
+            "PKK & Posyandu RW 014", 
+            "Sekretaris", 
+            "Bendahara", 
+            "Keamanan & Ketertiban", 
+            "Pembangunan & Lingkungan", 
+            "Olahraga", 
+            "Sosial & Pemakaman", 
+            "Seni Budaya & Pemuda"
+        ],
+        "NAMA PENGURUS": [
+            "Triyadi Sucipto", 
+            "Tim PKK / Posyandu RW 014", 
+            "Irvan Permana", 
+            "Aan Toni Fauyi", 
+            "Dedi (RT 04), Uus (RT 04), Ali (RT 03), Tiktik (RT 07)", 
+            "E. Rustandi (RT 06), Nahnu (RT 07), Dahlan (RT 03), Sugiyanto (RT 01), Mulyono (RT 05)", 
+            "Mulyana (RT 05), Ateng (RT 03), Fajar (RT 01), Kris (RT 04), Apeng (RT 02), Mulyadi (RT 06)", 
+            "Ust. Nanang (RT 03), E. Rustandi (RT 06), Ust. Juhendi (RT 07), Shulton (RT 04), Edi (RT 05), Baryanto (RT 01)", 
+            "Uwa Tia (RT 06), Ridwan S (RT 01), Hary (RT 07)"
+        ],
+        "KONTAK / HP": ["0812xxxxxxxx", "-", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
+    }
+    
+    # Jika file datastruktur.xlsx ada dan ingin dipakai override, silakan; jika tidak, langsung pakai data resmi gambar
     if os.path.exists("datastruktur.xlsx"):
-        df_struk = pd.read_excel("datastruktur.xlsx")
-        df_struk.columns = df_struk.columns.str.strip().str.upper()
-        return df_struk
-    else:
-        data_awal = {
-            "JABATAN": [
-                "Ketua RW 014", 
-                "PKK & Posyandu RW 014", 
-                "Sekretaris", 
-                "Bendahara", 
-                "Keamanan & Ketertiban", 
-                "Pembangunan & Lingkungan", 
-                "Olahraga", 
-                "Sosial & Pemakaman", 
-                "Seni Budaya & Pemuda"
-            ],
-            "NAMA PENGURUS": [
-                "Triyadi Sucipto", 
-                "Tim PKK / Posyandu RW 014", 
-                "Irvan Permana", 
-                "Aan Toni Fauyi", 
-                "Dedi (RT 04), Uus (RT 04), Ali (RT 03), Tiktik (RT 07)", 
-                "E. Rustandi (RT 06), Nahnu (RT 07), Dahlan (RT 03), Sugiyanto (RT 01), Mulyono (RT 05)", 
-                "Mulyana (RT 05), Ateng (RT 03), Fajar (RT 01), Kris (RT 04), Apeng (RT 02), Mulyadi (RT 06)", 
-                "Ust. Nanang (RT 03), E. Rustandi (RT 06), Ust. Juhendi (RT 07), Shulton (RT 04), Edi (RT 05), Baryanto (RT 01)", 
-                "Uwa Tia (RT 06), Ridwan S (RT 01), Hary (RT 07)"
-            ],
-            "KONTAK / HP": ["0812xxxxxxxx", "-", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
-        }
-        return pd.DataFrame(data_awal)
+        try:
+            df_struk = pd.read_excel("datastruktur.xlsx")
+            df_struk.columns = df_struk.columns.str.strip().str.upper()
+            if not df_struk.empty:
+                return df_struk
+        except Exception:
+            pass
+            
+    return pd.DataFrame(data_resmi)
 
 df = load_data()
 df_kas = load_kas()
@@ -346,7 +353,7 @@ with tab0:
         </div>
         """, unsafe_allow_html=True)
 
-# ================= TAB STRUKTUR ORGANISASI (DENGAN GAMBAR ORGANIGRAM) =================
+# ================= TAB STRUKTUR ORGANISASI (DENGAN GAMBAR ORGANIGRAM & TABEL LENGKAP) =================
 with tab_struk:
     st.subheader("👥 Bagan Struktur Organisasi Pengurus RW 14")
     st.markdown("Bagan organigram kepengurusan Rukun Warga (RW) 14 Perum Griya Permata Raya Periode 2024 - 2029.")
@@ -361,7 +368,7 @@ with tab_struk:
         st.info("ℹ️ File gambar struktur belum diunggah. Silakan upload file gambar dengan nama 'struktur_rw.jpg' ke folder utama project atau via menu Admin.")
     
     st.write("---")
-    st.markdown("### 📋 Rincian Tabel Pengurus")
+    st.markdown("### 📋 Rincian Tabel Pengurus Lengkap")
     if not df_struktur.empty:
         st.dataframe(df_struktur, use_container_width=True, hide_index=True)
     else:
