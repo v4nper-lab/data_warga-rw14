@@ -331,7 +331,6 @@ with tab_struk:
     st.subheader("👥 Bagan Struktur Organisasi Pengurus RW 14")
     st.markdown("Bagan organigram kepengurusan Rukun Warga (RW) 14 Perum Griya Permata Raya Periode 2024 - 2029.")
     
-    # Cek dan tampilkan gambar struktur organigram resmi
     path_struktur_img = "struktur_rw.jpg"
     if not os.path.exists(path_struktur_img):
         path_struktur_img = "struktur_rw.png"
@@ -701,9 +700,9 @@ if admin_terverifikasi:
                 st.success(f"✅ Dokumen PDF '{pdf_upload.name}' berhasil diunggah!")
                 st.rerun()
                     
-        elif menu_admin-=="Upload Foto Galeri" or menu_admin == "Upload Foto Galeri":
+        elif menu_admin == "Upload Foto Galeri":
             st.markdown("Unggah foto kegiatan baru ke galeri RW:")
-            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png", "JPG"])
+            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
             if foto_upload is not None:
                 folder_galeri = "galeri"
                 if not os.path.exists(folder_galeri):
