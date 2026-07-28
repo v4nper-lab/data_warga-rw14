@@ -212,6 +212,17 @@ if "RT" in df.columns:
     if not os.path.exists(folder_foto_rt):
         os.makedirs(folder_foto_rt)
 
+    # Daftar nama lengkap resmi Ketua RT 01 sampai 07
+    daftar_ketua_rt_resmi = {
+        "1": "M. Husni Mubarak",
+        "2": "Casnanto",
+        "3": "Ucok Yudho Hartono",
+        "4": "Salya",
+        "5": "Suwarno",
+        "6": "Agus Hendra",
+        "7": "Dodi Sunardi"
+    }
+
     for rt_pilih in pilihan_rt_format:
         rt_num = ''.join(filter(str.isdigit, rt_pilih))
         
@@ -227,29 +238,7 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
-        # Pengecakan Nama Ketua RT secara spesifik dari seksi Keamanan, Pembangunan, Olahraga, dll yang mencantumkan nama di dalam kurung RT
-        nama_ketua = f"Ketua {rt_pilih}"
-        
-        # Mapping nama ketua RT cadangan jika belum diset secara spesifik di struktur
-        mapping_ketua_rt_default = {
-            "1": "Sugiyanto",
-            "2": "Apeng",
-            "3": "Ali / Dahlan",
-            "4": "Dedi / Uus",
-            "5": "Mulyana",
-            "6": "E. Rustandi",
-            "7": "Nahnu / Hary"
-        }
-        
-        if rt_num in mapping_ketua_rt_default:
-            nama_ketua = mapping_ketua_rt_default[rt_num]
-
-        if not df_struktur.empty:
-            for _, row in df_struktur.iterrows():
-                pengurus_val = str(row.get("NAMA PENGURUS", ""))
-                if f"RT {rt_num}" in pengurus_val or f"RT{rt_num}" in pengurus_val:
-                    # Ambil bagian sebelum kurung jika ada
-                    pass
+        nama_ketua = daftar_ketua_rt_resmi.get(rt_num, f"Ketua {rt_pilih}")
 
         if path_foto and os.path.exists(path_foto):
             st.sidebar.markdown(f"""
@@ -745,8 +734,6 @@ with tab8:
 with tab10:
     st.subheader("💬 Kotak Aspirasi, Saran, & Pendapat Pengurus RW 14")
     st.markdown("Menu khusus bagi **Ketua RT 01 s.d. 07** serta **Pengurus Inti RW** untuk memberikan masukan, evaluasi, dan pendapat terkait pengembangan Portal RW 14.")
-    
-    st.info("🔒 **Kode Akses Pengurus:** Gunakan password **`PengurusRW14#`** untuk masuk.")
 
     if st.session_state.get("saran_terverifikasi", False):
         st.success(f"Anda sedang login sebagai: **{st.session_state.get('saran_nama')} ({st.session_state.get('saran_jabatan')})**")
@@ -791,6 +778,7 @@ with tab10:
                 ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"]
             )
             nama_pengirim = st.text_input("Nama Lengkap Anda:")
+            # Tampilan kode akses disembunyikan menggunakan type="password"
             kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password")
             
             submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
@@ -800,14 +788,14 @@ with tab10:
             
             if pilihan_jabatan_pengurus == "-- Pilih Jabatan --" or not nama_pengirim.strip() or not kode_bersih:
                 st.error("❌ Mohon lengkapi pilihan jabatan, nama, dan kode akses!")
-            elif kode_bersih == "PengurusRW14#":
+            elif kode_bersih == "@pengurusrw14":
                 st.session_state["saran_terverifikasi"] = True
                 st.session_state["saran_nama"] = nama_pengirim.strip()
                 st.session_state["saran_jabatan"] = pilihan_jabatan_pengurus
                 st.success(f"✅ Verifikasi Berhasil! Selamat datang, {nama_pengirim.strip()} ({pilihan_jabatan_pengurus}).")
                 st.rerun()
             else:
-                st.error("❌ Kode akses pengurus salah! Pastikan Anda memasukkan password dengan benar (PengurusRW14#).")
+                st.error("❌ Kode akses pengurus salah!")
 
     st.markdown("---")
     st.markdown("### 📋 Daftar Saran & Pendapat Pengurus yang Masuk")
