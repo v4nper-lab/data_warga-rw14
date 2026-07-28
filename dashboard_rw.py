@@ -212,7 +212,7 @@ if "RT" in df.columns:
     if not os.path.exists(folder_foto_rt):
         os.makedirs(folder_foto_rt)
 
-    # Daftar nama lengkap resmi Ketua RT 01 sampai 07 (Pasti Tampil)
+    # Daftar nama lengkap resmi Ketua RT 01 sampai 07 (Dijamin Tampil)
     daftar_ketua_rt_resmi = {
         "1": "M. Husni Mubarak",
         "2": "Casnanto",
@@ -224,13 +224,14 @@ if "RT" in df.columns:
     }
 
     for rt_pilih in pilihan_rt_format:
-        rt_num = ''.join(filter(str.isdigit, rt_pilih))
+        # Ekstrak angka RT secara bersih (misal "RT 01" atau "RT01" menjadi "1")
+        rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         
         path_foto = None
         kemungkinan_nama = [
-            os.path.join(folder_foto_rt, f"rt{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num}.png"),
-            os.path.join(folder_foto_rt, f"rt0{rt_num}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num}.png"),
-            f"rt{rt_num}.jpg", f"rt{rt_num}.png", f"rt0{rt_num}.jpg", f"rt0{rt_num}.png"
+            os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
+            os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -238,8 +239,8 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
-        # Ambil nama resmi langsung dari dictionary
-        nama_ketua = daftar_ketua_rt_resmi.get(rt_num, f"Ketua {rt_pilih}")
+        # Ambil nama resmi berdasarkan nomor RT
+        nama_ketua = daftar_ketua_rt_resmi.get(rt_num_clean, f"Ketua {rt_pilih}")
 
         if path_foto and os.path.exists(path_foto):
             st.sidebar.markdown(f"""
