@@ -87,6 +87,15 @@ def load_info():
     else:
         return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
 
+@st.cache_data
+def load_galeri_meta():
+    if os.path.exists("datagaleri.xlsx"):
+        df_g = pd.read_excel("datagaleri.xlsx")
+        df_g.columns = df_g.columns.str.strip().str.upper()
+        return df_g
+    else:
+        return pd.DataFrame(columns=["NAMA_FILE", "HARI", "TANGGAL", "BULAN", "TAHUN", "KETERANGAN"])
+
 # STRUKTUR PENGURUS LENGKAP DENGAN JOB DESCRIPTION & PROGRAM KERJA
 @st.cache_data
 def load_struktur():
@@ -143,6 +152,7 @@ df_kas = load_kas()
 df_kas_pemakaman = load_kas_pemakaman()
 df_info = load_info()
 df_struktur = load_struktur()
+df_galeri_meta = load_galeri_meta()
 
 # ================= WAKTU REAL-TIME DI SIDEBAR =================
 st.sidebar.markdown("---")
@@ -299,7 +309,7 @@ with tab0:
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW dan laporan khusus seksi pemakaman.
-        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan Nama Hari, Tanggal, Bulan, dan Tahun kegiatan.
+        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan Nama Hari, Tanggal, Bulan, dan Tahun kegiatan secara manual.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -621,10 +631,10 @@ with tab7:
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
-# ================= TAB 8: GALERI KEGIATAN (DENGAN NAMA HARI OTOMATIS) =================
+# ================= TAB 8: GALERI KEGIATAN (BERDASARKAN DATA INPUT MANUAL ADMIN) =================
 with tab8:
     st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
-    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Nama Hari, Tanggal, Bulan, dan Tahun.")
+    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Nama Hari, Tanggal, Bulan, dan Tahun kegiatan.")
     
     folder_galeri = "galeri"
     if not os.path.exists(folder_galeri):
@@ -633,79 +643,66 @@ with tab8:
     daftar_foto = [f for f in os.listdir(folder_galeri) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
     
     if daftar_foto:
-        nama_bulan_dict = {
-            '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
-            '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
-            '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
-        }
-        
-        hari_indo_dict = {
-            'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu',
-            'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu', 'Sunday': 'Minggu'
-        }
-        
+        # Buat dictionary arsip dari file meta excel jika ada, atau fallback otomatis
+        meta_dict = {}
+        if not df_galeri_meta.empty:
+            for _, row in df_galeri_meta.iterrows():
+                f_name = str(row.get("NAMA_FILE", "")).strip()
+                meta_dict[f_name] = {
+                    "hari": str(row.get("HARI", "Minggu")),
+                    "tanggal": str(row.get("TANGGAL", "01")),
+                    "bulan": str(row.get("BULAN", "Januari")),
+                    "tahun": str(row.get("TAHUN", "2026")),
+                    "ket": str(row.get("KETERANGAN", ""))
+                }
+
         galeri_arsip = {}
         
-        for nama_file in daftar_foto:
-            part = nama_file.split('_')[0]
-            if len(part) == 10 and part.count('-') == 2:
-                tahun, bulan, tanggal = part.split('-')
-                if not (len(tahun) == 4 and tahun.isdigit()):
-                    tahun = "2026"
+        for nama_foto in daftar_foto:
+            if nama_foto in meta_dict:
+                h = meta_dict[nama_foto]["hari"]
+                t = meta_dict[nama_foto]["tanggal"]
+                b = meta_dict[nama_foto]["bulan"]
+                th = meta_dict[nama_foto]["tahun"]
             else:
-                tahun, bulan, tanggal = "2026", "Arsip", "Umum"
-                for kata in nama_file.replace('_', '-').split('-'):
-                    if len(kata) == 4 and kata.isdigit() and kata.startswith(('20', '19')):
-                        tahun = kata
-                        break
+                # Default jika belum diset admin
+                h, t, b, th = "Minggu", "01", "Januari", "2026"
                 
-            nama_bln_indo = nama_bulan_dict.get(bulan, bulan)
-            
-            if tahun not in galeri_arsip:
-                galeri_arsip[tahun] = {}
-            if nama_bln_indo not in galeri_arsip[tahun]:
-                galeri_arsip[tahun][nama_bln_indo] = {}
-            if tanggal not in galeri_arsip[tahun][nama_bln_indo]:
-                galeri_arsip[tahun][nama_bln_indo][tanggal] = []
+            if th not in galeri_arsip:
+                galeri_arsip[th] = {}
+            if b not in galeri_arsip[th]:
+                galeri_arsip[th][b] = {}
+            if t not in galeri_arsip[th][b]:
+                galeri_arsip[th][b][t] = []
                 
-            galeri_arsip[tahun][nama_bln_indo][tanggal].append(nama_file)
+            galeri_arsip[th][b][t].append((nama_foto, h))
 
         for tahun in sorted(galeri_arsip.keys(), reverse=True):
             st.markdown(f"## 📅 Tahun {tahun}")
-            for bulan in sorted(galeri_arsip[tahun].keys()):
+            for bulan in galeri_arsip[tahun].keys():
                 st.markdown(f"### 🗓️ Bulan: {bulan}")
                 for tanggal in sorted(galeri_arsip[tahun][bulan].keys(), reverse=True):
-                    if tanggal != "Umum":
-                        format_ddmmyyyy = f"{tanggal}-{list(nama_bulan_dict.keys())[list(nama_bulan_dict.values()).index(bulan)]}-{tahun}" if bulan in nama_bulan_dict.values() else f"{tanggal}-{bulan}-{tahun}"
-                        
-                        # Hitung Nama Hari secara otomatis dari tanggal kegiatan
-                        nama_hari_kegiatan = "Hari Kegiatan"
-                        try:
-                            dt_obj = datetime(int(tahun), int(list(nama_bulan_dict.keys())[list(nama_bulan_dict.values()).index(bulan)]), int(tanggal))
-                            nama_hari_inggris = dt_obj.strftime("%A")
-                            nama_hari_kegiatan = hari_indo_dict.get(nama_hari_inggris, "")
-                        except Exception:
-                            pass
-                            
-                        st.markdown(f"**📌 Tanggal Kegiatan: {nama_hari_kegiatan}, {format_ddmmyyyy}**")
-                    else:
-                        st.markdown(f"**📌 Kategori: Arsip Umum / Tanpa Format Tanggal**")
-                        
+                    # Ambil nama hari dari data pertama di tanggal tersebut
+                    info_item = galeri_arsip[tahun][bulan][tanggal][0]
+                    nama_hari_kegiatan = info_item[1]
+                    
+                    st.markdown(f"**📌 Tanggal Kegiatan: {nama_hari_kegiatan}, {tanggal} {bulan} {tahun}**")
+                    
                     foto_list = galeri_arsip[tahun][bulan][tanggal]
                     cols = st.columns(3)
-                    for idx, nama_foto in enumerate(foto_list):
+                    for idx, item in enumerate(foto_list):
+                        nama_foto = item[0]
                         path_foto = os.path.join(folder_galeri, nama_foto)
-                        caption_bersih = nama_foto.rsplit('.', 1)[0]
-                        if len(caption_bersih) > 10 and caption_bersih[4] == '-' and caption_bersih[7] == '-':
-                            caption_bersih = caption_bersih[10:].replace('_', ' ').strip()
-                        else:
-                            caption_bersih = caption_bersih.replace('_', ' ').title()
+                        
+                        caption_teks = nama_foto.rsplit('.', 1)[0].replace('_', ' ').title()
+                        if nama_foto in meta_dict and meta_dict[nama_foto]["ket"]:
+                            caption_teks = meta_dict[nama_foto]["ket"]
                             
                         with cols[idx % 3]:
-                            st.image(path_foto, caption=caption_bersih, use_container_width=True)
+                            st.image(path_foto, caption=caption_teks, use_container_width=True)
                     st.write("---")
     else:
-        st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah foto melalui menu Admin (Disarankan menamai file dengan format: YYYY-MM-DD_nama_kegiatan.jpg).")
+        st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah foto dan mengatur tanggalnya melalui menu Admin.")
 
 # ================= TAB 9: EDIT & UPLOAD (HANYA ADMIN) =================
 if admin_terverifikasi:
@@ -846,18 +843,51 @@ if admin_terverifikasi:
                 st.rerun()
                     
         elif menu_admin == "Upload Foto Galeri":
-            st.markdown("📦 **Upload Foto Kegiatan ke Galeri**")
-            st.markdown("💡 *Tips Penamaan File:* Beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2026-08-17_Kerja_Bakti.jpg`)")
+            st.markdown("📦 **Upload Foto Kegiatan ke Galeri & Atur Jadwal Manual**")
             foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            
             if foto_upload is not None:
-                folder_galeri = "galeri"
-                if not os.path.exists(folder_galeri):
-                    os.makedirs(folder_galeri)
-                path_simpan = os.path.join(folder_galeri, foto_upload.name)
-                with open(path_simpan, "wb") as f:
-                    f.write(foto_upload.getbuffer())
-                st.success(f"✅ Foto '{foto_upload.name}' berhasil diunggah ke galeri!")
-                st.rerun()
+                col_i1, col_i2 = st.columns(2)
+                with col_i1:
+                    input_hari = st.selectbox("Pilih Hari:", ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"])
+                    input_tgl = st.selectbox("Pilih Tanggal:", [f"{i:02d}" for i in range(1, 32)])
+                    input_bln = st.selectbox("Pilih Bulan:", ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"])
+                with col_i2:
+                    input_thn = st.selectbox("Pilih Tahun:", ["2024", "2025", "2026", "2027", "2028"])
+                    input_ket = st.text_input("Keterangan / Nama Kegiatan:")
+                
+                if st.button("💾 Simpan Foto & Atur Tanggal", type="primary"):
+                    folder_galeri = "galeri"
+                    if not os.path.exists(folder_galeri):
+                        os.makedirs(folder_galeri)
+                    
+                    path_simpan = os.path.join(folder_galeri, foto_upload.name)
+                    with open(path_simpan, "wb") as f:
+                        f.write(foto_upload.getbuffer())
+                        
+                    # Simpan data meta ke datagaleri.xlsx
+                    new_row = pd.DataFrame([{
+                        "NAMA_FILE": foto_upload.name,
+                        "HARI": input_hari,
+                        "TANGGAL": input_tgl,
+                        "BULAN": input_bln,
+                        "TAHUN": input_thn,
+                        "KETERANGAN": input_ket
+                    }])
+                    
+                    if os.path.exists("datagaleri.xlsx"):
+                        df_g_existing = pd.read_excel("datagaleri.xlsx")
+                        df_g_existing.columns = df_g_existing.columns.str.strip().str.upper()
+                        # Hapus baris lama jika nama file sama
+                        df_g_existing = df_g_existing[df_g_existing["NAMA_FILE"] != foto_upload.name]
+                        df_g_updated = pd.concat([df_g_existing, new_row], ignore_index=True)
+                    else:
+                        df_g_updated = new_row
+                        
+                    df_g_updated.to_excel("datagaleri.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success(f"✅ Foto '{foto_upload.name}' berhasil diunggah dengan tanggal {input_hari}, {input_tgl}-{input_bln}-{input_thn}!")
+                    st.rerun()
 
         elif menu_admin == "Hapus Foto Galeri":
             st.markdown("🗑️ **Kelola & Hapus Foto Galeri yang Tidak Diperlukan**")
@@ -873,6 +903,13 @@ if admin_terverifikasi:
                     if st.button("🗑️ Hapus Foto Ini Permanen", type="primary"):
                         try:
                             os.remove(path_preview)
+                            # Hapus juga metadata di datagaleri.xlsx jika ada
+                            if os.path.exists("datagaleri.xlsx"):
+                                df_g_del = pd.read_excel("datagaleri.xlsx")
+                                df_g_del.columns = df_g_del.columns.str.strip().str.upper()
+                                df_g_del = df_g_del[df_g_del["NAMA_FILE"] != foto_pilih_hapus]
+                                df_g_del.to_excel("datagaleri.xlsx", index=False)
+                                
                             st.cache_data.clear()
                             st.success(f"✅ Foto '{foto_pilih_hapus}' berhasil dihapus secara permanen!")
                             st.rerun()
