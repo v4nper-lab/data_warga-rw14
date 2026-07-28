@@ -6,7 +6,7 @@ import os
 from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
-# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL (Termasuk animasi bergerak real-time banner seni budaya)
+# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL
 st.set_page_config(
     page_title="Portal Resmi RW 14 Griya Permata Raya",
     layout="wide",
@@ -26,15 +26,12 @@ button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-s
 
 /* Animasi bergerak real-time untuk banner seni budaya di paling atas */
 @keyframes fadeInSlide {
-    0% { opacity: 0.3; transform: translateY(-10px); }
+    0% { opacity: 0.4; transform: translateY(-5px); }
     50% { opacity: 1; transform: translateY(0px); }
-    100% { opacity: 0.3; transform: translateY(-10px); }
+    100% { opacity: 0.4; transform: translateY(-5px); }
 }
 .banner-animasi {
-    animation: fadeInSlide 4s infinite ease-in-out;
-    border-radius: 15px;
-    box-shadow: 0px 6px 15px rgba(0,0,0,0.12);
-    border: 3px solid #90CAF9;
+    animation: fadeInSlide 3.5s infinite ease-in-out;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -225,7 +222,6 @@ if "RT" in df.columns:
     if not os.path.exists(folder_foto_rt):
         os.makedirs(folder_foto_rt)
 
-    # Daftar nama lengkap resmi Ketua RT 01 sampai 07 (Dijamin Tampil)
     daftar_ketua_rt_resmi = {
         "1": "M. Husni Mubarak",
         "2": "Casnanto",
@@ -299,33 +295,38 @@ elif password_input != "":
 # =========================================================================
 # ============ 2 FOTO SENI BUDAYA DI PALING ATAS DENGAN ANIMASI ============
 # =========================================================================
-def cari_foto_seni(nama_dasar):
-    for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
-        p = f"{nama_dasar}{ext}"
-        if os.path.exists(p): return p
+def cari_foto_flexible(kemungkinan_nama_file):
+    for nama in kemungkinan_nama_file:
+        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+            p = f"{nama}{ext}"
+            if os.path.exists(p): return p
     return None
 
-foto_sb1 = cari_foto_seni("seni budaya 1")
-foto_sb2 = cari_foto_seni("seni budaya 2")
+foto_sb1 = cari_foto_flexible(["seni budaya 1", "seni_budaya_1", "senibudaya1"])
+foto_sb2 = cari_foto_flexible(["seni budaya 2", "seni_budaya_2", "senibudaya2"])
 
 col_sb1, col_sb2 = st.columns(2)
 with col_sb1:
     if foto_sb1:
+        st.markdown('<div class="banner-animasi">', unsafe_allow_html=True)
         st.image(foto_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
+        st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown("""
         <div style="background-color: #E3F2FD; padding: 30px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎭 Foto Seni Budaya 1<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 1.jpg' ke folder utama project)</span></p>
+            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎭 Foto Seni Budaya 1 Belum Ditemukan<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 1.jpg' ke folder utama project)</span></p>
         </div>
         """, unsafe_allow_html=True)
 
 with col_sb2:
     if foto_sb2:
+        st.markdown('<div class="banner-animasi">', unsafe_allow_html=True)
         st.image(foto_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
+        st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown("""
         <div style="background-color: #E3F2FD; padding: 30px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎨 Foto Seni Budaya 2<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 2.jpg' ke folder utama project)</span></p>
+            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎨 Foto Seni Budaya 2 Belum Ditemukan<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 2.jpg' ke folder utama project)</span></p>
         </div>
         """, unsafe_allow_html=True)
 
