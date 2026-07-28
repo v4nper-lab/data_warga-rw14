@@ -144,7 +144,7 @@ df_kas_pemakaman = load_kas_pemakaman()
 df_info = load_info()
 df_struktur = load_struktur()
 
-# ================= WAKTU REAL-TIME DI SIDEBAR (FORMAT TAHUN LENGKAP YYYY) =================
+# ================= WAKTU REAL-TIME DI SIDEBAR =================
 st.sidebar.markdown("---")
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 
@@ -153,7 +153,6 @@ bulan_list = {1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: 
 
 nama_hari = hari_list.get(waktu_sekarang.strftime("%A"), waktu_sekarang.strftime("%A"))
 nama_bulan = bulan_list.get(waktu_sekarang.month, "")
-# Tahun menggunakan format 4 digit lengkap (YYYY)
 tanggal_indo = f"{nama_hari}, {waktu_sekarang.day} {nama_bulan} {waktu_sekarang.year}"
 jam_indo = waktu_sekarang.strftime("%H:%M:%S") + " WIB"
 
@@ -300,7 +299,7 @@ with tab0:
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW dan laporan khusus seksi pemakaman.
-        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan tanggal kegiatan (Format DD-MM-YYYY).
+        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan tanggal kegiatan (Format DD-MM-YYYY secara akurat).
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -622,10 +621,10 @@ with tab7:
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
-# ================= TAB 8: GALERI KEGIATAN (FORMAT TANGGAL DD-MM-YYYY) =================
+# ================= TAB 8: GALERI KEGIATAN (FORMAT TAHUN 4 DIGIT LENGKAP) =================
 with tab8:
     st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
-    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Tahun, Bulan, dan Tanggal kegiatan.")
+    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Tahun, Bulan, dan Tanggal kegiatan (Format DD-MM-YYYY).")
     
     folder_galeri = "galeri"
     if not os.path.exists(folder_galeri):
@@ -643,11 +642,17 @@ with tab8:
         galeri_arsip = {}
         
         for nama_file in daftar_foto:
+            # Deteksi format YYYY-MM-DD secara aman di awal nama file
             part = nama_file.split('_')[0]
             if len(part) == 10 and part.count('-') == 2:
                 tahun, bulan, tanggal = part.split('-')
             else:
+                # Jika nama file tidak diawali YYYY-MM-DD lengkap, coba ekstrak tahun 4 digit jika ada di nama file
                 tahun, bulan, tanggal = "Lainnya", "Arsip", "Umum"
+                for kata in nama_file.replace('_', '-').split('-'):
+                    if len(kata) == 4 and kata.isdigit() and kata.startswith(('20', '19')):
+                        tahun = kata
+                        break
                 
             nama_bln_indo = nama_bulan_dict.get(bulan, bulan)
             
@@ -666,7 +671,7 @@ with tab8:
                 st.markdown(f"### 🗓️ Bulan: {bulan}")
                 for tanggal in sorted(galeri_arsip[tahun][bulan].keys(), reverse=True):
                     if tanggal != "Umum":
-                        # Format tampilan tanggal persis: DD-MM-YYYY
+                        # Format tampilan persis DD-MM-YYYY dengan tahun 4 digit lengkap
                         format_ddmmyyyy = f"{tanggal}-{list(nama_bulan_dict.keys())[list(nama_bulan_dict.values()).index(bulan)]}-{tahun}" if bulan in nama_bulan_dict.values() else f"{tanggal}-{bulan}-{tahun}"
                         st.markdown(f"**📌 Tanggal Kegiatan: {format_ddmmyyyy}**")
                     else:
@@ -828,7 +833,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Upload Foto Galeri":
             st.markdown("📦 **Upload Foto Kegiatan ke Galeri**")
-            st.markdown("💡 *Tips Penamaan File:* Agar foto otomatis tersusun rapi, beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2026-08-17_Kerja_Bakti.jpg`)")
+            st.markdown("💡 *Tips Penamaan File:* Agar foto otomatis tersusun rapi, beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2025-08-17_Kerja_Bakti.jpg`)")
             foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
             if foto_upload is not None:
                 folder_galeri = "galeri"
