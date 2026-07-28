@@ -96,6 +96,15 @@ def load_galeri_meta():
     else:
         return pd.DataFrame(columns=["NAMA_FILE", "HARI", "TANGGAL", "BULAN", "TAHUN", "KETERANGAN"])
 
+@st.cache_data
+def load_saran():
+    if os.path.exists("datasaran.xlsx"):
+        df_s = pd.read_excel("datasaran.xlsx")
+        df_s.columns = df_s.columns.str.strip().str.upper()
+        return df_s
+    else:
+        return pd.DataFrame(columns=["WAKTU", "PENGIRIM", "JABATAN", "SARAN_PENDAPAT"])
+
 # STRUKTUR PENGURUS LENGKAP DENGAN JOB DESCRIPTION & PROGRAM KERJA
 @st.cache_data
 def load_struktur():
@@ -153,6 +162,7 @@ df_kas_pemakaman = load_kas_pemakaman()
 df_info = load_info()
 df_struktur = load_struktur()
 df_galeri_meta = load_galeri_meta()
+df_saran = load_saran()
 
 # ================= WAKTU REAL-TIME & PENGINGAT SHOLAT DI SIDEBAR =================
 st.sidebar.markdown("---")
@@ -174,15 +184,6 @@ st.sidebar.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Widget Pengingat Sholat Wilayah Kab. Bandung (Desa Nanjung Mekar, Kec. Rancaekek)
-# Jadwal standar Kemenag RI untuk wilayah Kabupaten Bandung
-jadwal_sholat_hari_ini = {
-    "Subuh": "04:44",
-    "Dzuhur": "12:00",
-    "Ashar": "15:21",
-    "Maghrib": "17:58",
-    "Isya": "19:06"
-}
-
 st.sidebar.markdown("""
 <div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 12px; border-radius: 10px; color: white; margin-bottom: 15px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
     <p style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">🕌 Jadwal Sholat & Pengingat</p>
@@ -304,16 +305,16 @@ st.write("---")
 
 # ================= MENU UTAMA WEBSITE PORTAL =================
 if admin_terverifikasi:
-    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
         "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "🖼️ Galeri", "⚙️ Edit & Upload (Admin)"
+        "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
     ])
 else:
-    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab10 = st.tabs([
         "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
         "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "🖼️ Galeri"
+        "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus"
     ])
 
 # ================= TAB 0: BERANDA / PROFIL =================
@@ -333,6 +334,7 @@ with tab0:
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW dan laporan khusus seksi pemakaman.
         * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan arsip manual Admin.
+        * Mengakses menu **Saran Pengurus** khusus untuk Ketua RT 01 s.d. 07 serta Pengurus Inti.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -725,6 +727,94 @@ with tab8:
     else:
         st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah dan mengatur jadwalnya melalui menu Admin.")
 
+# ================= TAB 10: SARAN & PENDAPAT (KHUSUS KETUA RT 01-07 & PENGURUS INTI) =================
+with tab10:
+    st.subheader("💬 Kotak Aspirasi, Saran, & Pendapat Pengurus RW 14")
+    st.markdown("Menu khusus bagi **Ketua RT 01 s.d. 07** serta **Pengurus Inti RW** untuk memberikan masukan, evaluasi, dan pendapat terkait pengembangan Portal RW 14.")
+    
+    st.info("🔒 **Akses Terbatas:** Halaman ini memerlukan verifikasi kode akses khusus pengurus (Ketua RT 01-07 atau Pengurus Inti).")
+    
+    # Form verifikasi pengurus khusus
+    with st.form("form_login_saran"):
+        st.markdown("### 🔑 Verifikasi Identitas Pengurus")
+        pilihan_jabatan_pengurus = st.selectbox(
+            "Pilih Jabatan Anda:", 
+            ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"]
+        )
+        nama_pengirim = st.text_input("Nama Lengkap Anda:")
+        kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password")
+        
+        submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
+        
+    # Validasi kode akses pengurus (Password khusus: PengurusRW14#)
+    if submit_verif:
+        if pilihan_jabatan_pengurus == "-- Pilih --" or not nama_pengirim or not kode_akses_pengurus:
+            st.error("❌ Mohon lengkapi seluruh kolom verifikasi!")
+        elif kode_akses_pengurus == "PengurusRW14#":
+            st.session_state["saran_terverifikasi"] = True
+            st.session_state["saran_nama"] = nama_pengirim
+            st.session_state["saran_jabatan"] = pilihan_jabatan_pengurus
+            st.success(f"✅ Verifikasi Berhasil! Selamat datang, {nama_pengirim} ({pilihan_jabatan_pengurus}).")
+        else:
+            st.error("❌ Kode akses pengurus salah!")
+
+    # Jika sudah terverifikasi, tampilkan form pengisian saran & daftar saran masuk
+    if st.session_state.get("saran_terverifikasi", False):
+        st.markdown("---")
+        st.success(f"Anda masuk sebagai: **{st.session_state.get('saran_nama')} ({st.session_state.get('saran_jabatan')})**")
+        
+        with st.form("form_kirim_saran"):
+            st.markdown("### ✍️ Tuliskan Saran, Pendapat, atau Evaluasi Portal")
+            isi_saran_input = st.text_area("Saran / Pendapat / Masukan Anda untuk Portal RW 14:")
+            submit_saran = st.form_submit_button("📤 Kirim Saran & Pendapat", type="primary")
+            
+            if submit_saran:
+                if not isi_saran_input.strip():
+                    st.warning("⚠️ Saran atau pendapat tidak boleh kosong.")
+                else:
+                    waktu_kirim = (datetime.utcnow() + timedelta(hours=7)).strftime("%d-%m-%Y %H:%M")
+                    new_saran_row = pd.DataFrame([{
+                        "WAKTU": waktu_kirim,
+                        "PENGIRIM": st.session_state.get('saran_nama'),
+                        "JABATAN": st.session_state.get('saran_jabatan'),
+                        "SARAN_PENDAPAT": isi_saran_input.strip()
+                    }])
+                    
+                    if os.path.exists("datasaran.xlsx"):
+                        df_s_existing = pd.read_excel("datasaran.xlsx")
+                        df_s_existing.columns = df_s_existing.columns.str.strip().str.upper()
+                        df_s_updated = pd.concat([df_s_existing, new_row], ignore_index=True)
+                    else:
+                        df_s_updated = new_row
+                        
+                    df_s_updated.to_excel("datasaran.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Saran dan pendapat Anda berhasil dikirim dan tersimpan di sistem!")
+                    st.rerun()
+
+        st.markdown("---")
+        st.markdown("### 📋 Daftar Saran & Pendapat Pengurus yang Masuk")
+        if os.path.exists("datasaran.xlsx"):
+            df_s_tampil = pd.read_excel("datasaran.xlsx")
+            df_s_tampil.columns = df_s_tampil.columns.str.strip().str.upper()
+            if not df_s_tampil.empty:
+                for idx, row in df_s_tampil.iloc[::-1].iterrows():
+                    waktu_s = row.get("WAKTU", "-")
+                    pengirim_s = row.get("PENGIRIM", "-")
+                    jabatan_s = row.get("JABATAN", "-")
+                    pesan_s = row.get("SARAN_PENDAPAT", "-")
+                    
+                    st.markdown(f"""
+                    <div style="background-color: white; padding: 15px; border-radius: 8px; border-left: 5px solid #0D47A1; margin-bottom: 12px; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
+                        <p style="margin: 0; font-size: 13px; color: #555;"><b>👤 {pengirim_s}</b> ({jabatan_s}) &bull; <i>🕒 {waktu_s} WIB</i></p>
+                        <p style="margin: 8px 0 0 0; font-size: 15px; color: #222; white-space: pre-wrap;">{pesan_s}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Belum ada saran atau pendapat yang dikirimkan oleh pengurus.")
+        else:
+            st.info("ℹ️ Belum ada catatan saran pengurus.")
+
 # ================= TAB 9: EDIT & UPLOAD (HANYA ADMIN) =================
 if admin_terverifikasi:
     with tab9:
@@ -894,7 +984,7 @@ if admin_terverifikasi:
                         input_hari = hari_indo_map.get(hari_inggris, "")
                         st.info(f"✨ Hari Terdeteksi Otomatis: **{input_hari}**")
                     except Exception:
-                        st.warning("⚠️ Kombinasi tanggal yang dipilih tidak valid (misal: tanggal 31 di bulan yang tidak memiliki 31 hari).")
+                        st.warning("⚠️ Kombinasi tanggal yang dipilih tidak valid.")
 
                 if st.button("💾 Simpan Foto & Atur Jadwal", type="primary"):
                     if input_tgl == "-- Pilih --" or input_bln == "-- Pilih --" or input_thn == "-- Pilih --" or not input_hari:
