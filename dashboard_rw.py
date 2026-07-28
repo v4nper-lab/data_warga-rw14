@@ -212,7 +212,7 @@ if "RT" in df.columns:
     if not os.path.exists(folder_foto_rt):
         os.makedirs(folder_foto_rt)
 
-    # Daftar nama lengkap resmi Ketua RT 01 sampai 07
+    # Daftar nama lengkap resmi Ketua RT 01 sampai 07 (Pasti Tampil)
     daftar_ketua_rt_resmi = {
         "1": "M. Husni Mubarak",
         "2": "Casnanto",
@@ -238,6 +238,7 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
+        # Ambil nama resmi langsung dari dictionary
         nama_ketua = daftar_ketua_rt_resmi.get(rt_num, f"Ketua {rt_pilih}")
 
         if path_foto and os.path.exists(path_foto):
