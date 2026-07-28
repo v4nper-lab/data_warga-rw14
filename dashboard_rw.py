@@ -621,7 +621,7 @@ with tab7:
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
-# ================= TAB 8: GALERI KEGIATAN (FORMAT TAHUN 4 DIGIT LENGKAP) =================
+# ================= TAB 8: GALERI KEGIATAN (VALIDASI TAHUN LENGKAP YYYY) =================
 with tab8:
     st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
     st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Tahun, Bulan, dan Tanggal kegiatan (Format DD-MM-YYYY).")
@@ -642,13 +642,14 @@ with tab8:
         galeri_arsip = {}
         
         for nama_file in daftar_foto:
-            # Deteksi format YYYY-MM-DD secara aman di awal nama file
             part = nama_file.split('_')[0]
             if len(part) == 10 and part.count('-') == 2:
                 tahun, bulan, tanggal = part.split('-')
+                # Validasi: pastikan tahun 4 digit valid (misal 2025, 2026). Jika tidak, jadikan 2025 default atau ambil tahun aktif
+                if not (len(tahun) == 4 and tahun.isdigit()):
+                    tahun = "2025"
             else:
-                # Jika nama file tidak diawali YYYY-MM-DD lengkap, coba ekstrak tahun 4 digit jika ada di nama file
-                tahun, bulan, tanggal = "Lainnya", "Arsip", "Umum"
+                tahun, bulan, tanggal = "2025", "Arsip", "Umum"
                 for kata in nama_file.replace('_', '-').split('-'):
                     if len(kata) == 4 and kata.isdigit() and kata.startswith(('20', '19')):
                         tahun = kata
@@ -671,7 +672,6 @@ with tab8:
                 st.markdown(f"### 🗓️ Bulan: {bulan}")
                 for tanggal in sorted(galeri_arsip[tahun][bulan].keys(), reverse=True):
                     if tanggal != "Umum":
-                        # Format tampilan persis DD-MM-YYYY dengan tahun 4 digit lengkap
                         format_ddmmyyyy = f"{tanggal}-{list(nama_bulan_dict.keys())[list(nama_bulan_dict.values()).index(bulan)]}-{tahun}" if bulan in nama_bulan_dict.values() else f"{tanggal}-{bulan}-{tahun}"
                         st.markdown(f"**📌 Tanggal Kegiatan: {format_ddmmyyyy}**")
                     else:
