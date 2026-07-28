@@ -39,11 +39,11 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk meluruskan orientasi HP dan menyeragamkan ukuran foto secara presisi
+# Fungsi untuk meluruskan orientasi foto secara presisi
 def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
     try:
         img = Image.open(path_file)
-        img = ImageOps.exif_transpose(img) # Luruskan posisi foto HP
+        img = ImageOps.exif_transpose(img)
         img = ImageOps.fit(img, ukuran, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
         return img
     except Exception:
@@ -86,9 +86,9 @@ def load_struktur():
         return df_struk
     else:
         data_awal = {
-            "JABATAN": ["Ketua RW 14", "Wakil Ketua RW", "Sekretaris", "Bendahara", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03"],
-            "NAMA PENGURUS": ["Bapak Ketua RW", "Bapak Wakil", "Bapak Sekretaris", "Ibu Bendahara", "Bapak RT 01", "Bapak RT 02", "Bapak RT 03"],
-            "KONTAK / HP": ["0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx"]
+            "JABATAN": ["Ketua RW 14", "Sekretaris", "Bendahara", "Keamanan & Ketertiban", "Pembangunan & Lingkungan", "Olahraga", "Sosial & Pemakaman", "Seni Budaya & Pemuda"],
+            "NAMA PENGURUS": ["Triyadi Sucipto", "Irvan Permana", "Aan Toni Fauyi", "Dedi, Uus, Ali, Tiktik", "E. Rustandi, Nahnu, Dahlan, Sugiyanto, Mulyono", "Mulyana, Ateng, Fajar, Kris, Apeng, Mulyadi", "Ust. Nanang, E. Rustandi, Ust. Juhendi, Shulton, Edi, Baryanto", "Uwa Tia, Ridwan S, Hary"],
+            "KONTAK / HP": ["0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
         }
         return pd.DataFrame(data_awal)
 
@@ -247,7 +247,7 @@ with tab0:
         Assalamu’alaikum Warahmatullahi Wabarakatuh,  
         Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
         
-        Melalui portal digital ini, ynag dapat Anda akses:
+        Melalui portal digital ini, Anda dapat:
         * Melihat struktur kepengurusan RW dan profil Ketua RT secara vertikal di panel sebelah kiri.
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
@@ -261,9 +261,9 @@ with tab0:
         st.markdown("---")
         st.markdown("### 🏛️ Jajaran Pengurus Inti RW 14")
         
-        nama_rw = "Ketua RW 14"
-        nama_sek = "Sekretaris"
-        nama_bend = "Bendahara"
+        nama_rw = "Triyadi Sucipto"
+        nama_sek = "Irvan Permana"
+        nama_bend = "Aan Toni Fauyi"
         if not df_struktur.empty:
             for _, row in df_struktur.iterrows():
                 jab = str(row.get("JABATAN", "")).upper()
@@ -326,11 +326,23 @@ with tab0:
         </div>
         """, unsafe_allow_html=True)
 
-# ================= TAB STRUKTUR ORGANISASI =================
+# ================= TAB STRUKTUR ORGANISASI (DENGAN GAMBAR ORGANIGRAM) =================
 with tab_struk:
     st.subheader("👥 Bagan Struktur Organisasi Pengurus RW 14")
-    st.markdown("Daftar jajaran pengurus Rukun Warga (RW) dan Rukun Tetangga (RT) yang berdedikasi melayani warga.")
+    st.markdown("Bagan organigram kepengurusan Rukun Warga (RW) 14 Perum Griya Permata Raya Periode 2024 - 2029.")
     
+    # Cek dan tampilkan gambar struktur organigram resmi
+    path_struktur_img = "struktur_rw.jpg"
+    if not os.path.exists(path_struktur_img):
+        path_struktur_img = "struktur_rw.png"
+        
+    if os.path.exists(path_struktur_img):
+        st.image(path_struktur_img, caption="Struktur Pengurus RW 014 Griya Permata Raya Periode 2024 - 2029", use_container_width=True)
+    else:
+        st.info("ℹ️ File gambar struktur belum diunggah. Silakan upload file gambar dengan nama 'struktur_rw.jpg' ke folder utama project atau via menu Admin.")
+    
+    st.write("---")
+    st.markdown("### 📋 Rincian Tabel Pengurus")
     if not df_struktur.empty:
         st.dataframe(df_struktur, use_container_width=True, hide_index=True)
     else:
@@ -570,7 +582,7 @@ if admin_terverifikasi:
         
         menu_admin = st.selectbox(
             "Pilih Menu Pengelolaan:", 
-            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri"]
         )
         
         if menu_admin == "Data Warga":
@@ -616,6 +628,16 @@ if admin_terverifikasi:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan informasi: {e}")
+
+        elif menu_admin == "Upload Gambar Struktur RW":
+            st.markdown("### 🖼️ Unggah Gambar Bagan Struktur Organisasi RW")
+            struktur_img_up = st.file_uploader("Pilih File Gambar Struktur (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            if struktur_img_up is not None:
+                path_simpan_str = "struktur_rw.jpg"
+                with open(path_simpan_str, "wb") as f:
+                    f.write(struktur_img_up.getbuffer())
+                st.success("✅ Gambar struktur organisasi RW berhasil diunggah!")
+                st.rerun()
 
         elif menu_admin == "Upload Foto Pengurus Inti":
             st.markdown("### 📸 Unggah Foto Pengurus Inti (Ketua RW, Sekretaris, Bendahara)")
@@ -679,9 +701,9 @@ if admin_terverifikasi:
                 st.success(f"✅ Dokumen PDF '{pdf_upload.name}' berhasil diunggah!")
                 st.rerun()
                     
-        elif menu_admin == "Upload Foto Galeri":
+        elif menu_admin-=="Upload Foto Galeri" or menu_admin == "Upload Foto Galeri":
             st.markdown("Unggah foto kegiatan baru ke galeri RW:")
-            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png", "JPG"])
             if foto_upload is not None:
                 folder_galeri = "galeri"
                 if not os.path.exists(folder_galeri):
