@@ -24,14 +24,17 @@ h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 
-/* Animasi bergerak real-time untuk banner seni budaya di paling atas */
-@keyframes fadeInSlide {
-    0% { opacity: 0.4; transform: translateY(-5px); }
-    50% { opacity: 1; transform: translateY(0px); }
-    100% { opacity: 0.4; transform: translateY(-5px); }
+/* Animasi bergerak real-time (efek denyut / pulse dan geser lembut) untuk banner seni budaya */
+@keyframes realTimeMotion {
+    0% { transform: scale(1); opacity: 0.85; filter: brightness(0.95); }
+    50% { transform: scale(1.02); opacity: 1; filter: brightness(1.05); }
+    100% { transform: scale(1); opacity: 0.85; filter: brightness(0.95); }
 }
-.banner-animasi {
-    animation: fadeInSlide 3.5s infinite ease-in-out;
+.banner-realtime {
+    animation: realTimeMotion 3s infinite ease-in-out;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+    border: 2px solid #90CAF9;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -49,8 +52,8 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk meluruskan orientasi foto secara presisi
-def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
+# Fungsi untuk meluruskan dan mengecilkan ukuran foto secara proporsional (agar pas di atas)
+def muat_dan_seragamkan_foto(path_file, ukuran=(250, 160)):
     try:
         img = Image.open(path_file)
         img = ImageOps.exif_transpose(img)
@@ -293,7 +296,7 @@ elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
 # =========================================================================
-# ============ 2 FOTO SENI BUDAYA DI PALING ATAS DENGAN ANIMASI ============
+# ============ 2 FOTO SENI BUDAYA UKURAN PAS & ANIMASI REAL-TIME ===========
 # =========================================================================
 def cari_foto_flexible(kemungkinan_nama_file):
     for nama in kemungkinan_nama_file:
@@ -308,39 +311,33 @@ foto_sb2 = cari_foto_flexible(["foto seni budaya 2", "foto_seni_budaya_2", "foto
 col_sb1, col_sb2 = st.columns(2)
 with col_sb1:
     if foto_sb1:
-        st.markdown('<div class="banner-animasi">', unsafe_allow_html=True)
-        st.image(foto_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
+        st.markdown('<div class="banner-realtime">', unsafe_allow_html=True)
+        img1 = muat_dan_seragamkan_foto(foto_sb1, ukuran=(600, 220))
+        st.image(img1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.markdown("""
-        <div style="background-color: #E3F2FD; padding: 25px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎭 Foto Seni Budaya 1 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>foto seni budaya 1.jpg</b> ke folder project)</span></p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.warning("⚠️ File 'foto seni budaya 1' belum ditemukan di folder project.")
 
 with col_sb2:
     if foto_sb2:
-        st.markdown('<div class="banner-animasi">', unsafe_allow_html=True)
-        st.image(foto_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
+        st.markdown('<div class="banner-realtime">', unsafe_allow_html=True)
+        img2 = muat_dan_seragamkan_foto(foto_sb2, ukuran=(600, 220))
+        st.image(img2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.markdown("""
-        <div style="background-color: #E3F2FD; padding: 25px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎨 Foto Seni Budaya 2 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>foto seni budaya 2.jpg</b> ke folder project)</span></p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.warning("⚠️ File 'foto seni budaya 2' belum ditemukan di folder project.")
 
-st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
 # ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
-<div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 20px; box-shadow: 0px 6px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border: 2px solid #90CAF9;">
+<div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 20px; border-radius: 15px; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); margin-bottom: 20px; border: 2px solid #90CAF9;">
 """, unsafe_allow_html=True)
 
 # Teks Berjalan Motivasi RT
 st.markdown("""
-<div style="background-color: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #90CAF9; margin-bottom: 15px; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
-    <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 15px;">
+<div style="background-color: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #90CAF9; margin-bottom: 10px; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
+    <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 14px;">
         🏡 Kepada seluruh Ketua RT RW 14 &nbsp;&bull;&nbsp; Mengurus data warga hari ini adalah investasi kemudahan untuk urusan sosial kemasyarakatan di masa depan &nbsp;&bull;&nbsp; Semangat terus melayani warga dengan sepenuh hati! ❤️
     </marquee>
 </div>
@@ -348,10 +345,10 @@ st.markdown("""
 
 col_logo, col_teks = st.columns([1, 6])
 with col_logo:
-    st.image(sumber_logo, width=80)
+    st.image(sumber_logo, width=70)
 with col_teks:
-    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 5px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-size: 22px;'>Portal Resmi & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #333; font-weight: bold; margin: 5px 0 0 0;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 5px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-size: 20px;'>Portal Resmi & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #333; font-weight: bold; margin: 3px 0 0 0; font-size: 14px;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
 
 st.write("---")
 
@@ -423,7 +420,7 @@ with tab0:
         with col_pengurus1:
             foto_rw = cari_foto_pengurus("ketuarw")
             if foto_rw:
-                img_rw = muat_dan_seragamkan_foto(foto_rw, ukuran=(300, 360))
+                img_rw = muat_dan_seragamkan_foto(foto_rw, ukuran=(280, 320))
                 st.image(img_rw, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
@@ -432,7 +429,7 @@ with tab0:
         with col_pengurus2:
             foto_sek = cari_foto_pengurus("sekretaris")
             if foto_sek:
-                img_sek = muat_dan_seragamkan_foto(foto_sek, ukuran=(300, 360))
+                img_sek = muat_dan_seragamkan_foto(foto_sek, ukuran=(280, 320))
                 st.image(img_sek, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
@@ -441,7 +438,7 @@ with tab0:
         with col_pengurus3:
             foto_bend = cari_foto_pengurus("bendahara")
             if foto_bend:
-                img_bend = muat_dan_seragamkan_foto(foto_bend, ukuran=(300, 360))
+                img_bend = muat_dan_seragamkan_foto(foto_bend, ukuran=(280, 320))
                 st.image(img_bend, use_container_width=True)
             else:
                 st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
