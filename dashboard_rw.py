@@ -154,7 +154,7 @@ df_info = load_info()
 df_struktur = load_struktur()
 df_galeri_meta = load_galeri_meta()
 
-# ================= WAKTU REAL-TIME DI SIDEBAR =================
+# ================= WAKTU REAL-TIME & PENGINGAT SHOLAT DI SIDEBAR =================
 st.sidebar.markdown("---")
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 
@@ -170,6 +170,29 @@ st.sidebar.markdown(f"""
 <div style="background-color: #E3F2FD; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #90CAF9; margin-bottom: 10px;">
     <p style="margin: 0; font-size: 13px; color: #555; font-weight: bold;">📅 {tanggal_indo}</p>
     <p style="margin: 5px 0 0 0; font-size: 16px; color: #0D47A1; font-weight: 900;">⏰ {jam_indo}</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Widget Pengingat Sholat Wilayah Kab. Bandung (Desa Nanjung Mekar, Kec. Rancaekek)
+# Jadwal standar Kemenag RI untuk wilayah Kabupaten Bandung
+jadwal_sholat_hari_ini = {
+    "Subuh": "04:44",
+    "Dzuhur": "12:00",
+    "Ashar": "15:21",
+    "Maghrib": "17:58",
+    "Isya": "19:06"
+}
+
+st.sidebar.markdown("""
+<div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 12px; border-radius: 10px; color: white; margin-bottom: 15px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
+    <p style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">🕌 Jadwal Sholat & Pengingat</p>
+    <p style="margin: 2px 0 10px 0; font-size: 11px; text-align: center; color: #E3F2FD;">Nanjung Mekar, Rancaekek, Kab. Bandung</p>
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 5px 0 8px 0;">
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>🌅 Subuh:</span> <b>04:44 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>☀️ Dzuhur:</span> <b>12:00 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>🌤️ Ashar:</span> <b>15:21 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>🌇 Maghrib:</span> <b>17:58 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between;"><span>🌙 Isya:</span> <b>19:06 WIB</b></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -847,22 +870,19 @@ if admin_terverifikasi:
             if foto_upload is not None:
                 col_i1, col_i2 = st.columns(2)
                 with col_i1:
-                    # Nilai default kosong/pilihan netral agar admin yang mengisi secara sadar
                     input_tgl = st.selectbox("Pilih Tanggal:", ["-- Pilih --"] + [f"{i:02d}" for i in range(1, 32)])
                     input_bln = st.selectbox("Pilih Bulan:", ["-- Pilih --", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"])
                 with col_i2:
                     input_thn = st.selectbox("Pilih Tahun:", ["-- Pilih --", "2024", "2025", "2026", "2027", "2028"])
                     input_ket = st.text_input("Keterangan / Nama Kegiatan:")
                 
-                # Dictionary pemetaan nama bulan teks ke angka untuk kalkulasi hari
                 bulan_to_angka = {
                     'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4,
                     'Mei': 5, 'Juni': 6, 'Juli': 7, 'Agustus': 8,
                     'September': 9, 'Oktober': 10, 'November': 11, 'Desember': 12
                 }
                 
-                # Kalkulasi otomatis nama hari jika tanggal, bulan, dan tahun sudah dipilih lengkap oleh admin
-                input_hari = "Hari Kegiatan"
+                input_hari = ""
                 if input_tgl != "-- Pilih --" and input_bln != "-- Pilih --" and input_thn != "-- Pilih --":
                     try:
                         dt_pilih = datetime(int(input_thn), bulan_to_angka[input_bln], int(input_tgl))
@@ -877,8 +897,8 @@ if admin_terverifikasi:
                         st.warning("⚠️ Kombinasi tanggal yang dipilih tidak valid (misal: tanggal 31 di bulan yang tidak memiliki 31 hari).")
 
                 if st.button("💾 Simpan Foto & Atur Jadwal", type="primary"):
-                    if input_tgl == "-- Pilih --" or input_bln == "-- Pilih --" or input_thn == "-- Pilih --":
-                        st.error("❌ Mohon lengkapi pilihan Tanggal, Bulan, dan Tahun terlebih dahulu!")
+                    if input_tgl == "-- Pilih --" or input_bln == "-- Pilih --" or input_thn == "-- Pilih --" or not input_hari:
+                        st.error("❌ Mohon pilih Tanggal, Bulan, dan Tahun dengan kombinasi yang valid!")
                     else:
                         folder_galeri = "galeri"
                         if not os.path.exists(folder_galeri):
