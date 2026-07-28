@@ -197,20 +197,14 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ================= PEMUTAR MUSIK LATAR (BACKGROUND MUSIC) DI SIDEBAR =================
+# ================= PEMUTAR MUSIK LATAR (BACKGROUND MUSIC) DENGAN KONTROL INTERAKTIF =================
 st.sidebar.markdown("---")
 st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px; font-size: 14px;'>🎵 Musik Latar Portal:</p>", unsafe_allow_html=True)
 file_musik = "backsound.mp3"
 if os.path.exists(file_musik):
     with open(file_musik, "rb") as f:
         audio_bytes = f.read()
-    audio_base64 = base64.b64encode(audio_bytes).decode()
-    st.sidebar.markdown(f"""
-    <audio controls autoplay loop style="width: 100%; height: 35px;">
-        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        Browser Anda tidak mendukung pemutar audio.
-    </audio>
-    """, unsafe_allow_html=True)
+    st.sidebar.audio(audio_bytes, format="audio/mp3", loop=True)
 else:
     st.sidebar.info("ℹ️ File musik **'backsound.mp3'** belum diunggah ke folder project.")
 
@@ -246,7 +240,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
