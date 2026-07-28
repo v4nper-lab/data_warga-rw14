@@ -746,7 +746,7 @@ with tab10:
         
         submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
         
-    # Validasi kode akses pengurus (Password khusus: PengurusRW14#)
+    # Validasi kode akses pengurus (Password khusus: @pengurusrw14)
     if submit_verif:
         if pilihan_jabatan_pengurus == "-- Pilih --" or not nama_pengirim or not kode_akses_pengurus:
             st.error("❌ Mohon lengkapi seluruh kolom verifikasi!")
