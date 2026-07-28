@@ -24,20 +24,20 @@ h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 
-/* Animasi Real-Time Efek Klise Hidup / Slideshow Bergerak */
+/* Animasi Real-Time Klise Hidup & Bergeser Dinamis */
 @keyframes kliseLiveMotion {
-    0% { transform: scale(1) translateY(0px); filter: brightness(0.9) contrast(1.1); box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
-    25% { transform: scale(1.015) translateY(-2px); filter: brightness(1.05) contrast(1.15); box-shadow: 0px 6px 12px rgba(13,71,161,0.3); }
-    50% { transform: scale(1) translateY(0px); filter: brightness(1) contrast(1); box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
-    75% { transform: scale(1.015) translateY(-2px); filter: brightness(1.08) contrast(1.15); box-shadow: 0px 6px 12px rgba(25,118,210,0.3); }
-    100% { transform: scale(1) translateY(0px); filter: brightness(0.9) contrast(1.1); box-shadow: 0px 2px 5px rgba(0,0,0,0.2); }
+    0% { transform: scale(1) translateX(0px); filter: brightness(0.95) contrast(1.05); box-shadow: 0px 3px 8px rgba(13,71,161,0.2); }
+    50% { transform: scale(1.02) translateX(3px); filter: brightness(1.08) contrast(1.15); box-shadow: 0px 6px 15px rgba(25,118,210,0.4); }
+    100% { transform: scale(1) translateX(0px); filter: brightness(0.95) contrast(1.05); box-shadow: 0px 3px 8px rgba(13,71,161,0.2); }
 }
-.banner-realtime {
-    animation: kliseLiveMotion 3s infinite ease-in-out;
-    border-radius: 10px;
+.banner-realtime-klise {
+    animation: kliseLiveMotion 2.5s infinite ease-in-out;
+    border-radius: 8px;
     border: 2px solid #90CAF9;
-    padding: 3px;
-    background-color: white;
+    width: 100%;
+    height: 95px;
+    object-fit: cover;
+    display: block;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -55,8 +55,18 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk meluruskan dan menyesuaikan tinggi foto agar sejajar dengan panel waktu sidebar
-def muat_dan_seragamkan_foto(path_file, ukuran=(280, 85)):
+# Fungsi konversi gambar lokal ke base64 HTML agar animasi bergerak aktif sempurna
+def konversi_gambar_ke_base64(path_file):
+    if os.path.exists(path_file):
+        with open(path_file, "rb") as img_file:
+            encoded_string = base64.b64encode(img_file.read()).decode()
+        ext = path_file.split('.')[-1].lower()
+        if ext in ['jpg', 'jpeg']: mime = 'jpeg'
+        else: mime = 'png'
+        return f"data:image/{mime};base64,{encoded_string}"
+    return ""
+
+def muat_dan_seragamkan_foto(path_file, ukuran=(250, 300)):
     try:
         img = Image.open(path_file)
         img = ImageOps.exif_transpose(img)
@@ -299,7 +309,7 @@ elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
 # =========================================================================
-# ============ 2 FOTO SENI BUDAYA SEJAJAR DENGAN PANEL WAKTU SIDEBAR ======
+# ============ 2 FOTO SENI BUDAYA ANIMASI KLISE HIDUP REAL-TIME ===========
 # =========================================================================
 def cari_foto_flexible(kemungkinan_nama_file):
     for nama in kemungkinan_nama_file:
@@ -315,19 +325,25 @@ col_sb1, col_sb2 = st.columns(2)
 
 with col_sb1:
     if foto_sb1:
-        st.markdown('<div class="banner-realtime" style="text-align: center;">', unsafe_allow_html=True)
-        img_sb1 = muat_dan_seragamkan_foto(foto_sb1, ukuran=(450, 95))
-        st.image(img_sb1, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        base64_img1 = konversi_gambar_ke_base64(foto_sb1)
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 5px;">
+            <img src="{base64_img1}" class="banner-realtime-klise">
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: #0D47A1; font-weight: bold;">🎭 Dokumentasi Seni & Budaya RW 14 (1)</p>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 1' belum ditemukan di folder project.")
 
 with col_sb2:
     if foto_sb2:
-        st.markdown('<div class="banner-realtime" style="text-align: center;">', unsafe_allow_html=True)
-        img_sb2 = muat_dan_seragamkan_foto(foto_sb2, ukuran=(450, 95))
-        st.image(img_sb2, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        base64_img2 = konversi_gambar_ke_base64(foto_sb2)
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 5px;">
+            <img src="{base64_img2}" class="banner-realtime-klise">
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: #0D47A1; font-weight: bold;">🎨 Dokumentasi Seni & Budaya RW 14 (2)</p>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 2' belum ditemukan di folder project.")
 
