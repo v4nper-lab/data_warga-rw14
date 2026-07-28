@@ -6,7 +6,7 @@ import os
 from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
-# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL
+# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL (Termasuk animasi bergerak real-time banner seni budaya)
 st.set_page_config(
     page_title="Portal Resmi RW 14 Griya Permata Raya",
     layout="wide",
@@ -23,6 +23,19 @@ div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[
 h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
+
+/* Animasi bergerak real-time untuk banner seni budaya di paling atas */
+@keyframes fadeInSlide {
+    0% { opacity: 0.3; transform: translateY(-10px); }
+    50% { opacity: 1; transform: translateY(0px); }
+    100% { opacity: 0.3; transform: translateY(-10px); }
+}
+.banner-animasi {
+    animation: fadeInSlide 4s infinite ease-in-out;
+    border-radius: 15px;
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.12);
+    border: 3px solid #90CAF9;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -224,7 +237,6 @@ if "RT" in df.columns:
     }
 
     for rt_pilih in pilihan_rt_format:
-        # Ekstrak angka RT secara bersih (misal "RT 01" atau "RT01" menjadi "1")
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         
         path_foto = None
@@ -239,7 +251,6 @@ if "RT" in df.columns:
                 path_foto = lokasi_file
                 break
 
-        # Ambil nama resmi berdasarkan nomor RT
         nama_ketua = daftar_ketua_rt_resmi.get(rt_num_clean, f"Ketua {rt_pilih}")
 
         if path_foto and os.path.exists(path_foto):
@@ -284,6 +295,41 @@ if password_input == "V@nadminrw14":
     st.sidebar.success("✅ Login Admin Berhasil!")
 elif password_input != "":
     st.sidebar.error("❌ Password salah!")
+
+# =========================================================================
+# ============ 2 FOTO SENI BUDAYA DI PALING ATAS DENGAN ANIMASI ============
+# =========================================================================
+def cari_foto_seni(nama_dasar):
+    for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+        p = f"{nama_dasar}{ext}"
+        if os.path.exists(p): return p
+    return None
+
+foto_sb1 = cari_foto_seni("seni budaya 1")
+foto_sb2 = cari_foto_seni("seni budaya 2")
+
+col_sb1, col_sb2 = st.columns(2)
+with col_sb1:
+    if foto_sb1:
+        st.image(foto_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
+    else:
+        st.markdown("""
+        <div style="background-color: #E3F2FD; padding: 30px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
+            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎭 Foto Seni Budaya 1<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 1.jpg' ke folder utama project)</span></p>
+        </div>
+        """, unsafe_allow_html=True)
+
+with col_sb2:
+    if foto_sb2:
+        st.image(foto_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
+    else:
+        st.markdown("""
+        <div style="background-color: #E3F2FD; padding: 30px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
+            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎨 Foto Seni Budaya 2<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 2.jpg' ke folder utama project)</span></p>
+        </div>
+        """, unsafe_allow_html=True)
+
+st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
 # ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
@@ -780,7 +826,6 @@ with tab10:
                 ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"]
             )
             nama_pengirim = st.text_input("Nama Lengkap Anda:")
-            # Tampilan kode akses disembunyikan menggunakan type="password"
             kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password")
             
             submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
