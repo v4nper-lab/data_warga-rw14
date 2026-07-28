@@ -86,9 +86,29 @@ def load_struktur():
         return df_struk
     else:
         data_awal = {
-            "JABATAN": ["Ketua RW 14", "Sekretaris", "Bendahara", "Keamanan & Ketertiban", "Pembangunan & Lingkungan", "Olahraga", "Sosial & Pemakaman", "Seni Budaya & Pemuda"],
-            "NAMA PENGURUS": ["Triyadi Sucipto", "Irvan Permana", "Aan Toni Fauyi", "Dedi, Uus, Ali, Tiktik", "E. Rustandi, Nahnu, Dahlan, Sugiyanto, Mulyono", "Mulyana, Ateng, Fajar, Kris, Apeng, Mulyadi", "Ust. Nanang, E. Rustandi, Ust. Juhendi, Shulton, Edi, Baryanto", "Uwa Tia, Ridwan S, Hary"],
-            "KONTAK / HP": ["0812xxxxxxxx", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
+            "JABATAN": [
+                "Ketua RW 014", 
+                "PKK & Posyandu RW 014", 
+                "Sekretaris", 
+                "Bendahara", 
+                "Keamanan & Ketertiban", 
+                "Pembangunan & Lingkungan", 
+                "Olahraga", 
+                "Sosial & Pemakaman", 
+                "Seni Budaya & Pemuda"
+            ],
+            "NAMA PENGURUS": [
+                "Triyadi Sucipto", 
+                "Tim PKK / Posyandu RW 014", 
+                "Irvan Permana", 
+                "Aan Toni Fauyi", 
+                "Dedi (RT 04), Uus (RT 04), Ali (RT 03), Tiktik (RT 07)", 
+                "E. Rustandi (RT 06), Nahnu (RT 07), Dahlan (RT 03), Sugiyanto (RT 01), Mulyono (RT 05)", 
+                "Mulyana (RT 05), Ateng (RT 03), Fajar (RT 01), Kris (RT 04), Apeng (RT 02), Mulyadi (RT 06)", 
+                "Ust. Nanang (RT 03), E. Rustandi (RT 06), Ust. Juhendi (RT 07), Shulton (RT 04), Edi (RT 05), Baryanto (RT 01)", 
+                "Uwa Tia (RT 06), Ridwan S (RT 01), Hary (RT 07)"
+            ],
+            "KONTAK / HP": ["0812xxxxxxxx", "-", "0812xxxxxxxx", "0812xxxxxxxx", "-", "-", "-", "-", "-"]
         }
         return pd.DataFrame(data_awal)
 
