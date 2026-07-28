@@ -280,10 +280,10 @@ else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
     st.stop()
 
-# ================= KONTROL KEAMANAN ADMIN (LANGSUNG PASSWORD) =================
+# ================= KONTROL KEAMANAN ADMIN (TULISAN ADMIN MERAH) =================
 st.sidebar.markdown("---")
-st.sidebar.subheader("🔐 Menu Pengurus (Admin)")
-password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
+st.sidebar.markdown("<p style='font-weight: bold; color: red; font-size: 16px; margin-bottom: 5px;'>🔐 Menu Pengurus (Admin)</p>", unsafe_allow_html=True)
+password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password", key="input_password_admin_rw14")
 
 admin_terverifikasi = False
 if password_input == "V@nadminrw14":
@@ -302,8 +302,8 @@ def cari_foto_flexible(kemungkinan_nama_file):
             if os.path.exists(p): return p
     return None
 
-foto_sb1 = cari_foto_flexible(["seni budaya 1", "seni_budaya_1", "senibudaya1"])
-foto_sb2 = cari_foto_flexible(["seni budaya 2", "seni_budaya_2", "senibudaya2"])
+foto_sb1 = cari_foto_flexible(["foto seni budaya 1", "foto_seni_budaya_1", "fotosenibudaya1", "seni budaya 1"])
+foto_sb2 = cari_foto_flexible(["foto seni budaya 2", "foto_seni_budaya_2", "fotosenibudaya2", "seni budaya 2"])
 
 col_sb1, col_sb2 = st.columns(2)
 with col_sb1:
@@ -314,7 +314,7 @@ with col_sb1:
     else:
         st.markdown("""
         <div style="background-color: #E3F2FD; padding: 25px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎭 Foto Seni Budaya 1 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>seni budaya 1.jpg</b> ke folder utama GitHub)</span></p>
+            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎭 Foto Seni Budaya 1 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>foto seni budaya 1.jpg</b> ke folder project)</span></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -326,7 +326,7 @@ with col_sb2:
     else:
         st.markdown("""
         <div style="background-color: #E3F2FD; padding: 25px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎨 Foto Seni Budaya 2 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>seni budaya 2.jpg</b> ke folder utama GitHub)</span></p>
+            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎨 Foto Seni Budaya 2 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>foto seni budaya 2.jpg</b> ke folder project)</span></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1087,6 +1087,8 @@ if admin_terverifikasi:
                     if st.button("🗑️ Hapus Foto Ini Permanen", type="primary"):
                         try:
                             os.remove(path_preview)
+                            if os.path.exists("datasaran.xlsx"):
+                                pass
                             if os.path.exists("datagaleri.xlsx"):
                                 df_g_del = pd.read_excel("datagaleri.xlsx")
                                 df_g_del.columns = df_g_del.columns.str.strip().str.upper()
