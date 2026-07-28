@@ -313,8 +313,8 @@ with col_sb1:
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown("""
-        <div style="background-color: #E3F2FD; padding: 30px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎭 Foto Seni Budaya 1 Belum Ditemukan<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 1.jpg' ke folder utama project)</span></p>
+        <div style="background-color: #E3F2FD; padding: 25px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
+            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎭 Foto Seni Budaya 1 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>seni budaya 1.jpg</b> ke folder utama GitHub)</span></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -325,8 +325,8 @@ with col_sb2:
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown("""
-        <div style="background-color: #E3F2FD; padding: 30px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
-            <p style="margin: 0; color: #0D47A1; font-weight: bold;">🎨 Foto Seni Budaya 2 Belum Ditemukan<br><span style="font-size: 12px; color: #666;">(Unggah file 'seni budaya 2.jpg' ke folder utama project)</span></p>
+        <div style="background-color: #E3F2FD; padding: 25px; border-radius: 10px; text-align: center; border: 2px dashed #90CAF9;">
+            <p style="margin: 0; color: #0D47A1; font-weight: bold; font-size: 14px;">🎨 Foto Seni Budaya 2 Belum Ada<br><span style="font-size: 12px; color: #555;">(Unggah file <b>seni budaya 2.jpg</b> ke folder utama GitHub)</span></p>
         </div>
         """, unsafe_allow_html=True)
 
