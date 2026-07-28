@@ -201,7 +201,7 @@ st.sidebar.header("🛠️ Panel Filter Data RT")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique(), key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
-    pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
+    pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format, key="filter_rt_sidebar_multiselect")
     pilihan_rt_format = sorted(pilihan_rt_format, key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
 
     # ================= FOTO KETUA RT FORMAT VERTIKAL DI SIDEBAR =================
@@ -270,10 +270,10 @@ else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
     st.stop()
 
-# ================= KONTROL KEAMANAN ADMIN (TULISAN ADMIN MERAH) =================
+# ================= KONTROL KEAMANAN ADMIN (TERPISAH AMAN) =================
 st.sidebar.markdown("---")
 st.sidebar.markdown("<p style='font-weight: bold; color: red; font-size: 16px; margin-bottom: 5px;'>🔐 Menu Pengurus (Admin)</p>", unsafe_allow_html=True)
-password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password", key="input_password_admin_rw14")
+password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password", key="input_password_admin_segel_unik_rw14")
 
 admin_terverifikasi = False
 if password_input == "V@nadminrw14":
