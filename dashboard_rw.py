@@ -76,7 +76,6 @@ def load_kas_pemakaman():
         df_kp.columns = df_kp.columns.str.strip().str.upper()
         return df_kp
     else:
-        # Data dummy awal jika file belum ada
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "JENIS", "JUMLAH"])
 
 @st.cache_data
@@ -300,7 +299,7 @@ with tab0:
         * Memeriksa statistik kependudukan dan tingkat pendidikan warga.
         * Mencari data Kartu Keluarga (KK) dengan mudah.
         * Memantau transparansi laporan keuangan kas RW dan laporan khusus seksi pemakaman.
-        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan.
+        * Membaca hasil rapat, agenda kegiatan, dokumen PDF resmi, serta galeri foto lingkungan yang tersusun rapi berdasarkan tanggal, bulan, dan tahun kegiatan.
         
         Mari bersama-sama kita wujudkan kerukunan, keterbukaan, dan pelayanan warga yang semakin prima!
         """)
@@ -374,7 +373,7 @@ with tab0:
         </div>
         """, unsafe_allow_html=True)
 
-# ================= TAB STRUKTUR ORGANISASI (DENGAN GAMBAR, JOBDESC, PROGRAM, & LAPORAN PEMAKAMAN) =================
+# ================= TAB STRUKTUR ORGANISASI =================
 with tab_struk:
     st.subheader("👥 Bagan & Uraian Tugas (Job Description) Struktur Pengurus RW 14")
     st.markdown("Bagan organigram resmi, rincian tugas, serta bentuk program kerja dari masing-masing seksi Periode 2024 - 2029.")
@@ -622,10 +621,10 @@ with tab7:
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
 
-# ================= TAB 8: GALERI KEGIATAN =================
+# ================= TAB 8: GALERI KEGIATAN (TERSUSUN RAPI BERDASARKAN TANGGAL, BULAN, & TAHUN) =================
 with tab8:
     st.subheader("🖼️ Galeri Foto Kegiatan Warga RW 14")
-    st.markdown("Dokumentasi foto kegiatan warga, kerja bakti, posyandu, dan acara kebersamaan di lingkungan Perum Griya Permata Raya.")
+    st.markdown("Dokumentasi foto kegiatan warga yang tersusun rapi berdasarkan Tanggal, Bulan, dan Tahun kegiatan.")
     
     folder_galeri = "galeri"
     if not os.path.exists(folder_galeri):
@@ -634,13 +633,63 @@ with tab8:
     daftar_foto = [f for f in os.listdir(folder_galeri) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
     
     if daftar_foto:
-        cols = st.columns(3)
-        for idx, nama_foto in enumerate(daftar_foto):
-            path_foto = os.path.join(folder_galeri, nama_foto)
-            with cols[idx % 3]:
-                st.image(path_foto, caption=nama_foto.rsplit('.', 1)[0].replace('_', ' ').title(), use_container_width=True)
+        # Kamus nama bulan dalam Bahasa Indonesia
+        nama_bulan_dict = {
+            '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+            '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+            '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+        }
+        
+        # Pengelompokan data foto berdasarkan Tahun -> Bulan -> Tanggal
+        galeri_arsip = {}
+        
+        for nama_file in daftar_foto:
+            # Format nama file diharapkan: YYYY-MM-DD_nama_kegiatan.jpg (atau fallback jika format lain)
+            part = nama_file.split('_')[0]
+            if len(part) == 10 and part.count('-') == 2:
+                tahun, bulan, tanggal = part.split('-')
+            else:
+                # Jika tidak pakai format tanggal di depan nama file, masukkan ke kategori Arsip Umum
+                tahun, bulan, tanggal = "Lainnya", "Arsip", "Umum"
+                
+            nama_bln_indo = nama_bulan_dict.get(bulan, bulan)
+            
+            if tahun not in galeri_arsip:
+                galeri_arsip[tahun] = {}
+            if nama_bln_indo not in galeri_arsip[tahun]:
+                galeri_arsip[tahun][nama_bln_indo] = {}
+            if tanggal not in galeri_arsip[tahun][nama_bln_indo]:
+                galeri_arsip[tahun][nama_bln_indo][tanggal] = []
+                
+            galeri_arsip[tahun][nama_bln_indo][tanggal].append(nama_file)
+
+        # Tampilkan secara hierarki rapi (Tahun -> Bulan -> Tanggal)
+        for tahun in sorted(galeri_arsip.keys(), reverse=True):
+            st.markdown(f"## 📅 Tahun {tahun}")
+            for bulan in sorted(galeri_arsip[tahun].keys()):
+                st.markdown(f"### 🗓️ Bulan: {bulan}")
+                for tanggal in sorted(galeri_arsip[tahun][bulan].keys(), reverse=True):
+                    if tanggal != "Umum":
+                        st.markdown(f"**📌 Tanggal Kegiatan: {tanggal} {bulan} {tahun}**")
+                    else:
+                        st.markdown(f"**📌 Kategori: Arsip Umum / Tanpa Format Tanggal**")
+                        
+                    foto_list = galeri_arsip[tahun][bulan][tanggal]
+                    cols = st.columns(3)
+                    for idx, nama_foto in enumerate(foto_list):
+                        path_foto = os.path.join(folder_galeri, nama_foto)
+                        # Bersihkan nama caption dari format tanggal di depan file
+                        caption_bersih = nama_foto.rsplit('.', 1)[0]
+                        if len(caption_bersih) > 10 and caption_bersih[4] == '-' and caption_bersih[7] == '-':
+                            caption_bersih = caption_bersih[10:].replace('_', ' ').strip()
+                        else:
+                            caption_bersih = caption_bersih.replace('_', ' ').title()
+                            
+                        with cols[idx % 3]:
+                            st.image(path_foto, caption=caption_bersih, use_container_width=True)
+                    st.write("---")
     else:
-        st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah foto melalui menu Admin.")
+        st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah foto melalui menu Admin (Disarankan menamai file dengan format: YYYY-MM-DD_nama_kegiatan.jpg).")
 
 # ================= TAB 9: EDIT & UPLOAD (HANYA ADMIN) =================
 if admin_terverifikasi:
@@ -782,6 +831,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Upload Foto Galeri":
             st.markdown("Unggah foto kegiatan baru ke galeri RW:")
+            st.markdown("💡 *Tips Penamaan File:* Agar foto otomatis tersusun rapi berdasarkan tanggal, beri nama file dengan format **YYYY-MM-DD_nama_kegiatan.jpg** (Contoh: `2026-08-17_Kerja_Bakti.jpg`)")
             foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
             if foto_upload is not None:
                 folder_galeri = "galeri"
