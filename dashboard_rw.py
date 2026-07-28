@@ -270,17 +270,24 @@ else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
     st.stop()
 
-# ================= KONTROL KEAMANAN ADMIN (TERPISAH AMAN) =================
+# ================= KONTROL KEAMANAN ADMIN (STABIL DENGAN SESSION STATE) =================
 st.sidebar.markdown("---")
 st.sidebar.markdown("<p style='font-weight: bold; color: red; font-size: 16px; margin-bottom: 5px;'>🔐 Menu Pengurus (Admin)</p>", unsafe_allow_html=True)
+
+if "admin_logged_in" not in st.session_state:
+    st.session_state["admin_logged_in"] = False
+
 password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password", key="input_password_admin_segel_unik_rw14")
 
-admin_terverifikasi = False
 if password_input == "V@nadminrw14":
-    admin_terverifikasi = True
-    st.sidebar.success("✅ Login Admin Berhasil!")
+    st.session_state["admin_logged_in"] = True
 elif password_input != "":
+    st.session_state["admin_logged_in"] = False
     st.sidebar.error("❌ Password salah!")
+
+admin_terverifikasi = st.session_state["admin_logged_in"]
+if admin_terverifikasi:
+    st.sidebar.success("✅ Login Admin Berhasil!")
 
 # ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
@@ -736,7 +743,7 @@ with tab10:
 
     if st.session_state.get("saran_terverifikasi", False):
         st.success(f"Anda sedang login sebagai: **{st.session_state.get('saran_nama')} ({st.session_state.get('saran_jabatan')})**")
-        if st.button("🔄 Keluar / Ganti Akun Pengurus"):
+        if st.button("🔄 Keluar / Ganti Akun Pengurus", key="btn_keluar_saran_pengurus"):
             st.session_state["saran_terverifikasi"] = False
             st.rerun()
             
@@ -761,9 +768,9 @@ with tab10:
                     if os.path.exists("datasaran.xlsx"):
                         df_s_existing = pd.read_excel("datasaran.xlsx")
                         df_s_existing.columns = df_s_existing.columns.str.strip().str.upper()
-                        df_s_updated = pd.concat([df_s_existing, new_row], ignore_index=True)
+                        df_s_updated = pd.concat([df_s_existing, new_saran_row], ignore_index=True)
                     else:
-                        df_s_updated = new_row
+                        df_s_updated = new_saran_row
                         
                     df_s_updated.to_excel("datasaran.xlsx", index=False)
                     st.cache_data.clear()
@@ -774,10 +781,11 @@ with tab10:
             st.markdown("### 🔑 Verifikasi Identitas Pengurus")
             pilihan_jabatan_pengurus = st.selectbox(
                 "Pilih Jabatan Anda:", 
-                ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"]
+                ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"],
+                key="select_jabatan_saran_form"
             )
-            nama_pengirim = st.text_input("Nama Lengkap Anda:")
-            kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password")
+            nama_pengirim = st.text_input("Nama Lengkap Anda:", key="input_nama_saran_form")
+            kode_akses_pengurus = st.text_input("Masukkan Kode Akses Pengurus:", type="password", key="input_kode_saran_form")
             
             submit_verif = st.form_submit_button("🔓 Verifikasi & Masuk")
             
