@@ -34,9 +34,9 @@ button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-s
 }
 .banner-realtime {
     animation: kliseLiveMotion 3s infinite ease-in-out;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 2px solid #90CAF9;
-    padding: 2px;
+    padding: 3px;
     background-color: white;
 }
 </style>
@@ -55,8 +55,8 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk meluruskan dan memperkecil ukuran foto agar pas & proporsional
-def muat_dan_seragamkan_foto(path_file, ukuran=(180, 110)):
+# Fungsi untuk meluruskan dan menyesuaikan tinggi foto agar sejajar dengan panel waktu sidebar
+def muat_dan_seragamkan_foto(path_file, ukuran=(280, 85)):
     try:
         img = Image.open(path_file)
         img = ImageOps.exif_transpose(img)
@@ -299,7 +299,7 @@ elif password_input != "":
     st.sidebar.error("❌ Password salah!")
 
 # =========================================================================
-# ============ 2 FOTO SENI BUDAYA DENGAN ANIMASI KLISE HIDUP ============
+# ============ 2 FOTO SENI BUDAYA SEJAJAR DENGAN PANEL WAKTU SIDEBAR ======
 # =========================================================================
 def cari_foto_flexible(kemungkinan_nama_file):
     for nama in kemungkinan_nama_file:
@@ -311,13 +311,13 @@ def cari_foto_flexible(kemungkinan_nama_file):
 foto_sb1 = cari_foto_flexible(["foto seni budaya 1", "foto_seni_budaya_1", "fotosenibudaya1", "seni budaya 1"])
 foto_sb2 = cari_foto_flexible(["foto seni budaya 2", "foto_seni_budaya_2", "fotosenibudaya2", "seni budaya 2"])
 
-col_kosong1, col_sb1, col_sb2, col_kosong2 = st.columns([1, 4, 4, 1])
+col_sb1, col_sb2 = st.columns(2)
 
 with col_sb1:
     if foto_sb1:
         st.markdown('<div class="banner-realtime" style="text-align: center;">', unsafe_allow_html=True)
-        img_sb1 = muat_dan_seragamkan_foto(foto_sb1, ukuran=(380, 160))
-        st.image(img_sb1, use_container_width=True, caption="🎭 Dokumentasi Seni & Budaya RW 14 (1)")
+        img_sb1 = muat_dan_seragamkan_foto(foto_sb1, ukuran=(450, 95))
+        st.image(img_sb1, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 1' belum ditemukan di folder project.")
@@ -325,13 +325,13 @@ with col_sb1:
 with col_sb2:
     if foto_sb2:
         st.markdown('<div class="banner-realtime" style="text-align: center;">', unsafe_allow_html=True)
-        img_sb2 = muat_dan_seragamkan_foto(foto_sb2, ukuran=(380, 160))
-        st.image(img_sb2, use_container_width=True, caption="🎨 Dokumentasi Seni & Budaya RW 14 (2)")
+        img_sb2 = muat_dan_seragamkan_foto(foto_sb2, ukuran=(450, 95))
+        st.image(img_sb2, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("⚠️ File 'foto seni budaya 2' belum ditemukan di folder project.")
 
-st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom: 5px;'></div>", unsafe_allow_html=True)
 
 # ================= KONTEN UTAMA PORTAL =================
 st.markdown("""
