@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -312,19 +313,12 @@ with col_teks:
 
 st.write("---")
 
-# ================= MENU UTAMA WEBSITE PORTAL =================
-if admin_terverifikasi:
-    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
-        "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
-        "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
-    ])
-else:
-    tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab10 = st.tabs([
-        "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
-        "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
-        "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus"
-    ])
+# ================= MENU UTAMA WEBSITE PORTAL (JUMLAH TAB KONSISTEN) =================
+tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+    "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
+    "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
+    "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
+])
 
 # ================= TAB 0: BERANDA / PROFIL =================
 with tab0:
@@ -736,8 +730,8 @@ with tab8:
     else:
         st.info("ℹ️ Belum ada foto kegiatan di galeri. Pengurus dapat mengunggah dan mengatur jadwalnya melalui menu Admin.")
 
-# ================= TAB 10: SARAN & PENDAPAT (KHUSUS KETUA RT 01-07 & PENGURUS INTI) =================
-with tab10:
+# ================= TAB 9: SARAN & PENDAPAT (KONSISTEN) =================
+with tab9:
     st.subheader("💬 Kotak Aspirasi, Saran, & Pendapat Pengurus RW 14")
     st.markdown("Menu khusus bagi **Ketua RT 01 s.d. 07** serta **Pengurus Inti RW** untuk memberikan masukan, evaluasi, dan pendapat terkait pengembangan Portal RW 14.")
 
@@ -826,20 +820,21 @@ with tab10:
     else:
         st.info("ℹ️ Belum ada catatan saran pengurus.")
 
-# ================= TAB 9: EDIT & UPLOAD (HANYA ADMIN) =================
-if admin_terverifikasi:
-    with tab9:
-        st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
-        st.warning("⚠️ Anda berada dalam mode Admin. Anda dapat mengelola data warga, struktur, kas, kas pemakaman, informasi, galeri foto, foto pengurus, hingga menghapus foto galeri.")
-        
+# ================= TAB 10: EDIT & UPLOAD ADMIN (KONSISTEN & AMAN) =================
+with tab10:
+    st.subheader("⚙️ Panel Pengaturan & Unggah Dokumen (Admin)")
+    
+    if admin_terverifikasi:
+        st.success("✅ Status Admin Aktif. Silakan pilih menu pengelolaan di bawah ini:")
         menu_admin = st.selectbox(
             "Pilih Menu Pengelolaan:", 
-            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Laporan Kas Pemakaman/Sosial", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri", "Hapus Foto Galeri"]
+            ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Laporan Kas Pemakaman/Sosial", "Informasi & Hasil Rapat", "Upload Gambar Struktur RW", "Upload Foto Pengurus Inti", "Upload Foto Ketua RT", "Upload File PDF (Kas & Rapat)", "Upload Foto Galeri", "Hapus Foto Galeri"],
+            key="selectbox_menu_admin_utama"
         )
         
         if menu_admin == "Data Warga":
             data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-            if st.button("💾 Simpan Perubahan Data Warga", type="primary"):
+            if st.button("💾 Simpan Perubahan Data Warga", type="primary", key="btn_simpan_warga_admin"):
                 try:
                     data_terbaru.to_excel("datawarga.xlsx", index=False)
                     st.cache_data.clear()
@@ -850,7 +845,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Struktur Organisasi":
             struk_terbaru = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
-            if st.button("💾 Simpan Perubahan Struktur Organisasi", type="primary"):
+            if st.button("💾 Simpan Perubahan Struktur Organisasi", type="primary", key="btn_simpan_struk_admin"):
                 try:
                     struk_terbaru.to_excel("datastruktur.xlsx", index=False)
                     st.cache_data.clear()
@@ -861,7 +856,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Laporan Kas RW":
             kas_terbaru = st.data_editor(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-            if st.button("💾 Simpan Perubahan Kas RW", type="primary"):
+            if st.button("💾 Simpan Perubahan Kas RW", type="primary", key="btn_simpan_kas_admin"):
                 try:
                     kas_terbaru.to_excel("datakas.xlsx", index=False)
                     st.cache_data.clear()
@@ -872,7 +867,7 @@ if admin_terverifikasi:
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
             kp_terbaru = st.data_editor(df_kas_pemakaman.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-            if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary"):
+            if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary", key="btn_simpan_kp_admin"):
                 try:
                     kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
                     st.cache_data.clear()
@@ -883,7 +878,7 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Informasi & Hasil Rapat":
             info_terbaru = st.data_editor(df_info, num_rows="dynamic", use_container_width=True)
-            if st.button("💾 Simpan Perubahan Informasi", type="primary"):
+            if st.button("💾 Simpan Perubahan Informasi", type="primary", key="btn_simpan_info_admin"):
                 try:
                     info_terbaru.to_excel("datainfo.xlsx", index=False)
                     st.cache_data.clear()
@@ -894,7 +889,7 @@ if admin_terverifikasi:
 
         elif menu_admin == "Upload Gambar Struktur RW":
             st.markdown("### 🖼️ Unggah Gambar Bagan Struktur Organisasi RW")
-            struktur_img_up = st.file_uploader("Pilih File Gambar Struktur (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            struktur_img_up = st.file_uploader("Pilih File Gambar Struktur (JPG/PNG)", type=["jpg", "jpeg", "png"], key="up_str_img")
             if struktur_img_up is not None:
                 path_simpan_str = "struktur_rw.jpg"
                 with open(path_simpan_str, "wb") as f:
@@ -904,12 +899,12 @@ if admin_terverifikasi:
 
         elif menu_admin == "Upload Foto Pengurus Inti":
             st.markdown("### 📸 Unggah Foto Pengurus Inti (Ketua RW, Sekretaris, Bendahara)")
-            pilih_posisi = st.selectbox("Pilih Jabatan Pengurus:", ["Ketua RW", "Sekretaris", "Bendahara"])
+            pilih_posisi = st.selectbox("Pilih Jabatan Pengurus:", ["Ketua RW", "Sekretaris", "Bendahara"], key="sel_pos_pengurus")
             
             mapping_nama = {"Ketua RW": "ketuarw", "Sekretaris": "sekretaris", "Bendahara": "bendahara"}
             file_key = mapping_nama[pilih_posisi]
             
-            foto_pengurus_up = st.file_uploader(f"Pilih Foto untuk {pilih_posisi} (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            foto_pengurus_up = st.file_uploader(f"Pilih Foto untuk {pilih_posisi} (JPG/PNG)", type=["jpg", "jpeg", "png"], key="up_foto_pengurus")
             if foto_pengurus_up is not None:
                 folder_pengurus_dir = "pengurus"
                 if not os.path.exists(folder_pengurus_dir):
@@ -925,10 +920,10 @@ if admin_terverifikasi:
             st.markdown("### 📸 Unggah Foto Profil Ketua RT")
             st.markdown("Pilih nomor RT dan unggah foto profil resminya:")
             
-            pilih_rt_upload = st.selectbox("Pilih RT untuk Foto:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07", "RT 08", "RT 09", "RT 10"])
+            pilih_rt_upload = st.selectbox("Pilih RT untuk Foto:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07", "RT 08", "RT 09", "RT 10"], key="sel_rt_foto")
             rt_num_up = ''.join(filter(str.isdigit, pilih_rt_upload))
             
-            foto_rt_upload = st.file_uploader(f"Pilih Foto untuk {pilih_rt_upload} (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            foto_rt_upload = st.file_uploader(f"Pilih Foto untuk {pilih_rt_upload} (JPG/PNG)", type=["jpg", "jpeg", "png"], key="up_foto_rt_file")
             
             if foto_rt_upload is not None:
                 folder_rt_dir = "rt"
@@ -946,8 +941,8 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Upload File PDF (Kas & Rapat)":
             st.markdown("Unggah dokumen resmi berformat PDF untuk Warga:")
-            kategori_pdf = st.radio("Pilih Kategori Dokumen PDF:", ["Laporan Kas RW", "Hasil Rapat / Informasi RW"])
-            pdf_upload = st.file_uploader("Pilih File PDF", type=["pdf"])
+            kategori_pdf = st.radio("Pilih Kategori Dokumen PDF:", ["Laporan Kas RW", "Hasil Rapat / Informasi RW"], key="radio_kat_pdf")
+            pdf_upload = st.file_uploader("Pilih File PDF", type=["pdf"], key="up_pdf_file_rw")
             
             if pdf_upload is not None:
                 if kategori_pdf == "Laporan Kas RW":
@@ -966,16 +961,16 @@ if admin_terverifikasi:
                     
         elif menu_admin == "Upload Foto Galeri":
             st.markdown("📦 **Upload Foto Kegiatan ke Galeri & Atur Jadwal Otomatis**")
-            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"])
+            foto_upload = st.file_uploader("Pilih File Foto (JPG/PNG)", type=["jpg", "jpeg", "png"], key="up_foto_galeri_file")
             
             if foto_upload is not None:
                 col_i1, col_i2 = st.columns(2)
                 with col_i1:
-                    input_tgl = st.selectbox("Pilih Tanggal:", ["-- Pilih --"] + [f"{i:02d}" for i in range(1, 32)])
-                    input_bln = st.selectbox("Pilih Bulan:", ["-- Pilih --", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"])
+                    input_tgl = st.selectbox("Pilih Tanggal:", ["-- Pilih --"] + [f"{i:02d}" for i in range(1, 32)], key="sel_tgl_galeri")
+                    input_bln = st.selectbox("Pilih Bulan:", ["-- Pilih --", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"], key="sel_bln_galeri")
                 with col_i2:
-                    input_thn = st.selectbox("Pilih Tahun:", ["-- Pilih --", "2024", "2025", "2026", "2027", "2028"])
-                    input_ket = st.text_input("Keterangan / Nama Kegiatan:")
+                    input_thn = st.selectbox("Pilih Tahun:", ["-- Pilih --", "2024", "2025", "2026", "2027", "2028"], key="sel_thn_galeri")
+                    input_ket = st.text_input("Keterangan / Nama Kegiatan:", key="input_ket_galeri")
                 
                 bulan_to_angka = {
                     'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4,
@@ -997,7 +992,7 @@ if admin_terverifikasi:
                     except Exception:
                         st.warning("⚠️ Kombinasi tanggal yang dipilih tidak valid.")
 
-                if st.button("💾 Simpan Foto & Atur Jadwal", type="primary"):
+                if st.button("💾 Simpan Foto & Atur Jadwal", type="primary", key="btn_simpan_galeri_admin"):
                     if input_tgl == "-- Pilih --" or input_bln == "-- Pilih --" or input_thn == "-- Pilih --" or not input_hari:
                         st.error("❌ Mohon pilih Tanggal, Bulan, dan Tahun dengan kombinasi yang valid!")
                     else:
@@ -1037,16 +1032,14 @@ if admin_terverifikasi:
             if os.path.exists(folder_galeri):
                 daftar_foto_del = [f for f in os.listdir(folder_galeri) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
                 if daftar_foto_del:
-                    foto_pilih_hapus = st.selectbox("Pilih Foto yang Ingin Dihapus:", options=daftar_foto_del)
+                    foto_pilih_hapus = st.selectbox("Pilih Foto yang Ingin Dihapus:", options=daftar_foto_del, key="sel_hapus_galeri_foto")
                     
                     path_preview = os.path.join(folder_galeri, foto_pilih_hapus)
                     st.image(path_preview, width=300, caption=f"Preview: {foto_pilih_hapus}")
                     
-                    if st.button("🗑️ Hapus Foto Ini Permanen", type="primary"):
+                    if st.button("🗑️ Hapus Foto Ini Permanen", type="primary", key="btn_konfirmasi_hapus_galeri"):
                         try:
                             os.remove(path_preview)
-                            if os.path.exists("datasaran.xlsx"):
-                                pass
                             if os.path.exists("datagaleri.xlsx"):
                                 df_g_del = pd.read_excel("datagaleri.xlsx")
                                 df_g_del.columns = df_g_del.columns.str.strip().str.upper()
@@ -1062,6 +1055,8 @@ if admin_terverifikasi:
                     st.info("ℹ️ Belum ada foto di dalam folder galeri.")
             else:
                 st.info("ℹ️ Folder galeri belum tersedia.")
+    else:
+        st.warning("⚠️ **Akses Terbatas:** Silakan masukkan **Password Admin** yang benar di panel sidebar sebelah kiri untuk membuka menu pengaturan dan unggah dokumen ini.")
 
 # Penutup blok div utama biru muda
 st.markdown("</div>", unsafe_allow_html=True)
