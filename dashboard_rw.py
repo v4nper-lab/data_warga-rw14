@@ -85,6 +85,7 @@ def load_kas():
         if k_col not in df_kas.columns: df_kas[k_col] = 0
         
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
+        df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str)
         df_kas[m_col] = pd.to_numeric(df_kas[m_col], errors="coerce").fillna(0)
         df_kas[k_col] = pd.to_numeric(df_kas[k_col], errors="coerce").fillna(0)
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
@@ -114,6 +115,7 @@ def load_kas_pemakaman():
         if k_col not in df_kp.columns: df_kp[k_col] = 0
         
         df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
+        df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str)
         df_kp[m_col] = pd.to_numeric(df_kp[m_col], errors="coerce").fillna(0)
         df_kp[k_col] = pd.to_numeric(df_kp[k_col], errors="coerce").fillna(0)
         df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
@@ -1206,7 +1208,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat mengetik uraian teks di kolom Keterangan, copy-paste, dan menambah/menghapus baris. Kolom **Saldo** dihitung otomatis.*")
+            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat melakukan copy-paste dari Excel, mengetik teks uraian keterangan, menambah/menyisipkan baris, serta menghapus baris. Kolom **Saldo** akan dihitung secara otomatis.*")
             
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             
@@ -1241,7 +1243,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan kas: {e}")
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
-            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Kolom **Saldo** akan dihitung otomatis.*")
+            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Anda dapat copy-paste, mengetik keterangan, menambah/menyisipkan baris, dan menghapus baris. Saldo dihitung otomatis.*")
             df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
             kp_terbaru = st.data_editor(
                 df_kp_edit, 
