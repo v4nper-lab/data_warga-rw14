@@ -246,7 +246,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -560,20 +560,37 @@ with tab3:
     else:
         st.info("ℹ️ Kolom 'PENDIDIKAN' atau 'PENDIDIKAN TERAKHIR' belum tersedia di file Excel datawarga.")
 
-# ================= TAB 4: SEMUA DATA =================
+# ================= TAB 4: SEMUA DATA (ANGGOTA KELUARGA DISAMARKAN) =================
 with tab4:
     st.subheader("Tabel Seluruh Warga")
-    st.markdown("💡 *Data sensitif (NIK & No. KK) disembunyikan untuk keamanan publik.*")
+    st.markdown("💡 *Data sensitif, NIK, No. KK, serta nama anggota keluarga disamarkan demi privasi.*")
+    
+    kolom_nama_opsi = [col for col in df_filtered.columns if "NAMA" in col]
+    kolom_hub_opsi = [col for col in df_filtered.columns if "HUBUNGAN" in col or "STATUS" in col]
+    
+    df_tabel = df_filtered.copy()
+    if kolom_nama_opsi and kolom_hub_opsi:
+        n_col = kolom_nama_opsi[0]
+        h_col = kolom_hub_opsi[0]
+        
+        def samarkan_non_kk(row):
+            hub = str(row.get(h_col, "")).upper()
+            if "KEPALA KELUARGA" not in hub:
+                return "🔒 [Nama Anggota Keluarga Disamarkan]"
+            return row[n_col]
+            
+        df_tabel[n_col] = df_tabel.apply(samarkan_non_kk, axis=1)
+        
     kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
-    df_tabel = df_filtered.drop(columns=kolom_dibuang, errors="ignore")
+    df_tabel = df_tabel.drop(columns=kolom_dibuang, errors="ignore")
     st.dataframe(df_tabel, use_container_width=True, hide_index=True)
 
 # ================= TAB 5: PENCARIAN KK =================
 with tab5:
     st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
-    st.markdown("Ketik nama salah satu warga untuk melihat seluruh anggota keluarganya secara akurat.")
+    st.markdown("Ketik nama Kepala Keluarga untuk melihat anggota keluarga secara lengkap.")
     
-    kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
+    kata_kunci = st.text_input("🔎 Masukkan Nama Kepala Keluarga:")
     
     if kata_kunci:
         kunci_bersih = kata_kunci.strip().lower()
@@ -589,6 +606,8 @@ with tab5:
         
         if not hasil_pencarian.empty:
             kolom_kk_opsi = [col for col in df.columns if "KK" in col]
+            kolom_hub_opsi = [col for col in df.columns if "HUBUNGAN" in col or "STATUS" in col]
+            
             if kolom_kk_opsi:
                 kk_kolom_aktif = kolom_kk_opsi[0]
                 list_kk = hasil_pencarian[kk_kolom_aktif].dropna().unique()
@@ -598,14 +617,24 @@ with tab5:
                     df_keluarga = df[df[kk_kolom_aktif] == kk].copy()
                     
                     nama_kepala = "Satu Keluarga"
-                    kolom_hub = [col for col in df.columns if "HUBUNGAN" in col or "STATUS" in col]
-                    if kolom_hub and kolom_nama_opsi:
-                        kepala_df = df_keluarga[df_keluarga[kolom_hub[0]].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)]
+                    if kolom_hub_opsi and kolom_nama_opsi:
+                        kepala_df = df_keluarga[df_keluarga[kolom_hub_opsi[0]].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)]
                         if not kepala_df.empty:
                             nama_kepala = "Keluarga Bpk/Ibu " + str(kepala_df.iloc[0][nama_kolom_aktif]).title()
                     
                     st.markdown(f"### 🏠 {nama_kepala}")
                     
+                    # Samarkan nama anggota keluarga kecuali kepala keluarga
+                    if kolom_nama_opsi and kolom_hub_opsi:
+                        n_col = kolom_nama_opsi[0]
+                        h_col = kolom_hub_opsi[0]
+                        def samarkan_pencarian(row):
+                            hub = str(row.get(h_col, "")).upper()
+                            if "KEPALA KELUARGA" not in hub:
+                                return "🔒 [Nama Anggota Keluarga Disamarkan]"
+                            return row[n_col]
+                        df_keluarga[n_col] = df_keluarga.apply(samarkan_pencarian, axis=1)
+
                     def highlight_pencarian(row):
                         match = kunci_bersih in str(row.get(nama_kolom_aktif, "")).lower()
                         return ['background-color: #FFF9C4' if match else '' for _ in row]
