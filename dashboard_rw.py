@@ -72,7 +72,6 @@ def load_kas():
         df_kas = pd.read_excel("datakas.xlsx")
         df_kas.columns = df_kas.columns.str.strip().str.upper()
         
-        # Standarisasi nama kolom kas agar seragam
         if "TANGGAL" not in df_kas.columns: df_kas["TANGGAL"] = ""
         if "KETERANGAN" not in df_kas.columns: df_kas["KETERANGAN"] = ""
         
@@ -85,11 +84,11 @@ def load_kas():
         if m_col not in df_kas.columns: df_kas[m_col] = 0
         if k_col not in df_kas.columns: df_kas[k_col] = 0
         
+        df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
         df_kas[m_col] = pd.to_numeric(df_kas[m_col], errors="coerce").fillna(0)
         df_kas[k_col] = pd.to_numeric(df_kas[k_col], errors="coerce").fillna(0)
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
         
-        # Rapikan urutan kolom standar
         df_kas = df_kas[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
         df_kas.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
         return df_kas
@@ -114,6 +113,7 @@ def load_kas_pemakaman():
         if m_col not in df_kp.columns: df_kp[m_col] = 0
         if k_col not in df_kp.columns: df_kp[k_col] = 0
         
+        df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
         df_kp[m_col] = pd.to_numeric(df_kp[m_col], errors="coerce").fillna(0)
         df_kp[k_col] = pd.to_numeric(df_kp[k_col], errors="coerce").fillna(0)
         df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
@@ -1206,7 +1206,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat mengetik teks, melakukan copy-paste, menambah/menyisipkan baris, dan menghapus baris. Kolom **Saldo** akan dihitung otomatis.*")
+            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat mengetik uraian teks di kolom Keterangan, copy-paste, dan menambah/menghapus baris. Kolom **Saldo** dihitung otomatis.*")
             
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             
@@ -1214,10 +1214,7 @@ with tab10:
                 df_kas_edit, 
                 num_rows="dynamic", 
                 use_container_width=True, 
-                key="editor_kas_rw_admin",
-                column_config={
-                    "KETERANGAN": st.column_config.TextColumn("Keterangan", help="Uraian atau keterangan transaksi kas", required=True)
-                }
+                key="editor_kas_rw_admin"
             )
             
             if st.button("💾 Simpan Perubahan Laporan Kas RW", type="primary", key="btn_simpan_kas_admin"):
@@ -1229,8 +1226,10 @@ with tab10:
                         if kolom_m and kolom_k:
                             m_name = kolom_m[0]
                             k_name = kolom_k[0]
-                            kas_terbaru["VAL_M"] = pd.to_numeric(kas_terbaru[m_name], errors="coerce").fillna(0)
-                            kas_terbaru["VAL_K"] = pd.to_numeric(kas_terbaru[k_name], errors="coerce").fillna(0)
+                            kas_terbaru[m_name] = pd.to_numeric(kas_terbaru[m_name], errors="coerce").fillna(0)
+                            kas_terbaru[k_name] = pd.to_numeric(kas_terbaru[k_name], errors="coerce").fillna(0)
+                            kas_terbaru["VAL_M"] = kas_terbaru[m_name]
+                            kas_terbaru["VAL_K"] = kas_terbaru[k_name]
                             kas_terbaru["SALDO"] = (kas_terbaru["VAL_M"] - kas_terbaru["VAL_K"]).cumsum()
                             kas_terbaru = kas_terbaru.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
                     
@@ -1248,10 +1247,7 @@ with tab10:
                 df_kp_edit, 
                 num_rows="dynamic", 
                 use_container_width=True, 
-                key="editor_kp_admin",
-                column_config={
-                    "KETERANGAN": st.column_config.TextColumn("Keterangan", help="Uraian atau keterangan transaksi pemakaman", required=True)
-                }
+                key="editor_kp_admin"
             )
             
             if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary", key="btn_simpan_kp_admin"):
@@ -1263,8 +1259,10 @@ with tab10:
                         if kolom_m_kp and kolom_k_kp:
                             m_name_kp = kolom_m_kp[0]
                             k_name_kp = kolom_k_kp[0]
-                            kp_terbaru["VAL_M"] = pd.to_numeric(kp_terbaru[m_name_kp], errors="coerce").fillna(0)
-                            kp_terbaru["VAL_K"] = pd.to_numeric(kp_terbaru[k_name_kp], errors="coerce").fillna(0)
+                            kp_terbaru[m_name_kp] = pd.to_numeric(kp_terbaru[m_name_kp], errors="coerce").fillna(0)
+                            kp_terbaru[k_name_kp] = pd.to_numeric(kp_terbaru[k_name_kp], errors="coerce").fillna(0)
+                            kp_terbaru["VAL_M"] = kp_terbaru[m_name_kp]
+                            kp_terbaru["VAL_K"] = kp_terbaru[k_name_kp]
                             kp_terbaru["SALDO"] = (kp_terbaru["VAL_M"] - kp_terbaru["VAL_K"]).cumsum()
                             kp_terbaru = kp_terbaru.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
                             
