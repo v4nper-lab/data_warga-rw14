@@ -1192,9 +1192,8 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Edit data kas di bawah ini. Kolom **Saldo** akan otomatis dihitung dan diperbarui secara akumulatif.*")
+            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat mengetik teks, melakukan copy-paste, menambah/menyisipkan baris, dan menghapus baris. Kolom **Saldo** akan dihitung otomatis.*")
             
-            # Memastikan tabel editor hanya menampilkan kolom asli tanpa ada kolom duplikat *_val*
             df_kas_edit = df_kas.drop(columns=["SALDO", "VAL_M", "VAL_K"], errors="ignore").copy()
             
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
