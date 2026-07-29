@@ -49,16 +49,6 @@ def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
     except Exception:
         return path_file
 
-# Fungsi untuk menampilkan preview PDF langsung di layar (Viewer PDF)
-def tampilkan_pdf_viewer(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode()
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf" style="border-radius: 8px; border: 1px solid #ccc;"></iframe>'
-        st.markdown(pdf_display, unsafe_allow_html=True)
-    else:
-        st.warning("⚠️ File PDF tidak ditemukan.")
-
 @st.cache_data
 def load_data():
     df = pd.read_excel("datawarga.xlsx")
@@ -256,7 +246,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -772,16 +762,20 @@ with tab_update_kk:
             if not df_p_tampil.empty:
                 st.dataframe(df_p_tampil, use_container_width=True, hide_index=True)
                 
-                # Tambahan opsi Preview Dokumen PDF jika ada file PDF pada riwayat
-                st.markdown("#### 👁️ Preview Dokumen Bukti PDF yang Diunggah")
-                pilihan_dok_preview = st.selectbox("Pilih Dokumen untuk Dilihat Langsung:", options=df_p_tampil["DOKUMEN_FILE"].tolist())
-                if pilihan_dok_preview and pilihan_dok_preview.lower().endswith('.pdf'):
-                    path_target_dok = os.path.join("pengajuan_kk", pilihan_dok_preview)
-                    tampilkan_pdf_viewer(path_target_dok)
-                elif pilihan_dok_preview:
-                    path_target_dok = os.path.join("pengajuan_kk", pilihan_dok_preview)
+                # Tombol Download untuk dokumen bukti yang telah dikirim
+                st.markdown("#### 📥 Unduh Dokumen Bukti yang Diunggah")
+                pilihan_dok_dl = st.selectbox("Pilih Dokumen untuk Diunduh:", options=df_p_tampil["DOKUMEN_FILE"].tolist(), key="sel_dl_dok_bukti")
+                if pilihan_dok_dl:
+                    path_target_dok = os.path.join("pengajuan_kk", pilihan_dok_dl)
                     if os.path.exists(path_target_dok):
-                        st.image(path_target_dok, caption=f"Preview Dokumen: {pilihan_dok_preview}", use_container_width=True)
+                        with open(path_target_dok, "rb") as f_dok:
+                            st.download_button(
+                                label=f"📥 Download File: {pilihan_dok_dl}",
+                                data=f_dok,
+                                file_name=pilihan_dok_dl,
+                                mime="application/octet-stream",
+                                key="btn_download_dok_bukti"
+                            )
             else:
                 st.info("ℹ️ Belum ada riwayat pengajuan pembaruan KK.")
         else:
@@ -834,8 +828,6 @@ with tab6:
         for pdf_file in daftar_pdf_kas:
             path_pdf = os.path.join(folder_pdf_kas, pdf_file)
             st.markdown(f"**📂 PDF Kas: {pdf_file}**")
-            
-            # Tombol Download
             with open(path_pdf, "rb") as f:
                 st.download_button(
                     label=f"📥 Download Dokumen PDF: {pdf_file}",
@@ -844,10 +836,6 @@ with tab6:
                     mime="application/pdf",
                     key=f"dl_kas_{pdf_file}"
                 )
-            
-            # Tampilan Preview PDF Langsung di Layar
-            st.markdown("🔍 **Preview Dokumen PDF di Layar:**")
-            tampilkan_pdf_viewer(path_pdf)
             st.write("---")
 
     daftar_excel_kas = [f for f in os.listdir() if f.lower().endswith('.xlsx') and ('kas' in f.lower() or 'laporan' in f.lower())]
@@ -893,8 +881,6 @@ with tab7:
         for pdf_file in daftar_pdf_info:
             path_pdf = os.path.join(folder_pdf_info, pdf_file)
             st.markdown(f"**📂 {pdf_file}**")
-            
-            # Tombol Download
             with open(path_pdf, "rb") as f:
                 st.download_button(
                     label=f"📥 Download Dokumen PDF: {pdf_file}",
@@ -903,10 +889,6 @@ with tab7:
                     mime="application/pdf",
                     key=f"dl_info_{pdf_file}"
                 )
-            
-            # Tampilan Preview PDF Langsung di Layar
-            st.markdown("🔍 **Preview Dokumen PDF di Layar:**")
-            tampilkan_pdf_viewer(path_pdf)
             st.write("---")
     else:
         st.markdown("*Belum ada file PDF hasil rapat yang diunggah oleh pengurus.*")
