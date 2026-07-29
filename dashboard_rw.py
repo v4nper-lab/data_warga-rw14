@@ -71,6 +71,13 @@ def load_kas():
     if os.path.exists("datakas.xlsx"):
         df_kas = pd.read_excel("datakas.xlsx")
         df_kas.columns = df_kas.columns.str.strip().str.upper()
+        
+        # Hitung Saldo Otomatis Berdasarkan Kolom Tanggal - Keterangan - Pemasukan - Pengeluaran - Saldo
+        if "PEMASUKAN" in df_kas.columns and "PENGELUARAN" in df_kas.columns:
+            df_kas["PEMASUKAN_VAL"] = pd.to_numeric(df_kas["PEMASUKAN"], errors="coerce").fillna(0)
+            df_kas["PENGELUARAN_VAL"] = pd.to_numeric(df_kas["PENGELUARAN"], errors="coerce").fillna(0)
+            df_kas["SALDO"] = (df_kas["PEMASUKAN_VAL"] - df_kas["PENGELUARAN_VAL"]).cumsum()
+            df_kas = df_kas.drop(columns=["PEMASUKAN_VAL", "PENGELUARAN_VAL"], errors="ignore")
         return df_kas
     else:
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
@@ -80,6 +87,11 @@ def load_kas_pemakaman():
     if os.path.exists("datakaspemakaman.xlsx"):
         df_kp = pd.read_excel("datakaspemakaman.xlsx")
         df_kp.columns = df_kp.columns.str.strip().str.upper()
+        if "PEMASUKAN" in df_kp.columns and "PENGELUARAN" in df_kp.columns:
+            df_kp["PEMASUKAN_VAL"] = pd.to_numeric(df_kp["PEMASUKAN"], errors="coerce").fillna(0)
+            df_kp["PENGELUARAN_VAL"] = pd.to_numeric(df_kp["PENGELUARAN"], errors="coerce").fillna(0)
+            df_kp["SALDO"] = (df_kp["PEMASUKAN_VAL"] - df_kp["PENGELUARAN_VAL"]).cumsum()
+            df_kp = df_kp.drop(columns=["PEMASUKAN_VAL", "PENGELUARAN_VAL"], errors="ignore")
         return df_kp
     else:
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
@@ -543,7 +555,7 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (PIE CHART BIASA DENGAN WARNA ISLAM PUTIH) =================
+# ================= TAB 2: DEMOGRAFI =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
@@ -590,7 +602,6 @@ with tab2:
                 margin=dict(t=20, b=60, l=10, r=10)
             )
             
-            # Membuat fungsi kustom agar tulisan Islam berwarna putih, dan agama lain berwarna hitam jelas
             teks_warna_list = ["white" if "ISLAM" in str(x).upper() else "black" for x in df_filtered["AGAMA"]]
             
             fig_agama.update_traces(
