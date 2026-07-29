@@ -1208,7 +1208,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat melakukan copy-paste dari Excel, mengetik teks uraian keterangan, menambah/menyisipkan baris, serta menghapus baris. Kolom **Saldo** akan dihitung secara otomatis.*")
+            st.markdown("💡 *Edit data kas di bawah ini. Anda dapat menyalin data (copy-paste) dari Excel, mengetik uraian keterangan secara bebas, menambah, menyisipkan, atau menghapus baris. Gunakan **Ctrl+Z** untuk Undo dan **Ctrl+Y** untuk Redo. Kolom **Saldo** dihitung otomatis.*")
             
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             
@@ -1243,7 +1243,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan kas: {e}")
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
-            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Anda dapat copy-paste, mengetik keterangan, menambah/menyisipkan baris, dan menghapus baris. Saldo dihitung otomatis.*")
+            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Anda dapat copy-paste, mengetik keterangan, menambah/menyisipkan baris, dan menghapus baris. Gunakan **Ctrl+Z** untuk Undo dan **Ctrl+Y** untuk Redo. Saldo dihitung otomatis.*")
             df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
             kp_terbaru = st.data_editor(
                 df_kp_edit, 
