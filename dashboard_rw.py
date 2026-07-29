@@ -543,10 +543,10 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (PIE CHART 3D UNTUK SEBARAN AGAMA) =================
+# ================= TAB 2: DEMOGRAFI (PIE CHART 3D DENGAN TABEL RINGKASAN) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
-    st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif dalam bentuk 3D.")
+    st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
     
     palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
 
@@ -572,24 +572,29 @@ with tab2:
                     color_map[ag] = palet_agama_lain[idx_warna % len(palet_agama_lain)]
                     idx_warna += 1
 
-            # Menggunakan efek visual 3D (tilt angle & projection) pada Plotly Pie Chart
             fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.4, color="AGAMA", color_discrete_map=color_map)
             fig_agama.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", 
-                font=dict(size=14, family="sans-serif"), 
-                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
-                margin=dict(t=30, b=50, l=20, r=20),
-                scene=dict(camera=dict(eye=dict(x=1.8, y=1.8, z=1.8)))
+                font=dict(size=13, family="sans-serif"), 
+                legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
+                margin=dict(t=20, b=60, l=10, r=10)
             )
             fig_agama.update_traces(
-                textfont_size=14, 
+                textposition='auto',
+                textfont_size=13, 
                 textfont_color="black",
                 hoverinfo="label+percent+value", 
                 textinfo="label+percent",
-                pull=[0.05 if "ISLAM" in str(x).upper() else 0 for x in df_filtered["AGAMA"].unique()], # Efek slice terpisah sedikit untuk estetika 3D
-                marker=dict(line=dict(color='#000000', width=1))
+                marker=dict(line=dict(color='#ffffff', width=1.5))
             )
             st.plotly_chart(fig_agama, use_container_width=True)
+
+            # Menampilkan Tabel Ringkasan Sebaran Agama agar data kecil tetap terbaca jelas
+            df_agama_summary = df_filtered["AGAMA"].astype(str).str.title().value_counts().reset_index()
+            df_agama_summary.columns = ["Agama", "Jumlah (Jiwa)"]
+            df_agama_summary["Persentase (%)"] = ((df_agama_summary["Jumlah (Jiwa)"] / len(df_filtered)) * 100).round(2).astype(str) + "%"
+            st.markdown("<p style='font-size: 13px; font-weight: bold; margin-bottom: 2px;'>📋 Tabel Detail Sebaran Agama:</p>", unsafe_allow_html=True)
+            st.dataframe(df_agama_summary, use_container_width=True, hide_index=True)
             
     with col_c:
         st.markdown("#### 💍 Status Perkawinan")
