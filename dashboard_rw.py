@@ -71,6 +71,7 @@ def load_kas():
     if os.path.exists("datakas.xlsx"):
         df_kas = pd.read_excel("datakas.xlsx")
         df_kas.columns = df_kas.columns.str.strip().str.upper()
+        
         if "TANGGAL" not in df_kas.columns: df_kas["TANGGAL"] = ""
         if "KETERANGAN" not in df_kas.columns: df_kas["KETERANGAN"] = ""
         
@@ -82,10 +83,10 @@ def load_kas():
         if m_col not in df_kas.columns: df_kas[m_col] = 0
         if k_col not in df_kas.columns: df_kas[k_col] = 0
         
+        # Penanganan presisi agar tanggal selalu dibaca dan ditampilkan sebagai string normal
+        df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
-        df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str)
         
-        # Pembersihan total string format akuntansi Excel
         df_kas[m_col] = pd.to_numeric(df_kas[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas[k_col] = pd.to_numeric(df_kas[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
@@ -101,6 +102,7 @@ def load_kas_pemakaman():
     if os.path.exists("datakaspemakaman.xlsx"):
         df_kp = pd.read_excel("datakaspemakaman.xlsx")
         df_kp.columns = df_kp.columns.str.strip().str.upper()
+        
         if "TANGGAL" not in df_kp.columns: df_kp["TANGGAL"] = ""
         if "KETERANGAN" not in df_kp.columns: df_kp["KETERANGAN"] = ""
         
@@ -112,8 +114,9 @@ def load_kas_pemakaman():
         if m_col not in df_kp.columns: df_kp[m_col] = 0
         if k_col not in df_kp.columns: df_kp[k_col] = 0
         
+        df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
         df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
-        df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str)
+        
         df_kp[m_col] = pd.to_numeric(df_kp[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kp[k_col] = pd.to_numeric(df_kp[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
@@ -580,6 +583,7 @@ with tab6:
         c3.metric("💰 Saldo Akhir", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
         
         df_kas_display = df_kas.copy()
+        df_kas_display["TANGGAL"] = df_kas_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
         df_kas_display["PEMASUKAN"] = val_m_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kas_display["SALDO"] = (val_m_sum - val_k_sum).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
@@ -621,9 +625,11 @@ with tab10:
             ed_s = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Struktur"): ed_s.to_excel("datastruktur.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Sistem otomatis membersihkan format akuntansi Excel (Rp, spasi, titik). Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo.*")
+            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Tanggal dan angka dibersihkan otomatis. Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo.*")
             
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
+            df_kas_edit["TANGGAL"] = df_kas_edit["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '')
+            
             for c_num in ["PEMASUKAN", "PENGELUARAN"]:
                 if c_num in df_kas_edit.columns:
                     nums = pd.to_numeric(df_kas_edit[c_num], errors="coerce").fillna(0).astype(int)
@@ -637,7 +643,7 @@ with tab10:
                         m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
                         
-                        # Membersihkan string angka mentah dari karakter format akuntansi Excel (misal: Rp, titik, koma, strip)
+                        kas_terbaru["TANGGAL"] = kas_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
                         kas_terbaru[m] = pd.to_numeric(
                             kas_terbaru[m].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace(r'[^0-9.-]', '', regex=True),
                             errors="coerce"
@@ -660,6 +666,8 @@ with tab10:
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
             st.markdown("💡 *Edit data kas pemakaman di bawah ini. Saldo dihitung otomatis.*")
             df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
+            df_kp_edit["TANGGAL"] = df_kp_edit["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '')
+            
             for c_num in ["PEMASUKAN", "PENGELUARAN"]:
                 if c_num in df_kp_edit.columns:
                     nums_kp = pd.to_numeric(df_kp_edit[c_num], errors="coerce").fillna(0).astype(int)
@@ -673,6 +681,7 @@ with tab10:
                         m_kp = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k_kp = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
                         
+                        kp_terbaru["TANGGAL"] = kp_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
                         kp_terbaru[m_kp] = pd.to_numeric(
                             kp_terbaru[m_kp].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace(r'[^0-9.-]', '', regex=True),
                             errors="coerce"
