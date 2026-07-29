@@ -72,7 +72,6 @@ def load_kas():
         df_kas = pd.read_excel("datakas.xlsx")
         df_kas.columns = df_kas.columns.str.strip().str.upper()
         
-        # Penanganan otomatis jika kolom pemasukan/pengeluaran ada
         kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
         
@@ -1191,20 +1190,54 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
-            kas_terbaru = st.data_editor(df_kas.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-            if st.button("💾 Simpan Perubahan Kas RW", type="primary", key="btn_simpan_kas_admin"):
+            st.markdown("💡 *Edit data kas di bawah ini. Kolom **Saldo** akan otomatis dihitung dan diperbarui secara akumulatif.*")
+            
+            # Siapkan dataframe untuk editor kas tanpa kolom saldo (karena dihitung otomatis)
+            df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
+            
+            kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
+            
+            if st.button("💾 Simpan Perubahan Laporan Kas RW", type="primary", key="btn_simpan_kas_admin"):
                 try:
+                    # Hitung ulang saldo secara otomatis sebelum disimpan ke Excel
+                    if not kas_terbaru.empty:
+                        kolom_m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c]
+                        kolom_k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c]
+                        
+                        if kolom_m and kolom_k:
+                            m_name = kolom_m[0]
+                            k_name = kolom_k[0]
+                            kas_terbaru["VAL_M"] = pd.to_numeric(kas_terbaru[m_name], errors="coerce").fillna(0)
+                            kas_terbaru["VAL_K"] = pd.to_numeric(kas_terbaru[k_name], errors="coerce").fillna(0)
+                            kas_terbaru["SALDO"] = (kas_terbaru["VAL_M"] - kas_terbaru["VAL_K"]).cumsum()
+                            kas_terbaru = kas_terbaru.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
+                    
                     kas_terbaru.to_excel("datakas.xlsx", index=False)
                     st.cache_data.clear()
-                    st.success("✅ Laporan Kas RW berhasil disimpan!")
+                    st.success("✅ Laporan Kas RW beserta perhitungan saldonya berhasil disimpan!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan kas: {e}")
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
-            kp_terbaru = st.data_editor(df_kas_pemakaman.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Kolom **Saldo** akan dihitung otomatis.*")
+            df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
+            kp_terbaru = st.data_editor(df_kp_edit, num_rows="dynamic", use_container_width=True, key="editor_kp_admin")
+            
             if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary", key="btn_simpan_kp_admin"):
                 try:
+                    if not kp_terbaru.empty:
+                        kolom_m_kp = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c]
+                        kolom_k_kp = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c]
+                        
+                        if kolom_m_kp and kolom_k_kp:
+                            m_name_kp = kolom_m_kp[0]
+                            k_name_kp = kolom_k_kp[0]
+                            kp_terbaru["VAL_M"] = pd.to_numeric(kp_terbaru[m_name_kp], errors="coerce").fillna(0)
+                            kp_terbaru["VAL_K"] = pd.to_numeric(kp_terbaru[k_name_kp], errors="coerce").fillna(0)
+                            kp_terbaru["SALDO"] = (kp_terbaru["VAL_M"] - kp_terbaru["VAL_K"]).cumsum()
+                            kp_terbaru = kp_terbaru.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
+                            
                     kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
                     st.cache_data.clear()
                     st.success("✅ Laporan Kas Pemakaman berhasil disimpan!")
