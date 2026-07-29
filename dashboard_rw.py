@@ -246,7 +246,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -307,7 +307,7 @@ if admin_terverifikasi:
     st.sidebar.success("✅ Login Admin Berhasil!")
 
 # =========================================================================
-# ============ TEKS BERITA BERJALAN ONLINE (DI ATAS JUDUL DASHBOARD) =======
+# ============ TEKS BERITA BERJALAN ONLINE (HURUF DIPERBESAR) ==============
 # =========================================================================
 teks_berita_online = "📢 SELAMAT DATANG DI PORTAL RESMI RW 14 GRIYA PERMATA RAYA &bull; "
 if not df_info.empty:
@@ -323,10 +323,10 @@ else:
     teks_berita_online += "Pengumuman dan agenda kegiatan lingkungan akan diperbarui secara berkala oleh Pengurus."
 
 st.markdown(f"""
-<div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0px 4px 8px rgba(0,0,0,0.1); border: 1px solid #90CAF9;">
+<div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0px 4px 10px rgba(0,0,0,0.15); border: 1px solid #90CAF9;">
     <div style="display: flex; align-items: center;">
-        <span style="background-color: #ff9800; color: white; padding: 2px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; margin-right: 10px; white-space: nowrap;">📰 BREAKING NEWS</span>
-        <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #ffffff; font-weight: bold; font-size: 14px;">
+        <span style="background-color: #ff9800; color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-right: 12px; white-space: nowrap;">📰 BREAKING NEWS</span>
+        <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #ffffff; font-weight: 900; font-size: 16px; letter-spacing: 0.5px;">
             {teks_berita_online}
         </marquee>
     </div>
@@ -531,31 +531,39 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI =================
+# ================= TAB 2: DEMOGRAFI (WARNA ELEGAN & INTERAKTIF) =================
 with tab2:
+    st.subheader("📊 Analisis Demografi Warga RW 14")
+    st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
+    
+    # Palet Warna Elegan (Deep Navy, Emerald, Amber, Royal Purple, Teal)
+    palet_elegan = ['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57', '#C0392B', '#2980B9']
+
     col_a, col_b, col_c = st.columns(3)
     with col_a:
-        st.subheader("Jenis Kelamin")
+        st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
-            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.5, color_discrete_sequence=['#66b3ff','#ff9999'])
-            fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=16))
-            fig_jk.update_traces(textfont_size=18)
+            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#1B365D', '#D9822B'])
+            fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
+            fig_jk.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
             st.plotly_chart(fig_jk, use_container_width=True)
+            
     with col_b:
-        st.subheader("Sebaran Agama")
+        st.markdown("#### ☪️ Sebaran Agama")
         if "AGAMA" in df_filtered.columns:
-            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.5, color_discrete_sequence=px.colors.qualitative.Set3)
-            fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=16), legend=dict(font=dict(size=14)))
-            fig_agama.update_traces(textfont_size=18)
+            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.55, color_discrete_sequence=palet_elegan)
+            fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
+            fig_agama.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
             st.plotly_chart(fig_agama, use_container_width=True)
+            
     with col_c:
-        st.subheader("Status Perkawinan")
+        st.markdown("#### 💍 Status Perkawinan")
         if "STATUS PERKAWINAN" in df_filtered.columns:
             df_status = df_filtered["STATUS PERKAWINAN"].astype(str).str.title().value_counts().reset_index()
             df_status.columns = ["Status", "Jumlah"]
-            fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=px.colors.qualitative.Set2)
-            fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=16))
-            fig_status.update_traces(textfont_size=18, textangle=0)
+            fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=palet_elegan)
+            fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14, family="sans-serif"))
+            fig_status.update_traces(textfont_size=16, textangle=0, marker_line_color='rgb(8,48,107)', marker_line_width=1.5)
             st.plotly_chart(fig_status, use_container_width=True)
 
 # ================= TAB 3: PENDIDIKAN =================
