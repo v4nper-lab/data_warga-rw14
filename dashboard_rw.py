@@ -548,14 +548,12 @@ with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
     
-    # Palet warna khusus untuk agama selain Islam (Biru, Coklat, Abu-abu)
     palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
 
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
-            # Laki-laki Pink Tua ('#C71585'), Perempuan Biru Navy ('#1B365D')
             fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#C71585', '#1B365D'])
             fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
             fig_jk.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
@@ -564,7 +562,6 @@ with tab2:
     with col_b:
         st.markdown("#### ☪️ Sebaran Agama")
         if "AGAMA" in df_filtered.columns:
-            # Memetakan warna khusus: Islam Hijau, lainnya Biru, Coklat, Abu-abu
             agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
             color_map = {}
             idx_warna = 0
@@ -576,8 +573,20 @@ with tab2:
                     idx_warna += 1
 
             fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.55, color="AGAMA", color_discrete_map=color_map)
-            fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
-            fig_agama.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
+            # Menambahkan pengaturan textinfo="label+percent" serta memperlebar margin agar nama agama lain tampil jelas di luar/dalam grafik
+            fig_agama.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", 
+                font=dict(size=14, family="sans-serif"), 
+                legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
+                margin=dict(t=20, b=40, l=20, r=20)
+            )
+            fig_agama.update_traces(
+                textfont_size=14, 
+                textfont_color="black",
+                hoverinfo="label+percent+value", 
+                textinfo="label+percent",
+                insidetextorientation="radial"
+            )
             st.plotly_chart(fig_agama, use_container_width=True)
             
     with col_c:
