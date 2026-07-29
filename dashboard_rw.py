@@ -85,7 +85,6 @@ def load_kas():
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
         df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str)
         
-        # Bersihkan format angka agar nilai ratusan/jutaan tetap akurat
         df_kas[m_col] = pd.to_numeric(df_kas[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas[k_col] = pd.to_numeric(df_kas[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
@@ -568,19 +567,23 @@ with tab_update_kk:
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
     if not df_kas.empty:
-        total_masuk = df_kas["PEMASUKAN"].sum()
-        total_keluar = df_kas["PENGELUARAN"].sum()
-        saldo_akhir = df_kas["SALDO"].iloc[-1] if not df_kas.empty else 0
+        # Hitung dari nilai numerik asli
+        val_m_sum = pd.to_numeric(df_kas["PEMASUKAN"], errors="coerce").fillna(0)
+        val_k_sum = pd.to_numeric(df_kas["PENGELUARAN"], errors="coerce").fillna(0)
+        total_masuk = val_m_sum.sum()
+        total_keluar = val_k_sum.sum()
+        saldo_akhir = (val_m_sum - val_k_sum).cumsum().iloc[-1] if not df_kas.empty else 0
+
         c1, c2, c3 = st.columns(3)
         c1.metric("💵 Total Pemasukan", f"Rp {total_masuk:,.0f}".replace(",", "."))
         c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
         c3.metric("💰 Saldo Akhir", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
         
-        # Format tampilan tabel kas utama agar menampilkan format angka dengan pemisah ribuan
+        # Format tampilan tabel kas utama agar menampilkan format Rupiah penuh (contoh: Rp 700.000)
         df_kas_display = df_kas.copy()
-        df_kas_display["PEMASUKAN"] = df_kas_display["PEMASUKAN"].apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if pd.notnull(x) else "Rp 0")
-        df_kas_display["PENGELUARAN"] = df_kas_display["PENGELUARAN"].apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if pd.notnull(x) else "Rp 0")
-        df_kas_display["SALDO"] = df_kas_display["SALDO"].apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if pd.notnull(x) else "Rp 0")
+        df_kas_display["PEMASUKAN"] = val_m_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
+        df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
+        df_kas_display["SALDO"] = (val_m_sum - val_k_sum).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
         
         st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
 
@@ -619,11 +622,12 @@ with tab10:
             ed_s = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Struktur"): ed_s.to_excel("datastruktur.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Ketik atau salin angka nominal lengkap (misal: 700000). Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo.*")
+            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Ketik atau salin angka nominal lengkap (misal: 700000). Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo. Saldo dihitung otomatis.*")
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             for c_num in ["PEMASUKAN", "PENGELUARAN"]:
                 if c_num in df_kas_edit.columns:
-                    df_kas_edit[c_num] = df_kas_edit[c_num].astype(str).str.replace(r'\.0$', '', regex=True)
+                    df_kas_edit[c_num] = pd.to_numeric(df_kas_edit[c_num], errors="coerce").fillna(0).astype(int).astype(str)
+                    df_kas_edit[c_num] = df_kas_edit[c_num].replace("0", "")
             
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
             
@@ -647,7 +651,8 @@ with tab10:
             df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
             for c_num in ["PEMASUKAN", "PENGELUARAN"]:
                 if c_num in df_kp_edit.columns:
-                    df_kp_edit[c_num] = df_kp_edit[c_num].astype(str).str.replace(r'\.0$', '', regex=True)
+                    df_kp_edit[c_num] = pd.to_numeric(df_kp_edit[c_num], errors="coerce").fillna(0).astype(int).astype(str)
+                    df_kp_edit[c_num] = df_kp_edit[c_num].replace("0", "")
                     
             kp_terbaru = st.data_editor(df_kp_edit, num_rows="dynamic", use_container_width=True, key="editor_kp_admin")
             
