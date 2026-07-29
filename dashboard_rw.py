@@ -72,12 +72,19 @@ def load_kas():
         df_kas = pd.read_excel("datakas.xlsx")
         df_kas.columns = df_kas.columns.str.strip().str.upper()
         
-        # Hitung Saldo Otomatis Berdasarkan Kolom Tanggal - Keterangan - Pemasukan - Pengeluaran - Saldo
-        if "PEMASUKAN" in df_kas.columns and "PENGELUARAN" in df_kas.columns:
-            df_kas["PEMASUKAN_VAL"] = pd.to_numeric(df_kas["PEMASUKAN"], errors="coerce").fillna(0)
-            df_kas["PENGELUARAN_VAL"] = pd.to_numeric(df_kas["PENGELUARAN"], errors="coerce").fillna(0)
+        # Penanganan otomatis jika kolom pemasukan/pengeluaran ada
+        kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
+        kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
+        
+        if kolom_masuk and kolom_keluar:
+            m_col = kolom_masuk[0]
+            k_col = kolom_keluar[0]
+            df_kas["PEMASUKAN_VAL"] = pd.to_numeric(df_kas[m_col], errors="coerce").fillna(0)
+            df_kas["PENGELUARAN_VAL"] = pd.to_numeric(df_kas[k_col], errors="coerce").fillna(0)
             df_kas["SALDO"] = (df_kas["PEMASUKAN_VAL"] - df_kas["PENGELUARAN_VAL"]).cumsum()
             df_kas = df_kas.drop(columns=["PEMASUKAN_VAL", "PENGELUARAN_VAL"], errors="ignore")
+        elif "SALDO" not in df_kas.columns:
+            df_kas["SALDO"] = 0
         return df_kas
     else:
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
@@ -87,11 +94,19 @@ def load_kas_pemakaman():
     if os.path.exists("datakaspemakaman.xlsx"):
         df_kp = pd.read_excel("datakaspemakaman.xlsx")
         df_kp.columns = df_kp.columns.str.strip().str.upper()
-        if "PEMASUKAN" in df_kp.columns and "PENGELUARAN" in df_kp.columns:
-            df_kp["PEMASUKAN_VAL"] = pd.to_numeric(df_kp["PEMASUKAN"], errors="coerce").fillna(0)
-            df_kp["PENGELUARAN_VAL"] = pd.to_numeric(df_kp["PENGELUARAN"], errors="coerce").fillna(0)
+        
+        kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
+        kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
+        
+        if kolom_masuk_kp and kolom_keluar_kp:
+            m_col = kolom_masuk_kp[0]
+            k_col = kolom_keluar_kp[0]
+            df_kp["PEMASUKAN_VAL"] = pd.to_numeric(df_kp[m_col], errors="coerce").fillna(0)
+            df_kp["PENGELUARAN_VAL"] = pd.to_numeric(df_kp[k_col], errors="coerce").fillna(0)
             df_kp["SALDO"] = (df_kp["PEMASUKAN_VAL"] - df_kp["PENGELUARAN_VAL"]).cumsum()
             df_kp = df_kp.drop(columns=["PEMASUKAN_VAL", "PENGELUARAN_VAL"], errors="ignore")
+        elif "SALDO" not in df_kp.columns:
+            df_kp["SALDO"] = 0
         return df_kp
     else:
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
