@@ -356,10 +356,10 @@ with col_teks:
 
 st.write("---")
 
-# ================= MENU UTAMA WEBSITE PORTAL (JUMLAH TAB KONSISTEN) =================
-tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+# ================= MENU UTAMA WEBSITE PORTAL (DITAMBAH TAB UPDATE KK RT) =================
+tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_update_kk, tab6, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
-    "🗂️ Data Warga", "🔍 Cari KK", "💰 Kas RW", 
+    "🗂️ Data Warga", "🔍 Cari KK", "📤 Update Data RT & KK", "💰 Kas RW", 
     "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
 ])
 
@@ -655,6 +655,102 @@ with tab5:
                     st.error("Kolom yang mengandung kata 'KK' tidak ditemukan di Excel.")
             else:
                 st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
+
+# ================= TAB 7: UPDATE DATA RT & UPLOAD DOKUMEN KK BARU =================
+with tab_update_kk:
+    st.subheader("📤 Menu Update Data Warga & Unggah Dokumen KK Baru (Khusus Ketua RT)")
+    st.markdown("Menu ini digunakan oleh Ketua RT untuk melaporkan perubahan data warga (misalnya pembaruan KK lama ke KK baru) sekaligus mengirimkan dokumen bukti scan KK baru ke Pengurus RW.")
+
+    if "rt_update_terverifikasi" not in st.session_state:
+        st.session_state["rt_update_terverifikasi"] = False
+
+    if not st.session_state["rt_update_terverifikasi"]:
+        st.info("🔒 Masukkan kata sandi pengurus/Ketua RT untuk mengakses formulir pengajuan perubahan data warga.")
+        pass_rt_up = st.text_input("Kata Sandi Akses Menu Update:", type="password", key="pass_input_rt_update")
+        if pass_rt_up == "ijindibuka":
+            st.session_state["rt_update_terverifikasi"] = True
+            st.success("✅ Akses diberikan!")
+            st.rerun()
+        elif pass_rt_up != "":
+            st.error("❌ Kata sandi salah!")
+    else:
+        st.success("✅ Mode Akses Ketua RT Aktif.")
+        if st.button("🔒 Keluar / Kunci Menu Update", key="btn_kunci_rt_update"):
+            st.session_state["rt_update_terverifikasi"] = False
+            st.rerun()
+
+        st.markdown("---")
+        with st.form("form_update_kk_rt"):
+            st.markdown("### 📝 Formulir Pengajuan Perubahan Data & Unggah KK Baru")
+            
+            col_u1, col_u2 = st.columns(2)
+            with col_u1:
+                pilih_rt_lapor = st.selectbox("Pilih RT:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07"])
+                nama_pelapor = st.text_input("Nama Ketua RT / Pengurus Pelapor:")
+            with col_u2:
+                no_kk_terkait = st.text_input("Nomor Kartu Keluarga (KK):")
+                nama_kepala_keluarga = st.text_input("Nama Kepala Keluarga:")
+
+            keterangan_perubahan = st.text_area("Keterangan Perubahan Data / Alasan (Contoh: Penambahan anggota keluarga baru, pemisahan KK, atau penggantian KK lama ke KK baru):")
+            
+            st.markdown("---")
+            st.markdown("<b>📂 Unggah Dokumen Bukti (Scan KK Baru / Surat Pengantar / Dokumen Pendukung):</b>", unsafe_allow_html=True)
+            dokumen_kk_up = st.file_uploader("Pilih File Dokumen (Format PDF, JPG, atau PNG):", type=["pdf", "jpg", "jpeg", "png"])
+
+            submit_laporan_kk = st.form_submit_button("📤 Kirim Pengajuan ke Pengurus RW", type="primary")
+
+            if submit_laporan_kk:
+                if not nama_pelapor.strip() or not no_kk_terkait.strip() or not nama_kepala_keluarga.strip() or dokumen_kk_up is None:
+                    st.error("❌ Mohon lengkapi semua kolom isian dan wajib mengunggah dokumen bukti KK baru!")
+                else:
+                    folder_pengajuan = "pengajuan_kk"
+                    if not os.path.exists(folder_pengajuan):
+                        os.makedirs(folder_pengajuan)
+
+                    # Simpan file dokumen yang diunggah
+                    nama_file_dokumen = f"{pilih_rt_lapor.replace(' ', '')}_{no_kk_terkait}_{dokumen_kk_up.name}"
+                    path_simpan_dok = os.path.join(folder_pengajuan, nama_file_dokumen)
+                    with open(path_simpan_dok, "wb") as f:
+                        f.write(dokumen_kk_up.getbuffer())
+
+                    # Catat ke dalam file excel rekap pengajuan
+                    waktu_lapor = (datetime.utcnow() + timedelta(hours=7)).strftime("%d-%m-%Y %H:%M")
+                    new_pengajuan = pd.DataFrame([{
+                        "WAKTU": waktu_lapor,
+                        "RT": pilih_rt_lapor,
+                        "PELAPOR": nama_pelapor.strip(),
+                        "NO_KK": no_kk_terkait.strip(),
+                        "KEPALA_KELUARGA": nama_kepala_keluarga.strip(),
+                        "KETERANGAN": keterangan_perubahan.strip(),
+                        "DOKUMEN_FILE": nama_file_dokumen,
+                        "STATUS": "Menunggu Verifikasi RW"
+                    }])
+
+                    file_excel_pengajuan = "datapengajuankk.xlsx"
+                    if os.path.exists(file_excel_pengajuan):
+                        df_p_exist = pd.read_excel(file_excel_pengajuan)
+                        df_p_exist.columns = df_p_exist.columns.str.strip().str.upper()
+                        df_p_updated = pd.concat([df_p_exist, new_pengajuan], ignore_index=True)
+                    else:
+                        df_p_updated = new_pengajuan
+
+                    df_p_updated.to_excel(file_excel_pengajuan, index=False)
+                    st.success("✅ Pengajuan perubahan data dan dokumen KK baru berhasil dikirim ke Pengurus RW!")
+                    st.balloons()
+
+        # Tampilkan riwayat pengajuan dokumen di RT tersebut
+        st.markdown("---")
+        st.markdown("### 📋 Riwayat Pengajuan Pembaruan KK yang Telah Dikirim")
+        file_excel_pengajuan = "datapengajuankk.xlsx"
+        if os.path.exists(file_excel_pengajuan):
+            df_p_tampil = pd.read_excel(file_excel_pengajuan)
+            df_p_tampil.columns = df_p_tampil.columns.str.strip().str.upper()
+            if not df_p_tampil.empty:
+                st.dataframe(df_p_tampil, use_container_width=True, hide_index=True)
+            else:
+                st.info("ℹ️ Belum ada riwayat pengajuan pembaruan KK.")
+        else:
+            st.info("ℹ️ Belum ada riwayat pengajuan pembaruan KK.")
 
 # ================= TAB 6: KAS RW =================
 with tab6:
