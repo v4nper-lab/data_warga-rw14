@@ -78,10 +78,10 @@ def load_kas():
         if kolom_masuk and kolom_keluar:
             m_col = kolom_masuk[0]
             k_col = kolom_keluar[0]
-            df_kas["PEMASUKAN_VAL"] = pd.to_numeric(df_kas[m_col], errors="coerce").fillna(0)
-            df_kas["PENGELUARAN_VAL"] = pd.to_numeric(df_kas[k_col], errors="coerce").fillna(0)
-            df_kas["SALDO"] = (df_kas["PEMASUKAN_VAL"] - df_kas["PENGELUARAN_VAL"]).cumsum()
-            df_kas = df_kas.drop(columns=["PEMASUKAN_VAL", "PENGELUARAN_VAL"], errors="ignore")
+            df_kas["VAL_M"] = pd.to_numeric(df_kas[m_col], errors="coerce").fillna(0)
+            df_kas["VAL_K"] = pd.to_numeric(df_kas[k_col], errors="coerce").fillna(0)
+            df_kas["SALDO"] = (df_kas["VAL_M"] - df_kas["VAL_K"]).cumsum()
+            df_kas = df_kas.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
         elif "SALDO" not in df_kas.columns:
             df_kas["SALDO"] = 0
         return df_kas
@@ -100,10 +100,10 @@ def load_kas_pemakaman():
         if kolom_masuk_kp and kolom_keluar_kp:
             m_col = kolom_masuk_kp[0]
             k_col = kolom_keluar_kp[0]
-            df_kp["PEMASUKAN_VAL"] = pd.to_numeric(df_kp[m_col], errors="coerce").fillna(0)
-            df_kp["PENGELUARAN_VAL"] = pd.to_numeric(df_kp[k_col], errors="coerce").fillna(0)
-            df_kp["SALDO"] = (df_kp["PEMASUKAN_VAL"] - df_kp["PENGELUARAN_VAL"]).cumsum()
-            df_kp = df_kp.drop(columns=["PEMASUKAN_VAL", "PENGELUARAN_VAL"], errors="ignore")
+            df_kp["VAL_M"] = pd.to_numeric(df_kp[m_col], errors="coerce").fillna(0)
+            df_kp["VAL_K"] = pd.to_numeric(df_kp[k_col], errors="coerce").fillna(0)
+            df_kp["SALDO"] = (df_kp["VAL_M"] - df_kp["VAL_K"]).cumsum()
+            df_kp = df_kp.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
         elif "SALDO" not in df_kp.columns:
             df_kp["SALDO"] = 0
         return df_kp
@@ -527,11 +527,11 @@ with tab_struk:
         total_keluar_kp = 0
         
         if kolom_pemasukan_kp:
-            df_kas_pemakaman["MASUK_ANGKA"] = pd.to_numeric(df_kas_pemakaman[kolom_pemasukan_kp[0]], errors="coerce").fillna(0)
-            total_masuk_kp = df_kas_pemakaman["MASUK_ANGKA"].sum()
+            df_kas_pemakaman["VAL_M"] = pd.to_numeric(df_kas_pemakaman[kolom_pemasukan_kp[0]], errors="coerce").fillna(0)
+            total_masuk_kp = df_kas_pemakaman["VAL_M"].sum()
         if kolom_pengeluaran_kp:
-            df_kas_pemakaman["KELUAR_ANGKA"] = pd.to_numeric(df_kas_pemakaman[kolom_pengeluaran_kp[0]], errors="coerce").fillna(0)
-            total_keluar_kp = df_kas_pemakaman["KELUAR_ANGKA"].sum()
+            df_kas_pemakaman["VAL_K"] = pd.to_numeric(df_kas_pemakaman[kolom_pengeluaran_kp[0]], errors="coerce").fillna(0)
+            total_keluar_kp = df_kas_pemakaman["VAL_K"].sum()
 
         saldo_akhir_kp = total_masuk_kp - total_keluar_kp
         if kolom_saldo_kp and not df_kas_pemakaman[kolom_saldo_kp[0]].dropna().empty:
@@ -544,7 +544,8 @@ with tab_struk:
         cp3.metric("💰 Saldo Kas Pemakaman", f"Rp {saldo_akhir_kp:,.0f}".replace(",", "."))
 
         st.write("---")
-        st.dataframe(df_kas_pemakaman.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
+        df_kp_tampil = df_kas_pemakaman.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
+        st.dataframe(df_kp_tampil, use_container_width=True, hide_index=True)
     else:
         st.info("ℹ️ Belum ada data transaksi khusus pemakaman yang dimasukkan.")
 
@@ -883,11 +884,11 @@ with tab6:
         total_keluar = 0
         
         if kolom_pemasukan:
-            df_kas["MASUK_ANGKA"] = pd.to_numeric(df_kas[kolom_pemasukan[0]], errors="coerce").fillna(0)
-            total_masuk = df_kas["MASUK_ANGKA"].sum()
+            df_kas["VAL_M"] = pd.to_numeric(df_kas[kolom_pemasukan[0]], errors="coerce").fillna(0)
+            total_masuk = df_kas["VAL_M"].sum()
         if kolom_pengeluaran:
-            df_kas["KELUAR_ANGKA"] = pd.to_numeric(df_kas[kolom_pengeluaran[0]], errors="coerce").fillna(0)
-            total_keluar = df_kas["KELUAR_ANGKA"].sum()
+            df_kas["VAL_K"] = pd.to_numeric(df_kas[kolom_pengeluaran[0]], errors="coerce").fillna(0)
+            total_keluar = df_kas["VAL_K"].sum()
 
         saldo_akhir = total_masuk - total_keluar
         if kolom_saldo and not df_kas[kolom_saldo[0]].dropna().empty:
@@ -900,7 +901,8 @@ with tab6:
         c3.metric("💰 Saldo Kas Bersih", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
         
         st.write("---")
-        st.dataframe(df_kas.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
+        df_kas_tampil = df_kas.drop(columns=["VAL_M", "VAL_K"], errors="ignore")
+        st.dataframe(df_kas_tampil, use_container_width=True, hide_index=True)
     else:
         st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
         
@@ -1192,14 +1194,13 @@ with tab10:
         elif menu_admin == "Laporan Kas RW":
             st.markdown("💡 *Edit data kas di bawah ini. Kolom **Saldo** akan otomatis dihitung dan diperbarui secara akumulatif.*")
             
-            # Siapkan dataframe untuk editor kas tanpa kolom saldo (karena dihitung otomatis)
-            df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
+            # Memastikan tabel editor hanya menampilkan kolom asli tanpa ada kolom duplikat *_val*
+            df_kas_edit = df_kas.drop(columns=["SALDO", "VAL_M", "VAL_K"], errors="ignore").copy()
             
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
             
             if st.button("💾 Simpan Perubahan Laporan Kas RW", type="primary", key="btn_simpan_kas_admin"):
                 try:
-                    # Hitung ulang saldo secara otomatis sebelum disimpan ke Excel
                     if not kas_terbaru.empty:
                         kolom_m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c]
                         kolom_k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c]
@@ -1221,7 +1222,7 @@ with tab10:
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
             st.markdown("💡 *Edit data kas pemakaman di bawah ini. Kolom **Saldo** akan dihitung otomatis.*")
-            df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
+            df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO", "VAL_M", "VAL_K"], errors="ignore").copy()
             kp_terbaru = st.data_editor(df_kp_edit, num_rows="dynamic", use_container_width=True, key="editor_kp_admin")
             
             if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary", key="btn_simpan_kp_admin"):
