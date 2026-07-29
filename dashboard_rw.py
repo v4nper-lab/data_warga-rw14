@@ -543,7 +543,7 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (PIE CHART 3D DENGAN PEREGANGAN LABEL AGAMA KECIL) =================
+# ================= TAB 2: DEMOGRAFI (LABEL HORIZONTAL / LURUS PADA JENIS KELAMIN) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
@@ -555,8 +555,21 @@ with tab2:
         st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
             fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.5, color_discrete_sequence=['#C71585', '#1B365D'])
-            fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
-            fig_jk.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
+            fig_jk.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", 
+                font=dict(size=14, family="sans-serif"), 
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
+                uniformtext=dict(minsize=14, mode='hide')
+            )
+            # Memaksa teks label tampil lurus horizontal dan persentase di dalam/luar tanpa rotasi miring
+            fig_jk.update_traces(
+                textposition='inside',
+                textangle=0, 
+                textfont_size=15, 
+                textfont_color="white",
+                hoverinfo="label+percent+value", 
+                textinfo="label+percent"
+            )
             st.plotly_chart(fig_jk, use_container_width=True)
             
     with col_b:
@@ -582,11 +595,12 @@ with tab2:
             )
             fig_agama.update_traces(
                 textposition='inside',
+                textangle=0,
                 textfont_size=13, 
                 textfont_color="white",
                 hoverinfo="label+percent+value", 
                 textinfo="label+percent",
-                pull=[0.08 if "ISLAM" not in str(x).upper() else 0 for x in df_filtered["AGAMA"]], # Memisahkan irisan kecil keluar agar nama agama kecil sangat mudah dibaca
+                pull=[0.08 if "ISLAM" not in str(x).upper() else 0 for x in df_filtered["AGAMA"]],
                 marker=dict(line=dict(color='#ffffff', width=1.5))
             )
             st.plotly_chart(fig_agama, use_container_width=True)
