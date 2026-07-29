@@ -543,7 +543,7 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (PIE CHART 3D DENGAN TABEL RINGKASAN) =================
+# ================= TAB 2: DEMOGRAFI (PIE CHART 3D DENGAN PEREGANGAN LABEL AGAMA KECIL) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
@@ -577,19 +577,21 @@ with tab2:
                 paper_bgcolor="rgba(0,0,0,0)", 
                 font=dict(size=13, family="sans-serif"), 
                 legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
-                margin=dict(t=20, b=60, l=10, r=10)
+                margin=dict(t=20, b=60, l=10, r=10),
+                uniformtext=dict(minsize=12, mode='hide')
             )
             fig_agama.update_traces(
-                textposition='auto',
+                textposition='inside',
                 textfont_size=13, 
-                textfont_color="black",
+                textfont_color="white",
                 hoverinfo="label+percent+value", 
                 textinfo="label+percent",
+                pull=[0.08 if "ISLAM" not in str(x).upper() else 0 for x in df_filtered["AGAMA"]], # Memisahkan irisan kecil keluar agar nama agama kecil sangat mudah dibaca
                 marker=dict(line=dict(color='#ffffff', width=1.5))
             )
             st.plotly_chart(fig_agama, use_container_width=True)
 
-            # Menampilkan Tabel Ringkasan Sebaran Agama agar data kecil tetap terbaca jelas
+            # Tabel Detail Sebaran Agama
             df_agama_summary = df_filtered["AGAMA"].astype(str).str.title().value_counts().reset_index()
             df_agama_summary.columns = ["Agama", "Jumlah (Jiwa)"]
             df_agama_summary["Persentase (%)"] = ((df_agama_summary["Jumlah (Jiwa)"] / len(df_filtered)) * 100).round(2).astype(str) + "%"
