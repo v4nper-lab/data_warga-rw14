@@ -560,93 +560,101 @@ with tab3:
     else:
         st.info("ℹ️ Kolom 'PENDIDIKAN' atau 'PENDIDIKAN TERAKHIR' belum tersedia di file Excel datawarga.")
 
-# ================= TAB 4: SEMUA DATA (ANGGOTA KELUARGA DISAMARKAN) =================
+# ================= TAB 4: SEMUA DATA (DIKUNCI SANDI: ijindibuka) =================
 with tab4:
-    st.subheader("Tabel Seluruh Warga")
-    st.markdown("💡 *Data sensitif, NIK, No. KK, serta nama anggota keluarga disamarkan demi privasi.*")
+    st.subheader("🗂️ Data Seluruh Warga (Akses Khusus Pengurus)")
     
-    kolom_nama_opsi = [col for col in df_filtered.columns if "NAMA" in col]
-    kolom_hub_opsi = [col for col in df_filtered.columns if "HUBUNGAN" in col or "STATUS" in col]
-    
-    df_tabel = df_filtered.copy()
-    if kolom_nama_opsi and kolom_hub_opsi:
-        n_col = kolom_nama_opsi[0]
-        h_col = kolom_hub_opsi[0]
+    if "warga_terbuka" not in st.session_state:
+        st.session_state["warga_terbuka"] = False
         
-        def samarkan_non_kk(row):
-            hub = str(row.get(h_col, "")).upper()
-            if "KEPALA KELUARGA" not in hub:
-                return "🔒 [Nama Anggota Keluarga Disamarkan]"
-            return row[n_col]
+    if not st.session_state["warga_terbuka"]:
+        st.info("🔒 Menu ini dilindungi. Masukkan kata sandi pengurus untuk membuka data seluruh warga.")
+        pass_warga = st.text_input("Kata Sandi Akses Data Warga:", type="password", key="pass_input_data_warga")
+        if pass_warga == "ijindibuka":
+            st.session_state["warga_terbuka"] = True
+            st.success("✅ Akses diberikan!")
+            st.rerun()
+        elif pass_warga != "":
+            st.error("❌ Kata sandi salah!")
+    else:
+        st.success("✅ Anda sedang dalam mode akses pengurus.")
+        if st.button("🔒 Kunci Kembali Data Warga", key="btn_kunci_warga"):
+            st.session_state["warga_terbuka"] = False
+            st.rerun()
             
-        df_tabel[n_col] = df_tabel.apply(samarkan_non_kk, axis=1)
-        
-    kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
-    df_tabel = df_tabel.drop(columns=kolom_dibuang, errors="ignore")
-    st.dataframe(df_tabel, use_container_width=True, hide_index=True)
+        st.markdown("---")
+        kolom_dibuang = ["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
+        df_tabel = df_filtered.drop(columns=kolom_dibuang, errors="ignore")
+        st.dataframe(df_tabel, use_container_width=True, hide_index=True)
 
-# ================= TAB 5: PENCARIAN KK =================
+# ================= TAB 5: PENCARIAN KK (DIKUNCI SANDI: ijindibuka) =================
 with tab5:
-    st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK)")
-    st.markdown("Ketik nama Kepala Keluarga untuk melihat anggota keluarga secara lengkap.")
+    st.subheader("🔍 Pencarian & Data per Kartu Keluarga (KK) (Akses Khusus Pengurus)")
     
-    kata_kunci = st.text_input("🔎 Masukkan Nama Kepala Keluarga:")
-    
-    if kata_kunci:
-        kunci_bersih = kata_kunci.strip().lower()
-        kolom_nama_opsi = [col for col in df.columns if "NAMA" in col]
+    if "cari_terbuka" not in st.session_state:
+        st.session_state["cari_terbuka"] = False
         
-        if kolom_nama_opsi:
-            nama_kolom_aktif = kolom_nama_opsi[0]
-            mask_nama = df[nama_kolom_aktif].astype(str).str.lower().str.contains(kunci_bersih, na=False)
-            hasil_pencarian = df[mask_nama]
-        else:
-            hasil_pencarian = pd.DataFrame()
-            nama_kolom_aktif = None
-        
-        if not hasil_pencarian.empty:
-            kolom_kk_opsi = [col for col in df.columns if "KK" in col]
-            kolom_hub_opsi = [col for col in df.columns if "HUBUNGAN" in col or "STATUS" in col]
+    if not st.session_state["cari_terbuka"]:
+        st.info("🔒 Menu pencarian Kartu Keluarga dilindungi. Masukkan kata sandi pengurus untuk mengakses.")
+        pass_cari = st.text_input("Kata Sandi Akses Pencarian KK:", type="password", key="pass_input_cari_kk")
+        if pass_cari == "ijindibuka":
+            st.session_state["cari_terbuka"] = True
+            st.success("✅ Akses diberikan!")
+            st.rerun()
+        elif pass_cari != "":
+            st.error("❌ Kata sandi salah!")
+    else:
+        st.success("✅ Anda sedang dalam mode akses pengurus.")
+        if st.button("🔒 Kunci Kembali Pencarian KK", key="btn_kunci_cari"):
+            st.session_state["cari_terbuka"] = False
+            st.rerun()
             
-            if kolom_kk_opsi:
-                kk_kolom_aktif = kolom_kk_opsi[0]
-                list_kk = hasil_pencarian[kk_kolom_aktif].dropna().unique()
-                st.success(f"✅ Ditemukan {len(list_kk)} Kartu Keluarga terkait.")
-                
-                for kk in list_kk:
-                    df_keluarga = df[df[kk_kolom_aktif] == kk].copy()
-                    
-                    nama_kepala = "Satu Keluarga"
-                    if kolom_hub_opsi and kolom_nama_opsi:
-                        kepala_df = df_keluarga[df_keluarga[kolom_hub_opsi[0]].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)]
-                        if not kepala_df.empty:
-                            nama_kepala = "Keluarga Bpk/Ibu " + str(kepala_df.iloc[0][nama_kolom_aktif]).title()
-                    
-                    st.markdown(f"### 🏠 {nama_kepala}")
-                    
-                    # Samarkan nama anggota keluarga kecuali kepala keluarga
-                    if kolom_nama_opsi and kolom_hub_opsi:
-                        n_col = kolom_nama_opsi[0]
-                        h_col = kolom_hub_opsi[0]
-                        def samarkan_pencarian(row):
-                            hub = str(row.get(h_col, "")).upper()
-                            if "KEPALA KELUARGA" not in hub:
-                                return "🔒 [Nama Anggota Keluarga Disamarkan]"
-                            return row[n_col]
-                        df_keluarga[n_col] = df_keluarga.apply(samarkan_pencarian, axis=1)
-
-                    def highlight_pencarian(row):
-                        match = kunci_bersih in str(row.get(nama_kolom_aktif, "")).lower()
-                        return ['background-color: #FFF9C4' if match else '' for _ in row]
-
-                    kolom_dibuang = [kk_kolom_aktif, "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
-                    df_tampil = df_keluarga.drop(columns=[c for c in kolom_dibuang if c in df_keluarga.columns], errors="ignore")
-                    
-                    st.dataframe(df_tampil.style.apply(highlight_pencarian, axis=1), use_container_width=True, hide_index=True)
+        st.markdown("---")
+        kata_kunci = st.text_input("🔎 Masukkan Nama Warga atau Kepala Keluarga:")
+        
+        if kata_kunci:
+            kunci_bersih = kata_kunci.strip().lower()
+            kolom_nama_opsi = [col for col in df.columns if "NAMA" in col]
+            
+            if kolom_nama_opsi:
+                nama_kolom_aktif = kolom_nama_opsi[0]
+                mask_nama = df[nama_kolom_aktif].astype(str).str.lower().str.contains(kunci_bersih, na=False)
+                hasil_pencarian = df[mask_nama]
             else:
-                st.error("Kolom yang mengandung kata 'KK' tidak ditemukan di Excel.")
-        else:
-            st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
+                hasil_pencarian = pd.DataFrame()
+                nama_kolom_aktif = None
+            
+            if not hasil_pencarian.empty:
+                kolom_kk_opsi = [col for col in df.columns if "KK" in col]
+                if kolom_kk_opsi:
+                    kk_kolom_aktif = kolom_kk_opsi[0]
+                    list_kk = hasil_pencarian[kk_kolom_aktif].dropna().unique()
+                    st.success(f"✅ Ditemukan {len(list_kk)} Kartu Keluarga terkait.")
+                    
+                    for kk in list_kk:
+                        df_keluarga = df[df[kk_kolom_aktif] == kk].copy()
+                        
+                        nama_kepala = "Satu Keluarga"
+                        kolom_hub = [col for col in df.columns if "HUBUNGAN" in col or "STATUS" in col]
+                        if kolom_hub and kolom_nama_opsi:
+                            kepala_df = df_keluarga[df_keluarga[kolom_hub[0]].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)]
+                            if not kepala_df.empty:
+                                nama_kepala = "Keluarga Bpk/Ibu " + str(kepala_df.iloc[0][nama_kolom_aktif]).title()
+                        
+                        st.markdown(f"### 🏠 {nama_kepala}")
+                        
+                        def highlight_pencarian(row):
+                            match = kunci_bersih in str(row.get(nama_kolom_aktif, "")).lower()
+                            return ['background-color: #FFF9C4' if match else '' for _ in row]
+
+                        kolom_dibuang = [kk_kolom_aktif, "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"]
+                        df_tampil = df_keluarga.drop(columns=[c for c in kolom_dibuang if c in df_keluarga.columns], errors="ignore")
+                        
+                        st.dataframe(df_tampil.style.apply(highlight_pencarian, axis=1), use_container_width=True, hide_index=True)
+                else:
+                    st.error("Kolom yang mengandung kata 'KK' tidak ditemukan di Excel.")
+            else:
+                st.warning(f"❌ Tidak ada warga dengan nama '{kata_kunci}' yang ditemukan.")
 
 # ================= TAB 6: KAS RW =================
 with tab6:
