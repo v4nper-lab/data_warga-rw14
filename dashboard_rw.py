@@ -543,20 +543,20 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (WARNA HIJAU UNTUK ISLAM & PINK TUA UNTUK PEREMPUAN) =================
+# ================= TAB 2: DEMOGRAFI (WARNA: LAKI-LAKI PINK TUA, PEREMPUAN BIRU; ISLAM HIJAU, LAINNYA BIRU/COKLAT/ABU-ABU) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
     
-    # Palet Elegan Umum
-    palet_elegan = ['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57', '#C0392B', '#2980B9']
+    # Palet warna khusus untuk agama selain Islam (Biru, Coklat, Abu-abu)
+    palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
 
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
-            # Perempuan diubah menjadi warna Pink Tua ('#C71585' / MediumVioletRed atau '#D81B60'), Laki-laki Tetap Biru Navy ('#1B365D')
-            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#1B365D', '#C71585'])
+            # Laki-laki Pink Tua ('#C71585'), Perempuan Biru Navy ('#1B365D')
+            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#C71585', '#1B365D'])
             fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
             fig_jk.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
             st.plotly_chart(fig_jk, use_container_width=True)
@@ -564,15 +564,15 @@ with tab2:
     with col_b:
         st.markdown("#### ☪️ Sebaran Agama")
         if "AGAMA" in df_filtered.columns:
-            # Memetakan warna khusus agar Islam selalu Hijau
+            # Memetakan warna khusus: Islam Hijau, lainnya Biru, Coklat, Abu-abu
             agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
             color_map = {}
             idx_warna = 0
             for ag in agama_list:
                 if "ISLAM" in ag.upper():
-                    color_map[ag] = "#2E8B57" # Warna Hijau Elegan khas Islam
+                    color_map[ag] = "#2E8B57" # Hijau Elegan
                 else:
-                    color_map[ag] = palet_elegan[idx_warna % len(palet_elegan)]
+                    color_map[ag] = palet_agama_lain[idx_warna % len(palet_agama_lain)]
                     idx_warna += 1
 
             fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.55, color="AGAMA", color_discrete_map=color_map)
@@ -585,7 +585,8 @@ with tab2:
         if "STATUS PERKAWINAN" in df_filtered.columns:
             df_status = df_filtered["STATUS PERKAWINAN"].astype(str).str.title().value_counts().reset_index()
             df_status.columns = ["Status", "Jumlah"]
-            fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=palet_elegan)
+            palet_status = ['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57']
+            fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=palet_status)
             fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14, family="sans-serif"))
             fig_status.update_traces(textfont_size=16, textangle=0, marker_line_color='rgb(8,48,107)', marker_line_width=1.5)
             st.plotly_chart(fig_status, use_container_width=True)
