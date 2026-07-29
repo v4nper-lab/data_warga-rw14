@@ -543,18 +543,20 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (WARNA ELEGAN & INTERAKTIF) =================
+# ================= TAB 2: DEMOGRAFI (WARNA HIJAU UNTUK ISLAM & PINK TUA UNTUK PEREMPUAN) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
     
+    # Palet Elegan Umum
     palet_elegan = ['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57', '#C0392B', '#2980B9']
 
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
-            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#1B365D', '#D9822B'])
+            # Perempuan diubah menjadi warna Pink Tua ('#C71585' / MediumVioletRed atau '#D81B60'), Laki-laki Tetap Biru Navy ('#1B365D')
+            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#1B365D', '#C71585'])
             fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
             fig_jk.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
             st.plotly_chart(fig_jk, use_container_width=True)
@@ -562,7 +564,18 @@ with tab2:
     with col_b:
         st.markdown("#### ☪️ Sebaran Agama")
         if "AGAMA" in df_filtered.columns:
-            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.55, color_discrete_sequence=palet_elegan)
+            # Memetakan warna khusus agar Islam selalu Hijau
+            agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
+            color_map = {}
+            idx_warna = 0
+            for ag in agama_list:
+                if "ISLAM" in ag.upper():
+                    color_map[ag] = "#2E8B57" # Warna Hijau Elegan khas Islam
+                else:
+                    color_map[ag] = palet_elegan[idx_warna % len(palet_elegan)]
+                    idx_warna += 1
+
+            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.55, color="AGAMA", color_discrete_map=color_map)
             fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
             fig_agama.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
             st.plotly_chart(fig_agama, use_container_width=True)
