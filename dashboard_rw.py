@@ -67,7 +67,7 @@ def load_kas():
         df_kas.columns = df_kas.columns.str.strip().str.upper()
         return df_kas
     else:
-        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "JENIS", "JUMLAH"])
+        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
 
 @st.cache_data
 def load_kas_pemakaman():
@@ -76,7 +76,7 @@ def load_kas_pemakaman():
         df_kp.columns = df_kp.columns.str.strip().str.upper()
         return df_kp
     else:
-        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "JENIS", "JUMLAH"])
+        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
 
 @st.cache_data
 def load_info():
@@ -356,7 +356,7 @@ with col_teks:
 
 st.write("---")
 
-# ================= MENU UTAMA WEBSITE PORTAL (DITAMBAH TAB UPDATE KK RT) =================
+# ================= MENU UTAMA WEBSITE PORTAL (JUMLAH TAB KONSISTEN) =================
 tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_update_kk, tab6, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
     "🗂️ Data Warga", "🔍 Cari KK", "📤 Update Data RT & KK", "💰 Kas RW", 
@@ -480,21 +480,35 @@ with tab_struk:
     st.subheader("🕊️ Laporan Khusus Keuangan Seksi Sosial & Pemakaman")
     st.markdown("Berikut adalah transparansi pencatatan khusus dana sosial, santunan duka, dan pemakaman warga RW 14 yang dikelola secara terpisah.")
 
-    if not df_kas_pemakaman.empty and "JUMLAH" in df_kas_pemakaman.columns and "JENIS" in df_kas_pemakaman.columns:
-        df_kas_pemakaman["JUMLAH_ANGKA"] = pd.to_numeric(df_kas_pemakaman["JUMLAH"], errors="coerce").fillna(0)
-        pemasukan_pemakaman = df_kas_pemakaman[df_kas_pemakaman["JENIS"].astype(str).str.upper().str.contains("MASUK", na=False)]["JUMLAH_ANGKA"].sum()
-        pengeluaran_pemakaman = df_kas_pemakaman[df_kas_pemakaman["JENIS"].astype(str).str.upper().str.contains("KELUAR", na=False)]["JUMLAH_ANGKA"].sum()
-        saldo_pemakaman = pemasukan_pemakaman - pengeluaran_pemakaman
+    if not df_kas_pemakaman.empty:
+        kolom_pemasukan_kp = [c for c in df_kas_pemakaman.columns if "PEMASUKAN" in c or "MASUK" in c]
+        kolom_pengeluaran_kp = [c for c in df_kas_pemakaman.columns if "PENGELUARAN" in c or "KELUAR" in c]
+        kolom_saldo_kp = [c for c in df_kas_pemakaman.columns if "SALDO" in c]
+
+        total_masuk_kp = 0
+        total_keluar_kp = 0
+        
+        if kolom_pemasukan_kp:
+            df_kas_pemakaman["MASUK_ANGKA"] = pd.to_numeric(df_kas_pemakaman[kolom_pemasukan_kp[0]], errors="coerce").fillna(0)
+            total_masuk_kp = df_kas_pemakaman["MASUK_ANGKA"].sum()
+        if kolom_pengeluaran_kp:
+            df_kas_pemakaman["KELUAR_ANGKA"] = pd.to_numeric(df_kas_pemakaman[kolom_pengeluaran_kp[0]], errors="coerce").fillna(0)
+            total_keluar_kp = df_kas_pemakaman["KELUAR_ANGKA"].sum()
+
+        saldo_akhir_kp = total_masuk_kp - total_keluar_kp
+        if kolom_saldo_kp and not df_kas_pemakaman[kolom_saldo_kp[0]].dropna().empty:
+            last_saldo = pd.to_numeric(df_kas_pemakaman[kolom_saldo_kp[0]], errors="coerce").iloc[-1]
+            if pd.notnull(last_saldo): saldo_akhir_kp = last_saldo
 
         cp1, cp2, cp3 = st.columns(3)
-        cp1.metric("💵 Total Dana Masuk", f"Rp {pemasukan_pemakaman:,.0f}".replace(",", "."))
-        cp2.metric("💸 Total Pengeluaran Duka/Makam", f"Rp {pengeluaran_pemakaman:,.0f}".replace(",", "."))
-        cp3.metric("💰 Saldo Kas Pemakaman/Sosial", f"Rp {saldo_pemakaman:,.0f}".replace(",", "."))
+        cp1.metric("💵 Total Pemasukan", f"Rp {total_masuk_kp:,.0f}".replace(",", "."))
+        cp2.metric("💸 Total Pengeluaran", f"Rp {total_keluar_kp:,.0f}".replace(",", "."))
+        cp3.metric("💰 Saldo Kas Pemakaman", f"Rp {saldo_akhir_kp:,.0f}".replace(",", "."))
 
         st.write("---")
-        st.dataframe(df_kas_pemakaman.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
+        st.dataframe(df_kas_pemakaman.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
     else:
-        st.info("ℹ️ Belum ada data transaksi khusus pemakaman yang dimasukkan. Pengurus dapat mengelolanya melalui menu Admin.")
+        st.info("ℹ️ Belum ada data transaksi khusus pemakaman yang dimasukkan.")
 
 # ================= TAB 1: STATISTIK =================
 with tab1:
@@ -755,26 +769,41 @@ with tab_update_kk:
 # ================= TAB 6: KAS RW =================
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
-    st.markdown("Berikut adalah ringkasan keuangan, rincian transaksi, serta dokumen PDF laporan keuangan resmi.")
+    st.markdown("Berikut adalah ringkasan keuangan, rincian transaksi, serta dokumen PDF & Excel laporan keuangan resmi.")
     
-    if not df_kas.empty and "JUMLAH" in df_kas.columns and "JENIS" in df_kas.columns:
-        df_kas["JUMLAH_ANGKA"] = pd.to_numeric(df_kas["JUMLAH"], errors="coerce").fillna(0)
-        total_masuk = df_kas[df_kas["JENIS"].astype(str).str.upper().str.contains("MASUK", na=False)]["JUMLAH_ANGKA"].sum()
-        total_keluar = df_kas[df_kas["JENIS"].astype(str).str.upper().str.contains("KELUAR", na=False)]["JUMLAH_ANGKA"].sum()
-        saldo_akhir = total_masuk - total_keluar
+    if not df_kas.empty:
+        kolom_pemasukan = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
+        kolom_pengeluaran = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
+        kolom_saldo = [c for c in df_kas.columns if "SALDO" in c]
+
+        total_masuk = 0
+        total_keluar = 0
         
+        if kolom_pemasukan:
+            df_kas["MASUK_ANGKA"] = pd.to_numeric(df_kas[kolom_pemasukan[0]], errors="coerce").fillna(0)
+            total_masuk = df_kas["MASUK_ANGKA"].sum()
+        if kolom_pengeluaran:
+            df_kas["KELUAR_ANGKA"] = pd.to_numeric(df_kas[kolom_pengeluaran[0]], errors="coerce").fillna(0)
+            total_keluar = df_kas["KELUAR_ANGKA"].sum()
+
+        saldo_akhir = total_masuk - total_keluar
+        if kolom_saldo and not df_kas[kolom_saldo[0]].dropna().empty:
+            last_saldo = pd.to_numeric(df_kas[kolom_saldo[0]], errors="coerce").iloc[-1]
+            if pd.notnull(last_saldo): saldo_akhir = last_saldo
+
         c1, c2, c3 = st.columns(3)
         c1.metric("💵 Total Pemasukan", f"Rp {total_masuk:,.0f}".replace(",", "."))
         c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
         c3.metric("💰 Saldo Kas Bersih", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
         
         st.write("---")
-        st.dataframe(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
+        st.dataframe(df_kas.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), use_container_width=True, hide_index=True)
     else:
         st.info("ℹ️ Belum ada data transaksi kas yang dimasukkan.")
         
     st.write("---")
-    st.subheader("📄 Dokumen Laporan Kas Resmi (PDF)")
+    st.subheader("📄 Dokumen Laporan Kas Resmi (PDF & Excel)")
+    
     folder_pdf_kas = "pdf_kas"
     if not os.path.exists(folder_pdf_kas):
         os.makedirs(folder_pdf_kas)
@@ -783,18 +812,32 @@ with tab6:
     if daftar_pdf_kas:
         for pdf_file in daftar_pdf_kas:
             path_pdf = os.path.join(folder_pdf_kas, pdf_file)
-            st.markdown(f"**📂 {pdf_file}**")
+            st.markdown(f"**📂 PDF Kas: {pdf_file}**")
             with open(path_pdf, "rb") as f:
                 st.download_button(
-                    label=f"📥 Download & Lihat Dokumen: {pdf_file}",
+                    label=f"📥 Download Dokumen PDF: {pdf_file}",
                     data=f,
                     file_name=pdf_file,
                     mime="application/pdf",
                     key=f"dl_kas_{pdf_file}"
                 )
             st.write("---")
-    else:
-        st.markdown("*Belum ada file PDF laporan kas yang diunggah oleh pengurus.*")
+
+    daftar_excel_kas = [f for f in os.listdir() if f.lower().endswith('.xlsx') and ('kas' in f.lower() or 'laporan' in f.lower())]
+    if daftar_excel_kas:
+        for excel_file in daftar_excel_kas:
+            st.markdown(f"**📊 File Excel Kas: {excel_file}**")
+            with open(excel_file, "rb") as f:
+                st.download_button(
+                    label=f"📥 Download File Excel Kas: {excel_file}",
+                    data=f,
+                    file_name=excel_file,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"dl_excel_kas_{excel_file}"
+                )
+            st.write("---")
+    elif not daftar_pdf_kas:
+        st.markdown("*Belum ada file dokumen PDF atau Excel laporan kas tambahan yang diunggah.*")
 
 # ================= TAB 7: INFO & RAPAT =================
 with tab7:
@@ -1031,7 +1074,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan struktur: {e}")
                     
         elif menu_admin == "Laporan Kas RW":
-            kas_terbaru = st.data_editor(df_kas.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            kas_terbaru = st.data_editor(df_kas.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
             if st.button("💾 Simpan Perubahan Kas RW", type="primary", key="btn_simpan_kas_admin"):
                 try:
                     kas_terbaru.to_excel("datakas.xlsx", index=False)
@@ -1042,7 +1085,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan kas: {e}")
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
-            kp_terbaru = st.data_editor(df_kas_pemakaman.drop(columns=["JUMLAH_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            kp_terbaru = st.data_editor(df_kas_pemakaman.drop(columns=["MASUK_ANGKA", "KELUAR_ANGKA"], errors="ignore"), num_rows="dynamic", use_container_width=True)
             if st.button("💾 Simpan Perubahan Kas Pemakaman", type="primary", key="btn_simpan_kp_admin"):
                 try:
                     kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
