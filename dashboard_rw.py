@@ -149,7 +149,6 @@ def load_saran():
     else:
         return pd.DataFrame(columns=["WAKTU", "PENGIRIM", "JABATAN", "SARAN_PENDAPAT"])
 
-# STRUKTUR PENGURUS LENGKAP DENGAN JOB DESCRIPTION & PROGRAM KERJA
 @st.cache_data
 def load_struktur():
     data_resmi = {
@@ -481,6 +480,7 @@ with tab1:
 
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
+    palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.markdown("#### 🚻 Jenis Kelamin")
