@@ -292,7 +292,6 @@ if not df.empty and "RT" in df.columns:
                 <span style="background-color: #0D47A1; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
             </div>
             """, unsafe_allow_html=True)
-            # Menggunakan ukuran 300x400 piksel
             img_terluruskan = muat_dan_seragamkan_foto(path_foto, ukuran=(300, 400))
             st.sidebar.image(img_terluruskan, use_container_width=True)
             st.sidebar.markdown(f"""
@@ -413,9 +412,14 @@ with tab0:
         folder_pengurus = "pengurus"
         if not os.path.exists(folder_pengurus): os.makedirs(folder_pengurus)
 
+        def cari_foto_pengurus(nama_file_dasar):
+            for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+                p = os.path.join(folder_pengurus, f"{nama_file_dasar}{ext}")
+                if os.path.exists(p): return p
+            return None
+
         with col_pengurus1:
             foto_rw = cari_foto_pengurus("ketuarw")
-            # Menggunakan ukuran 300x400 piksel
             if foto_rw: st.image(muat_dan_seragamkan_foto(foto_rw, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
