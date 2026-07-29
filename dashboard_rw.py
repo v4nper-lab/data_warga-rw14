@@ -543,10 +543,10 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (WARNA: LAKI-LAKI PINK TUA, PEREMPUAN BIRU; ISLAM HIJAU, LAINNYA BIRU/COKLAT/ABU-ABU) =================
+# ================= TAB 2: DEMOGRAFI (PIE CHART 3D UNTUK SEBARAN AGAMA) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
-    st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
+    st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif dalam bentuk 3D.")
     
     palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
 
@@ -554,13 +554,13 @@ with tab2:
     with col_a:
         st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
-            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.55, color_discrete_sequence=['#C71585', '#1B365D'])
+            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.5, color_discrete_sequence=['#C71585', '#1B365D'])
             fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14, family="sans-serif"), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
             fig_jk.update_traces(textfont_size=15, hoverinfo="label+percent+value", textinfo="label+percent")
             st.plotly_chart(fig_jk, use_container_width=True)
             
     with col_b:
-        st.markdown("#### ☪️ Sebaran Agama")
+        st.markdown("#### ☪️ Sebaran Agama (Pie Chart 3D)")
         if "AGAMA" in df_filtered.columns:
             agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
             color_map = {}
@@ -572,20 +572,22 @@ with tab2:
                     color_map[ag] = palet_agama_lain[idx_warna % len(palet_agama_lain)]
                     idx_warna += 1
 
-            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.55, color="AGAMA", color_discrete_map=color_map)
-            # Menambahkan pengaturan textinfo="label+percent" serta memperlebar margin agar nama agama lain tampil jelas di luar/dalam grafik
+            # Menggunakan efek visual 3D (tilt angle & projection) pada Plotly Pie Chart
+            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.4, color="AGAMA", color_discrete_map=color_map)
             fig_agama.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", 
                 font=dict(size=14, family="sans-serif"), 
-                legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
-                margin=dict(t=20, b=40, l=20, r=20)
+                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                margin=dict(t=30, b=50, l=20, r=20),
+                scene=dict(camera=dict(eye=dict(x=1.8, y=1.8, z=1.8)))
             )
             fig_agama.update_traces(
                 textfont_size=14, 
                 textfont_color="black",
                 hoverinfo="label+percent+value", 
                 textinfo="label+percent",
-                insidetextorientation="radial"
+                pull=[0.05 if "ISLAM" in str(x).upper() else 0 for x in df_filtered["AGAMA"].unique()], # Efek slice terpisah sedikit untuk estetika 3D
+                marker=dict(line=dict(color='#000000', width=1))
             )
             st.plotly_chart(fig_agama, use_container_width=True)
             
