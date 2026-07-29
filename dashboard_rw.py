@@ -58,6 +58,10 @@ def load_data():
     if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
     if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
     if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
+    
+    # Deteksi atau buat otomatis kolom Status Penduduk jika belum ada
+    if "STATUS PENDUDUK" not in df.columns:
+        df["STATUS PENDUDUK"] = "Tetap"
     return df
 
 @st.cache_data
@@ -214,12 +218,16 @@ if os.path.exists(file_musik):
 else:
     st.sidebar.warning("⚠️ File 'backsound.mp3' belum ditemukan di GitHub.")
 
-st.sidebar.header("🛠️ Panel Filter Data RT")
+st.sidebar.header("🛠️ Panel Filter Data RT & Status")
 if "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique(), key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format, key="filter_rt_sidebar_multiselect")
     pilihan_rt_format = sorted(pilihan_rt_format, key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+
+    # Filter tambahan Status Penduduk (Tetap / Musiman)
+    semua_status_penduduk = ["Tetap", "Musiman"]
+    pilihan_status_penduduk = st.sidebar.multiselect("Filter Status Penduduk:", options=semua_status_penduduk, default=semua_status_penduduk, key="filter_status_penduduk_sidebar")
 
     # ================= FOTO KETUA RT FORMAT VERTIKAL DI SIDEBAR =================
     st.sidebar.markdown("---")
@@ -246,7 +254,7 @@ if "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt0{rt_num_clean}.jpg", f"rt0{rt_num_clean}.png"
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png", f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -282,7 +290,10 @@ if "RT" in df.columns:
     if not pilihan_rt_format:
         st.warning("⚠️ Silakan pilih minimal satu RT di menu sebelah kiri.")
         st.stop()
+        
     df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
+    if "STATUS PENDUDUK" in df_filtered.columns and pilihan_status_penduduk:
+        df_filtered = df_filtered[df_filtered["STATUS PENDUDUK"].astype(str).str.title().isin(pilihan_status_penduduk)]
 else:
     st.error("Kolom 'RT' tidak ditemukan di Excel.")
     st.stop()
@@ -536,7 +547,6 @@ with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
     
-    # Palet Warna Elegan (Deep Navy, Emerald, Amber, Royal Purple, Teal)
     palet_elegan = ['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57', '#C0392B', '#2980B9']
 
     col_a, col_b, col_c = st.columns(3)
@@ -1016,7 +1026,7 @@ with tab9:
         with st.form("form_login_saran"):
             st.markdown("### 🔑 Verifikasi Identitas Pengurus")
             pilihan_jabatan_pengurus = st.selectbox(
-                "Pilih Jabatan Anda:", 
+                "Pilih Jabatan:", 
                 ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti (Ketua/Sekretaris/Bendahara)"],
                 key="select_jabatan_saran_form"
             )
