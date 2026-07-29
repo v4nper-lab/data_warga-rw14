@@ -59,9 +59,11 @@ def load_data():
     if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
     if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
     
-    # Deteksi atau buat otomatis kolom Status Penduduk jika belum ada
     if "STATUS PENDUDUK" not in df.columns:
         df["STATUS PENDUDUK"] = "Tetap"
+    else:
+        df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].astype(str).str.strip().str.title()
+        df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
     return df
 
 @st.cache_data
@@ -225,7 +227,6 @@ if "RT" in df.columns:
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format, key="filter_rt_sidebar_multiselect")
     pilihan_rt_format = sorted(pilihan_rt_format, key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
 
-    # Filter tambahan Status Penduduk (Tetap / Musiman)
     semua_status_penduduk = ["Tetap", "Musiman"]
     pilihan_status_penduduk = st.sidebar.multiselect("Filter Status Penduduk:", options=semua_status_penduduk, default=semua_status_penduduk, key="filter_status_penduduk_sidebar")
 
@@ -1085,7 +1086,20 @@ with tab10:
         )
         
         if menu_admin == "Data Warga":
-            data_terbaru = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            st.markdown("💡 *Pada kolom **Status Penduduk**, Anda dapat memilih **Tetap** atau **Musiman**.*")
+            data_terbaru = st.data_editor(
+                df.drop(columns=["RT_FORMAT"], errors="ignore"), 
+                num_rows="dynamic", 
+                use_container_width=True,
+                column_config={
+                    "STATUS PENDUDUK": st.column_config.SelectboxColumn(
+                        "Status Penduduk",
+                        help="Pilih status kependudukan warga",
+                        options=["Tetap", "Musiman"],
+                        required=True
+                    )
+                }
+            )
             if st.button("💾 Simpan Perubahan Data Warga", type="primary", key="btn_simpan_warga_admin"):
                 try:
                     data_terbaru.to_excel("datawarga.xlsx", index=False)
