@@ -85,6 +85,7 @@ def load_kas():
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
         df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str)
         
+        # Pembersihan total string format akuntansi Excel
         df_kas[m_col] = pd.to_numeric(df_kas[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas[k_col] = pd.to_numeric(df_kas[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
@@ -578,7 +579,6 @@ with tab6:
         c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
         c3.metric("💰 Saldo Akhir", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
         
-        # Format tampilan tabel kas utama agar menampilkan format Rupiah penuh (contoh: Rp 700.000)
         df_kas_display = df_kas.copy()
         df_kas_display["PEMASUKAN"] = val_m_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
@@ -621,12 +621,11 @@ with tab10:
             ed_s = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Struktur"): ed_s.to_excel("datastruktur.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Ketik angka nominal lengkap (misal: 700000). Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo. Saldo dihitung otomatis.*")
+            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Sistem otomatis membersihkan format akuntansi Excel (Rp, spasi, titik). Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo.*")
             
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             for c_num in ["PEMASUKAN", "PENGELUARAN"]:
                 if c_num in df_kas_edit.columns:
-                    # Tampilkan angka mentah yang bersih (tanpa desimal .0) saat diedit
                     nums = pd.to_numeric(df_kas_edit[c_num], errors="coerce").fillna(0).astype(int)
                     df_kas_edit[c_num] = nums.astype(str).replace("0", "")
             
@@ -637,9 +636,20 @@ with tab10:
                     if not kas_terbaru.empty:
                         m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
-                        kas_terbaru[m] = pd.to_numeric(kas_terbaru[m].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
-                        kas_terbaru[k] = pd.to_numeric(kas_terbaru[k].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        
+                        # Membersihkan string angka mentah dari karakter format akuntansi Excel (misal: Rp, titik, koma, strip)
+                        kas_terbaru[m] = pd.to_numeric(
+                            kas_terbaru[m].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace(r'[^0-9.-]', '', regex=True),
+                            errors="coerce"
+                        ).fillna(0)
+                        
+                        kas_terbaru[k] = pd.to_numeric(
+                            kas_terbaru[k].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace(r'[^0-9.-]', '', regex=True),
+                            errors="coerce"
+                        ).fillna(0)
+                        
                         kas_terbaru["SALDO"] = (kas_terbaru[m] - kas_terbaru[k]).cumsum()
+                        
                     kas_terbaru.to_excel("datakas.xlsx", index=False)
                     st.cache_data.clear()
                     st.success("✅ Laporan Kas RW berhasil disimpan!")
@@ -662,9 +672,19 @@ with tab10:
                     if not kp_terbaru.empty:
                         m_kp = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k_kp = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
-                        kp_terbaru[m_kp] = pd.to_numeric(kp_terbaru[m_kp].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
-                        kp_terbaru[k_kp] = pd.to_numeric(kp_terbaru[k_kp].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        
+                        kp_terbaru[m_kp] = pd.to_numeric(
+                            kp_terbaru[m_kp].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace(r'[^0-9.-]', '', regex=True),
+                            errors="coerce"
+                        ).fillna(0)
+                        
+                        kp_terbaru[k_kp] = pd.to_numeric(
+                            kp_terbaru[k_kp].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace(r'[^0-9.-]', '', regex=True),
+                            errors="coerce"
+                        ).fillna(0)
+                        
                         kp_terbaru["SALDO"] = (kp_terbaru[m_kp] - kp_terbaru[k_kp]).cumsum()
+                        
                     kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
                     st.cache_data.clear()
                     st.success("✅ Laporan Kas Pemakaman berhasil disimpan!")
