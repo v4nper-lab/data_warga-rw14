@@ -51,20 +51,25 @@ def muat_dan_seragamkan_foto(path_file, ukuran=(300, 350)):
 
 @st.cache_data
 def load_data():
-    df = pd.read_excel("datawarga.xlsx")
-    df.columns = df.columns.str.strip().str.upper()
-    if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
-    if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
-    if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
-    if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
-    if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
-    
-    if "STATUS PENDUDUK" not in df.columns:
-        df["STATUS PENDUDUK"] = "Tetap"
-    else:
-        df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].astype(str).str.strip().str.title()
-        df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
-    return df
+    try:
+        df = pd.read_excel("datawarga.xlsx")
+        df.columns = df.columns.str.strip().str.upper()
+        if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
+        if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
+        if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
+        if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
+        if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
+        
+        # Penanganan aman untuk Status Penduduk
+        if "STATUS PENDUDUK" not in df.columns:
+            df["STATUS PENDUDUK"] = "Tetap"
+        else:
+            df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
+            df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
+        return df
+    except Exception as e:
+        st.error(f"Gagal memuat data warga: {e}")
+        return pd.DataFrame()
 
 @st.cache_data
 def load_kas():
@@ -221,7 +226,7 @@ else:
     st.sidebar.warning("⚠️ File 'backsound.mp3' belum ditemukan di GitHub.")
 
 st.sidebar.header("🛠️ Panel Filter Data RT & Status")
-if "RT" in df.columns:
+if not df.empty and "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique(), key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format, key="filter_rt_sidebar_multiselect")
@@ -296,8 +301,8 @@ if "RT" in df.columns:
     if "STATUS PENDUDUK" in df_filtered.columns and pilihan_status_penduduk:
         df_filtered = df_filtered[df_filtered["STATUS PENDUDUK"].astype(str).str.title().isin(pilihan_status_penduduk)]
 else:
-    st.error("Kolom 'RT' tidak ditemukan di Excel.")
-    st.stop()
+    df_filtered = pd.DataFrame()
+    st.error("Kolom 'RT' tidak ditemukan di file Excel datawarga.")
 
 # ================= KONTROL KEAMANAN ADMIN (STABIL DENGAN SESSION STATE) =================
 st.sidebar.markdown("---")
@@ -543,7 +548,7 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI (LABEL HORIZONTAL / LURUS PADA JENIS KELAMIN) =================
+# ================= TAB 2: DEMOGRAFI (LABEL HORIZONTAL / LURUS) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
@@ -561,7 +566,6 @@ with tab2:
                 legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
                 uniformtext=dict(minsize=14, mode='hide')
             )
-            # Memaksa teks label tampil lurus horizontal dan persentase di dalam/luar tanpa rotasi miring
             fig_jk.update_traces(
                 textposition='inside',
                 textangle=0, 
@@ -591,16 +595,16 @@ with tab2:
                 font=dict(size=13, family="sans-serif"), 
                 legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
                 margin=dict(t=20, b=60, l=10, r=10),
-                uniformtext=dict(minsize=12, mode='hide')
+                uniformtext=dict(minsize=11, mode='hide')
             )
             fig_agama.update_traces(
-                textposition='inside',
+                textposition='auto',
                 textangle=0,
-                textfont_size=13, 
-                textfont_color="white",
+                textfont_size=12, 
+                textfont_color="black",
                 hoverinfo="label+percent+value", 
                 textinfo="label+percent",
-                pull=[0.08 if "ISLAM" not in str(x).upper() else 0 for x in df_filtered["AGAMA"]],
+                pull=[0.12 if "ISLAM" not in str(x).upper() else 0 for x in df_filtered["AGAMA"]], # Irisan ditarik lebih keluar agar label agama kecil sangat jelas
                 marker=dict(line=dict(color='#ffffff', width=1.5))
             )
             st.plotly_chart(fig_agama, use_container_width=True)
