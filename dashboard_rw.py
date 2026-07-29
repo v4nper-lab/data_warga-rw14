@@ -84,8 +84,10 @@ def load_kas():
         
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
         df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str)
-        df_kas[m_col] = pd.to_numeric(df_kas[m_col], errors="coerce").fillna(0)
-        df_kas[k_col] = pd.to_numeric(df_kas[k_col], errors="coerce").fillna(0)
+        
+        # Bersihkan format angka agar nilai ratusan/jutaan tetap akurat
+        df_kas[m_col] = pd.to_numeric(df_kas[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+        df_kas[k_col] = pd.to_numeric(df_kas[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
         
         df_kas = df_kas[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
@@ -112,8 +114,8 @@ def load_kas_pemakaman():
         
         df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
         df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str)
-        df_kp[m_col] = pd.to_numeric(df_kp[m_col], errors="coerce").fillna(0)
-        df_kp[k_col] = pd.to_numeric(df_kp[k_col], errors="coerce").fillna(0)
+        df_kp[m_col] = pd.to_numeric(df_kp[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+        df_kp[k_col] = pd.to_numeric(df_kp[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
         df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
         
         df_kp = df_kp[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
@@ -573,7 +575,14 @@ with tab6:
         c1.metric("💵 Total Pemasukan", f"Rp {total_masuk:,.0f}".replace(",", "."))
         c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
         c3.metric("💰 Saldo Akhir", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
-        st.dataframe(df_kas, use_container_width=True, hide_index=True)
+        
+        # Format tampilan tabel kas utama agar menampilkan format angka dengan pemisah ribuan
+        df_kas_display = df_kas.copy()
+        df_kas_display["PEMASUKAN"] = df_kas_display["PEMASUKAN"].apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if pd.notnull(x) else "Rp 0")
+        df_kas_display["PENGELUARAN"] = df_kas_display["PENGELUARAN"].apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if pd.notnull(x) else "Rp 0")
+        df_kas_display["SALDO"] = df_kas_display["SALDO"].apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if pd.notnull(x) else "Rp 0")
+        
+        st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
 
 with tab7:
     st.subheader("📢 Informasi & Rapat")
@@ -610,13 +619,11 @@ with tab10:
             ed_s = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Struktur"): ed_s.to_excel("datastruktur.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung ke sel mana saja (termasuk kolom Pemasukan & Pengeluaran). Gunakan **Ctrl+Z** untuk Undo dan **Ctrl+Y** untuk Redo. Saldo dihitung otomatis.*")
-            
-            # Konversi kolom Pemasukan & Pengeluaran menjadi string agar mendukung copy-paste angka dan teks dari Excel tanpa error tipe data
+            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Ketik atau salin angka nominal lengkap (misal: 700000). Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo.*")
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
-            for col_num in ["PEMASUKAN", "PENGELUARAN"]:
-                if col_num in df_kas_edit.columns:
-                    df_kas_edit[col_num] = df_kas_edit[col_num].astype(str)
+            for c_num in ["PEMASUKAN", "PENGELUARAN"]:
+                if c_num in df_kas_edit.columns:
+                    df_kas_edit[c_num] = df_kas_edit[c_num].astype(str).str.replace(r'\.0$', '', regex=True)
             
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
             
@@ -634,6 +641,30 @@ with tab10:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan laporan kas: {e}")
+
+        elif menu_admin == "Laporan Kas Pemakaman/Sosial":
+            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Saldo dihitung otomatis.*")
+            df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
+            for c_num in ["PEMASUKAN", "PENGELUARAN"]:
+                if c_num in df_kp_edit.columns:
+                    df_kp_edit[c_num] = df_kp_edit[c_num].astype(str).str.replace(r'\.0$', '', regex=True)
+                    
+            kp_terbaru = st.data_editor(df_kp_edit, num_rows="dynamic", use_container_width=True, key="editor_kp_admin")
+            
+            if st.button("Simpan Laporan Kas Pemakaman"):
+                try:
+                    if not kp_terbaru.empty:
+                        m_kp = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
+                        k_kp = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
+                        kp_terbaru[m_kp] = pd.to_numeric(kp_terbaru[m_kp].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kp_terbaru[k_kp] = pd.to_numeric(kp_terbaru[k_kp].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kp_terbaru["SALDO"] = (kp_terbaru[m_kp] - kp_terbaru[k_kp]).cumsum()
+                    kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Laporan Kas Pemakaman berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan kas pemakaman: {e}")
     else:
         st.warning("⚠️ Masukkan password admin di sidebar.")
 
