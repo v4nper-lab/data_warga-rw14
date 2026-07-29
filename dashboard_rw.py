@@ -543,7 +543,7 @@ with tab1:
     fig_rt.update_traces(textfont_size=24, textfont_color="black", textangle=0, textposition="outside", cliponaxis=False)
     st.plotly_chart(fig_rt, use_container_width=True)
 
-# ================= TAB 2: DEMOGRAFI =================
+# ================= TAB 2: DEMOGRAFI (PIE CHART BIASA DENGAN WARNA ISLAM PUTIH) =================
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
     st.markdown("Statistik demografi kependudukan yang disajikan secara interaktif.")
@@ -554,7 +554,7 @@ with tab2:
     with col_a:
         st.markdown("#### 🚻 Jenis Kelamin")
         if "JENIS KELAMIN" in df_filtered.columns:
-            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.5, color_discrete_sequence=['#C71585', '#1B365D'])
+            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
             fig_jk.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", 
                 font=dict(size=14, family="sans-serif"), 
@@ -570,7 +570,7 @@ with tab2:
             st.plotly_chart(fig_jk, use_container_width=True)
             
     with col_b:
-        st.markdown("#### ☪️ Sebaran Agama (Pie Chart 3D)")
+        st.markdown("#### ☪️ Sebaran Agama")
         if "AGAMA" in df_filtered.columns:
             agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
             color_map = {}
@@ -582,20 +582,23 @@ with tab2:
                     color_map[ag] = palet_agama_lain[idx_warna % len(palet_agama_lain)]
                     idx_warna += 1
 
-            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.4, color="AGAMA", color_discrete_map=color_map)
+            fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color="AGAMA", color_discrete_map=color_map)
             fig_agama.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", 
                 font=dict(size=13, family="sans-serif"), 
                 legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
                 margin=dict(t=20, b=60, l=10, r=10)
             )
+            
+            # Membuat fungsi kustom agar tulisan Islam berwarna putih, dan agama lain berwarna hitam jelas
+            teks_warna_list = ["white" if "ISLAM" in str(x).upper() else "black" for x in df_filtered["AGAMA"]]
+            
             fig_agama.update_traces(
-                textposition='auto',
-                textfont_size=12, 
-                textfont_color="black",
+                textposition='inside',
+                textfont_size=13, 
+                textfont_color=teks_warna_list,
                 hoverinfo="label+percent+value", 
                 textinfo="label+percent",
-                pull=[0.12 if "ISLAM" not in str(x).upper() else 0 for x in df_filtered["AGAMA"]],
                 marker=dict(line=dict(color='#ffffff', width=1.5))
             )
             st.plotly_chart(fig_agama, use_container_width=True)
