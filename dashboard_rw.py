@@ -610,20 +610,30 @@ with tab10:
             ed_s = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Struktur"): ed_s.to_excel("datastruktur.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
         elif menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** dari Excel secara langsung. Gunakan **Ctrl+Z** untuk Undo dan **Ctrl+Y** untuk Redo. Saldo dihitung otomatis.*")
+            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung ke sel mana saja (termasuk kolom Pemasukan & Pengeluaran). Gunakan **Ctrl+Z** untuk Undo dan **Ctrl+Y** untuk Redo. Saldo dihitung otomatis.*")
+            
+            # Konversi kolom Pemasukan & Pengeluaran menjadi string agar mendukung copy-paste angka dan teks dari Excel tanpa error tipe data
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
+            for col_num in ["PEMASUKAN", "PENGELUARAN"]:
+                if col_num in df_kas_edit.columns:
+                    df_kas_edit[col_num] = df_kas_edit[col_num].astype(str)
+            
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
+            
             if st.button("Simpan Laporan Kas"):
-                if not kas_terbaru.empty:
-                    m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
-                    k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
-                    kas_terbaru[m] = pd.to_numeric(kas_terbaru[m], errors="coerce").fillna(0)
-                    kas_terbaru[k] = pd.to_numeric(kas_terbaru[k], errors="coerce").fillna(0)
-                    kas_terbaru["SALDO"] = (kas_terbaru[m] - kas_terbaru[k]).cumsum()
-                kas_terbaru.to_excel("datakas.xlsx", index=False)
-                st.cache_data.clear()
-                st.success("Tersimpan!")
-                st.rerun()
+                try:
+                    if not kas_terbaru.empty:
+                        m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
+                        k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
+                        kas_terbaru[m] = pd.to_numeric(kas_terbaru[m].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kas_terbaru[k] = pd.to_numeric(kas_terbaru[k].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kas_terbaru["SALDO"] = (kas_terbaru[m] - kas_terbaru[k]).cumsum()
+                    kas_terbaru.to_excel("datakas.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Laporan Kas RW berhasil disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan laporan kas: {e}")
     else:
         st.warning("⚠️ Masukkan password admin di sidebar.")
 
