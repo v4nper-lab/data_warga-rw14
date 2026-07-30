@@ -52,17 +52,12 @@ def muat_dan_seragamkan_foto(path_file, ukuran=(300, 400)):
 def urutkan_data_warga(df):
     if df.empty:
         return df
-    
-    # Normalisasi nama kolom ke huruf kapital
     df.columns = df.columns.str.strip().str.upper()
-    
-    # Ekstraksi angka RT untuk pengurutan numerik yang akurat (RT 1, RT 2, dst.)
     if "RT" in df.columns:
         df["RT_NUM"] = pd.to_numeric(df["RT"].astype(str).str.replace(r'[^0-9]', '', regex=True), errors="coerce").fillna(99)
     else:
         df["RT_NUM"] = 99
         
-    # Identifikasi kolom nama warga untuk pengurutan abjad
     kolom_nama = None
     for k in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]:
         if k in df.columns:
@@ -76,7 +71,6 @@ def urutkan_data_warga(df):
     else:
         df = df.sort_values(by=["RT_NUM"], ascending=[True]).reset_index(drop=True)
         df = df.drop(columns=["RT_NUM"], errors="ignore")
-        
     return df
 
 @st.cache_data
@@ -731,14 +725,53 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada file PDF hasil rapat yang diunggah.")
 
+# ================= TAB GALERI (TERSUSUN BERDASARKAN BULAN & TAHUN) =================
 with tab8:
-    st.subheader("🖼️ Galeri Kegiatan")
+    st.subheader("🖼️ Galeri Kegiatan Warga RW 14")
     folder_galeri = "galeri"
     if os.path.exists(folder_galeri) and not df_galeri_meta.empty:
-        for _, row in df_galeri_meta.iterrows():
-            p = os.path.join(folder_galeri, str(row.get("NAMA_FILE", "")))
-            if os.path.exists(p):
-                st.image(p, caption=str(row.get("KETERANGAN", "")), width=300)
+        # Pemetaan urutan bulan untuk pengurutan kronologis yang akurat
+        mapping_bulan = {
+            'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4, 'Mei': 5, 'Juni': 6,
+            'Juli': 7, 'Agustus': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Desember': 12
+        }
+        
+        df_g_sort = df_galeri_meta.copy()
+        df_g_sort["BULAN_NUM"] = df_g_sort["BULAN"].map(mapping_bulan).fillna(0)
+        df_g_sort["TAHUN_NUM"] = pd.to_numeric(df_g_sort["TAHUN"], errors="coerce").fillna(0)
+        df_g_sort["TANGGAL_NUM"] = pd.to_numeric(df_g_sort["TANGGAL"], errors="coerce").fillna(0)
+        
+        # Urutkan dari tahun, bulan, dan tanggal terbaru
+        df_g_sort = df_g_sort.sort_values(by=["TAHUN_NUM", "BULAN_NUM", "TANGGAL_NUM"], ascending=[False, False, False]).reset_index(drop=True)
+        
+        # Kelompokkan berdasarkan Tahun & Bulan
+        grouped = df_g_sort.groupby(["TAHUN", "BULAN"])
+        
+        for (thn, bln), group_df in grouped:
+            st.markdown(f"### 🗓️ Periode: {bln} {thn}")
+            st.markdown("---")
+            
+            # Tampilkan foto dalam grid 3 kolom
+            cols = st.columns(3)
+            for idx, (_, row) in enumerate(group_df.iterrows()):
+                nama_ f = str(row.get("NAMA_FILE", ""))
+                p_foto = os.path.join(folder_galeri, nama_f)
+                ket_foto = str(row.get("KETERANGAN", ""))
+                hari_foto = str(row.get("HARI", ""))
+                tgl_foto = str(row.get("TANGGAL", ""))
+                
+                if os.path.exists(p_foto):
+                    with cols[idx % 3]:
+                        img_g = muat_dan_seragamkan_foto(p_foto, ukuran=(300, 400))
+                        st.image(img_g, use_container_width=True)
+                        st.markdown(f"""
+                        <div style="background-color: white; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #90CAF9; border-top: none; margin-bottom: 20px; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
+                            <p style="margin: 0; font-size: 12px; color: #1976D2; font-weight: bold;">📅 {hari_foto}, {tgl_foto} {bln} {thn}</p>
+                            <p style="margin: 4px 0 0 0; font-size: 14px; color: #333; font-weight: bold;">{ket_foto}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+    else:
+        st.info("ℹ️ Belum ada foto kegiatan di galeri.")
 
 with tab9:
     st.subheader("💬 Kotak Aspirasi, Saran, & Pendapat Pengurus RW 14")
@@ -820,6 +853,7 @@ with tab10:
                 "Laporan Kas Pemakaman/Sosial", 
                 "Upload File PDF (Kas & Rapat)", 
                 "Upload Foto Galeri", 
+                "Edit Keterangan Galeri",
                 "Hapus Foto Galeri"
             ]
         )
@@ -976,6 +1010,23 @@ with tab10:
                         st.cache_data.clear()
                         st.success("✅ Foto galeri berhasil disimpan!")
                         st.rerun()
+
+        elif menu_admin == "Edit Keterangan Galeri":
+            st.markdown("✏️ **Edit Keterangan / Deskripsi Foto Galeri**")
+            if os.path.exists("datagaleri.xlsx"):
+                df_g_edit = pd.read_excel("datagaleri.xlsx")
+                df_g_edit.columns = df_g_edit.columns.str.strip().str.upper()
+                if not df_g_edit.empty:
+                    ed_galeri_hasil = st.data_editor(df_g_edit, num_rows="dynamic", use_container_width=True, key="editor_meta_galeri")
+                    if st.button("💾 Simpan Perubahan Keterangan"):
+                        ed_galeri_hasil.to_excel("datagaleri.xlsx", index=False)
+                        st.cache_data.clear()
+                        st.success("✅ Keterangan foto galeri berhasil diperbarui!")
+                        st.rerun()
+                else:
+                    st.info("ℹ️ Belum ada data metadata galeri.")
+            else:
+                st.info("ℹ️ File metadata galeri belum tersedia.")
 
         elif menu_admin == "Hapus Foto Galeri":
             st.markdown("🗑️ **Hapus Foto Galeri**")
