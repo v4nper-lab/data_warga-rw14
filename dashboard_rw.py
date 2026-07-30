@@ -730,7 +730,6 @@ with tab8:
     st.subheader("🖼️ Galeri Kegiatan Warga RW 14")
     folder_galeri = "galeri"
     if os.path.exists(folder_galeri) and not df_galeri_meta.empty:
-        # Pemetaan urutan bulan untuk pengurutan kronologis yang akurat
         mapping_bulan = {
             'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4, 'Mei': 5, 'Juni': 6,
             'Juli': 7, 'Agustus': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Desember': 12
@@ -741,21 +740,18 @@ with tab8:
         df_g_sort["TAHUN_NUM"] = pd.to_numeric(df_g_sort["TAHUN"], errors="coerce").fillna(0)
         df_g_sort["TANGGAL_NUM"] = pd.to_numeric(df_g_sort["TANGGAL"], errors="coerce").fillna(0)
         
-        # Urutkan dari tahun, bulan, dan tanggal terbaru
         df_g_sort = df_g_sort.sort_values(by=["TAHUN_NUM", "BULAN_NUM", "TANGGAL_NUM"], ascending=[False, False, False]).reset_index(drop=True)
         
-        # Kelompokkan berdasarkan Tahun & Bulan
         grouped = df_g_sort.groupby(["TAHUN", "BULAN"])
         
         for (thn, bln), group_df in grouped:
             st.markdown(f"### 🗓️ Periode: {bln} {thn}")
             st.markdown("---")
             
-            # Tampilkan foto dalam grid 3 kolom
             cols = st.columns(3)
             for idx, (_, row) in enumerate(group_df.iterrows()):
-                nama_ f = str(row.get("NAMA_FILE", ""))
-                p_foto = os.path.join(folder_galeri, nama_f)
+                nama_file = str(row.get("NAMA_FILE", ""))
+                p_foto = os.path.join(folder_galeri, nama_file)
                 ket_foto = str(row.get("KETERANGAN", ""))
                 hari_foto = str(row.get("HARI", ""))
                 tgl_foto = str(row.get("TANGGAL", ""))
