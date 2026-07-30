@@ -49,22 +49,55 @@ def muat_dan_seragamkan_foto(path_file, ukuran=(300, 400)):
     except Exception:
         return path_file
 
+def urutkan_data_warga(df):
+    if df.empty:
+        return df
+    
+    # Normalisasi nama kolom ke huruf kapital
+    df.columns = df.columns.str.strip().str.upper()
+    
+    # Ekstraksi angka RT untuk pengurutan numerik yang akurat (RT 1, RT 2, dst.)
+    if "RT" in df.columns:
+        df["RT_NUM"] = pd.to_numeric(df["RT"].astype(str).str.replace(r'[^0-9]', '', regex=True), errors="coerce").fillna(99)
+    else:
+        df["RT_NUM"] = 99
+        
+    # Identifikasi kolom nama warga untuk pengurutan abjad
+    kolom_nama = None
+    for k in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]:
+        if k in df.columns:
+            kolom_nama = k
+            break
+            
+    if kolom_nama:
+        df["NAMA_STR"] = df[kolom_nama].astype(str).str.strip().str.upper()
+        df = df.sort_values(by=["RT_NUM", "NAMA_STR"], ascending=[True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "NAMA_STR"], errors="ignore")
+    else:
+        df = df.sort_values(by=["RT_NUM"], ascending=[True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM"], errors="ignore")
+        
+    return df
+
 @st.cache_data
 def load_data():
-    df = pd.read_excel("datawarga.xlsx")
-    df.columns = df.columns.str.strip().str.upper()
-    if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
-    if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
-    if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
-    if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
-    if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
-    
-    if "STATUS PENDUDUK" not in df.columns:
-        df["STATUS PENDUDUK"] = "Tetap"
+    if os.path.exists("datawarga.xlsx"):
+        df = pd.read_excel("datawarga.xlsx")
+        df = urutkan_data_warga(df)
+        if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
+        if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
+        if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
+        if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
+        if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
+        
+        if "STATUS PENDUDUK" not in df.columns:
+            df["STATUS PENDUDUK"] = "Tetap"
+        else:
+            df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
+            df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
+        return df
     else:
-        df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
-        df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
-    return df
+        return pd.DataFrame()
 
 @st.cache_data
 def load_kas():
@@ -551,7 +584,6 @@ with tab5:
             hasil = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
             st.dataframe(hasil, use_container_width=True, hide_index=True)
 
-# ================= TAB REKAP RT (UNTUK CETAK / PRINT & DOWNLOAD) =================
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi & Cetak Data Warga per RT")
     st.markdown("Pilih RT untuk melihat rekapitulasi data warga lengkap, mencetak laporan (*print*), atau mengunduhnya ke file Excel.")
@@ -596,7 +628,6 @@ with tab_rekap_rt:
             col_pr1, col_pr2 = st.columns(2)
             
             with col_pr1:
-                # Tombol Download Excel Rekap
                 file_name_excel = f"Rekap_Data_Warga_{rt_pilihan_rekap.replace(' ', '')}.xlsx"
                 buffer_excel = pd.ExcelWriter(file_name_excel, engine='xlsxwriter')
                 df_rekap_tampil.to_excel(buffer_excel, sheet_name=f"Data {rt_pilihan_rekap}", index=False)
@@ -612,7 +643,6 @@ with tab_rekap_rt:
                     )
                     
             with col_pr2:
-                # Tombol Print / Cetak via browser
                 html_tabel = df_rekap_tampil.to_html(index=False, classes='table table-striped')
                 html_print_page = f"""
                 <html>
@@ -794,8 +824,19 @@ with tab10:
             ]
         )
         if menu_admin == "Data Warga":
+            st.markdown("💡 *Data warga akan otomatis diurutkan berdasarkan RT (01-07) dan Abjad Nama saat disimpan.*")
             ed = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-            if st.button("Simpan Data Warga"): ed.to_excel("datawarga.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
+            if st.button("Simpan Data Warga"):
+                try:
+                    df_baru = pd.DataFrame(ed)
+                    df_terurut = urutkan_data_warga(df_baru)
+                    df_terurut.to_excel("datawarga.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Data warga berhasil diurutkan dan disimpan!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan data warga: {e}")
+                    
         elif menu_admin == "Struktur Organisasi":
             ed_s = st.data_editor(df_struktur, num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Struktur"): ed_s.to_excel("datastruktur.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
