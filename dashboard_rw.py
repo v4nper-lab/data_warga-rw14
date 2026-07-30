@@ -383,9 +383,9 @@ with col_teks:
 
 st.write("---")
 
-tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_update_kk, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
-    "🗂️ Data Warga", "🔍 Cari KK", "📤 Update Data RT & KK", "💰 Kas RW", 
+    "🗂️ Data Warga", "🔍 Cari KK", "📊 Rekap RT", "📤 Update Data RT & KK", "💰 Kas RW", 
     "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
 ])
 
@@ -550,6 +550,83 @@ with tab5:
         if kata_kunci:
             hasil = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
             st.dataframe(hasil, use_container_width=True, hide_index=True)
+
+# ================= TAB REKAP RT (UNTUK CETAK / PRINT & DOWNLOAD) =================
+with tab_rekap_rt:
+    st.subheader("📊 Rekapitulasi & Cetak Data Warga per RT")
+    st.markdown("Pilih RT untuk melihat rekapitulasi data warga lengkap, mencetak laporan (*print*), atau mengunduhnya ke file Excel.")
+    
+    if "rekap_terverifikasi" not in st.session_state: st.session_state["rekap_terverifikasi"] = False
+    
+    if not st.session_state["rekap_terverifikasi"]:
+        st.info("🔒 Menu rekapitulasi dilindungi. Masukkan kata sandi pengurus untuk mengakses.")
+        pass_rekap = st.text_input("Kata Sandi Akses Rekap RT:", type="password", key="pass_input_rekap_rt")
+        if pass_rekap == "ijindibuka":
+            st.session_state["rekap_terverifikasi"] = True
+            st.success("✅ Akses diberikan!")
+            st.rerun()
+        elif pass_rekap != "":
+            st.error("❌ Kata sandi salah!")
+    else:
+        if st.button("🔒 Kunci Kembali Menu Rekap", key="btn_kunci_rekap"):
+            st.session_state["rekap_terverifikasi"] = False
+            st.rerun()
+            
+        st.markdown("---")
+        rt_pilihan_rekap = st.selectbox("Pilih Wilayah RT:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07"], key="sel_rt_rekap_print")
+        
+        if not df.empty and "RT_FORMAT" in df.columns:
+            df_rekap_rt = df[df["RT_FORMAT"] == rt_pilihan_rekap.replace(" ", "")].copy()
+            
+            st.markdown(f"""
+            <div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #90CAF9; margin-bottom: 15px;">
+                <h4 style="color: #0D47A1; margin-top:0; text-align: center;">REKAPITULASI DATA WARGA {rt_pilihan_rekap} RW 014</h4>
+                <p style="text-align: center; margin: 0; color: #555; font-size: 14px;">Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</p>
+                <hr style="margin: 10px 0;">
+                <p style="margin: 0; font-size: 14px;"><b>Total Penduduk:</b> {len(df_rekap_rt)} Jiwa</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            kolom_sampah = ["RT_FORMAT", "USIA_ANGKA", "Kelompok Usia"]
+            df_rekap_tampil = df_rekap_rt.drop(columns=[c for c in kolom_sampah if c in df_rekap_rt.columns], errors="ignore")
+            
+            st.dataframe(df_rekap_tampil, use_container_width=True, hide_index=True)
+            
+            st.markdown("---")
+            col_pr1, col_pr2 = st.columns(2)
+            
+            with col_pr1:
+                # Tombol Download Excel Rekap
+                file_name_excel = f"Rekap_Data_Warga_{rt_pilihan_rekap.replace(' ', '')}.xlsx"
+                buffer_excel = pd.ExcelWriter(file_name_excel, engine='xlsxwriter')
+                df_rekap_tampil.to_excel(buffer_excel, sheet_name=f"Data {rt_pilihan_rekap}", index=False)
+                buffer_excel.close()
+                
+                with open(file_name_excel, "rb") as f_ex:
+                    st.download_button(
+                        label=f"📥 Download Rekap Excel {rt_pilihan_rekap}",
+                        data=f_ex,
+                        file_name=file_name_excel,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"dl_excel_rekap_{rt_pilihan_rekap}"
+                    )
+                    
+            with col_pr2:
+                # Tombol Print / Cetak via browser
+                html_tabel = df_rekap_tampil.to_html(index=False, classes='table table-striped')
+                html_print_page = f"""
+                <html>
+                <head><title>Cetak Data Warga {rt_pilihan_rekap}</title></head>
+                <body onload="window.print()">
+                    <h2 style="text-align: center;">REKAPITULASI DATA WARGA {rt_pilihan_rekap} RW 014</h2>
+                    <p style="text-align: center;">Griya Permata Raya, Nanjung Mekar, Rancaekek</p>
+                    {html_tabel}
+                </body>
+                </html>
+                """
+                b64_print = base64.b64encode(html_print_page.encode()).decode()
+                href_print = f'<a href="data:text/html;base64,{b64_print}" target="_blank" style="background-color: #0D47A1; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; display: inline-block;">🖨️ Cetak / Print Data {rt_pilihan_rekap}</a>'
+                st.markdown(href_print, unsafe_allow_html=True)
 
 with tab_update_kk:
     st.subheader("📤 Menu Update Data Warga & Unggah Dokumen KK Baru")
