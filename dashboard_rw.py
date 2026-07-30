@@ -83,7 +83,6 @@ def load_kas():
         if m_col not in df_kas.columns: df_kas[m_col] = 0
         if k_col not in df_kas.columns: df_kas[k_col] = 0
         
-        # Penanganan presisi agar tanggal selalu dibaca dan ditampilkan sebagai string normal
         df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
         
@@ -617,7 +616,18 @@ with tab9:
 with tab10:
     st.subheader("⚙️ Panel Admin")
     if admin_terverifikasi:
-        menu_admin = st.selectbox("Menu Admin:", ["Data Warga", "Struktur Organisasi", "Laporan Kas RW", "Laporan Kas Pemakaman/Sosial"])
+        menu_admin = st.selectbox(
+            "Menu Admin:", 
+            [
+                "Data Warga", 
+                "Struktur Organisasi", 
+                "Laporan Kas RW", 
+                "Laporan Kas Pemakaman/Sosial", 
+                "Upload File PDF (Kas & Rapat)", 
+                "Upload Foto Galeri", 
+                "Hapus Foto Galeri"
+            ]
+        )
         if menu_admin == "Data Warga":
             ed = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
             if st.button("Simpan Data Warga"): ed.to_excel("datawarga.xlsx", index=False); st.success("Tersimpan!"); st.rerun()
@@ -700,6 +710,86 @@ with tab10:
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan kas pemakaman: {e}")
+
+        elif menu_admin == "Upload File PDF (Kas & Rapat)":
+            st.markdown("### 📄 Unggah Dokumen PDF Resmi (Kas & Rapat)")
+            kategori_pdf = st.radio("Pilih Kategori Dokumen:", ["Laporan Kas RW", "Hasil Rapat / Informasi RW"], key="radio_kat_pdf")
+            pdf_up = st.file_uploader("Pilih File PDF:", type=["pdf"], key="up_pdf_file_rw")
+            if pdf_up is not None:
+                folder_tujuan = "pdf_kas" if kategori_pdf == "Laporan Kas RW" else "pdf_info"
+                if not os.path.exists(folder_tujuan): os.makedirs(folder_tujuan)
+                path_pdf = os.path.join(folder_tujuan, pdf_up.name)
+                with open(path_pdf, "wb") as f:
+                    f.write(pdf_up.getbuffer())
+                st.success(f"✅ Dokumen PDF '{pdf_up.name}' berhasil diunggah!")
+                st.rerun()
+
+        elif menu_admin == "Upload Foto Galeri":
+            st.markdown("### 🖼️ Unggah Foto Kegiatan ke Galeri")
+            foto_up = st.file_uploader("Pilih File Foto (JPG/PNG):", type=["jpg", "jpeg", "png"], key="up_foto_galeri_file")
+            if foto_up is not None:
+                col_i1, col_i2 = st.columns(2)
+                with col_i1:
+                    input_tgl = st.selectbox("Pilih Tanggal:", ["-- Pilih --"] + [f"{i:02d}" for i in range(1, 32)], key="sel_tgl_galeri")
+                    input_bln = st.selectbox("Pilih Bulan:", ["-- Pilih --", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"], key="sel_bln_galeri")
+                with col_i2:
+                    input_thn = st.selectbox("Pilih Tahun:", ["-- Pilih --", "2024", "2025", "2026", "2027", "2028"], key="sel_thn_galeri")
+                    input_ket = st.text_input("Keterangan Kegiatan:", key="input_ket_galeri")
+                
+                bulan_to_angka = {'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4, 'Mei': 5, 'Juni': 6, 'Juli': 7, 'Agustus': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Desember': 12}
+                input_hari = ""
+                if input_tgl != "-- Pilih --" and input_bln != "-- Pilih --" and input_thn != "-- Pilih --":
+                    try:
+                        dt_pilih = datetime(int(input_thn), bulan_to_angka[input_bln], int(input_tgl))
+                        hari_inggris = dt_pilih.strftime("%A")
+                        hari_indo_map = {'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu', 'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu', 'Sunday': 'Minggu'}
+                        input_hari = hari_indo_map.get(hari_inggris, "")
+                        st.info(f"✨ Hari Terdeteksi Otomatis: **{input_hari}**")
+                    except Exception:
+                        st.warning("⚠️ Kombinasi tanggal tidak valid.")
+
+                if st.button("💾 Simpan Foto Galeri"):
+                    if input_tgl == "-- Pilih --" or input_bln == "-- Pilih --" or input_thn == "-- Pilih --" or not input_hari:
+                        st.error("❌ Mohon lengkapi Tanggal, Bulan, dan Tahun dengan benar!")
+                    else:
+                        folder_galeri = "galeri"
+                        if not os.path.exists(folder_galeri): os.makedirs(folder_galeri)
+                        path_simpan = os.path.join(folder_galeri, foto_up.name)
+                        with open(path_simpan, "wb") as f:
+                            f.write(foto_up.getbuffer())
+                        
+                        new_row = pd.DataFrame([{"NAMA_FILE": foto_up.name, "HARI": input_hari, "TANGGAL": input_tgl, "BULAN": input_bln, "TAHUN": input_thn, "KETERANGAN": input_ket}])
+                        if os.path.exists("datagaleri.xlsx"):
+                            df_g = pd.read_excel("datagaleri.xlsx")
+                            df_g.columns = df_g.columns.str.strip().str.upper()
+                            df_g = df_g[df_g["NAMA_FILE"] != foto_up.name]
+                            df_g = pd.concat([df_g, new_row], ignore_index=True)
+                        else:
+                            df_g = new_row
+                        df_g.to_excel("datagaleri.xlsx", index=False)
+                        st.cache_data.clear()
+                        st.success("✅ Foto galeri berhasil disimpan!")
+                        st.rerun()
+
+        elif menu_admin == "Hapus Foto Galeri":
+            st.markdown("🗑️ **Hapus Foto Galeri**")
+            folder_galeri = "galeri"
+            if os.path.exists(folder_galeri):
+                daftar_foto_del = [f for f in os.listdir(folder_galeri) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
+                if daftar_foto_del:
+                    foto_pilih_hapus = st.selectbox("Pilih Foto:", options=daftar_foto_del)
+                    if st.button("🗑️ Hapus Permanen"):
+                        os.remove(os.path.join(folder_galeri, foto_pilih_hapus))
+                        if os.path.exists("datagaleri.xlsx"):
+                            df_g_del = pd.read_excel("datagaleri.xlsx")
+                            df_g_del.columns = df_g_del.columns.str.strip().str.upper()
+                            df_g_del = df_g_del[df_g_del["NAMA_FILE"] != foto_pilih_hapus]
+                            df_g_del.to_excel("datagaleri.xlsx", index=False)
+                        st.cache_data.clear()
+                        st.success("✅ Foto berhasil dihapus!")
+                        st.rerun()
+                else:
+                    st.info("ℹ️ Belum ada foto di galeri.")
     else:
         st.warning("⚠️ Masukkan password admin di sidebar.")
 
