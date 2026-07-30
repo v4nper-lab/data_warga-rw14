@@ -16,13 +16,50 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.stApp { background-color: #F4F9F9; }
-div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1976D2; }
-div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
-div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
-h3 { font-size: 24px !important; color: #0D47A1; }
-button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
-.stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
+/* Latar belakang utama aplikasi dengan gradasi lembut berkelas */
+.stApp { 
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); 
+    background-attachment: fixed;
+}
+
+/* Kotak Metrik / Statistik dengan efek kaca transparan (Glassmorphism tipis) */
+div[data-testid="metric-container"] { 
+    background: rgba(255, 255, 255, 0.85); 
+    backdrop-filter: blur(10px);
+    padding: 15px; 
+    border-radius: 12px; 
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.04); 
+    border-left: 6px solid #0D47A1;
+    border-top: 1px solid rgba(255,255,255,0.8);
+}
+
+div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { 
+    font-size: 38px !important; 
+    color: #0D47A1 !important; 
+    font-weight: 900 !important; 
+}
+
+div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { 
+    font-size: 16px !important; 
+    font-weight: bold !important; 
+    color: #334155 !important; 
+}
+
+h3 { font-size: 24px !important; color: #0D47A1; font-weight: 800; }
+
+button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { 
+    font-size: 13px !important; 
+    font-weight: bold; 
+}
+
+/* Kartu Chart / Grafik */
+.stPlotlyChart { 
+    background: rgba(255, 255, 255, 0.9); 
+    border-radius: 12px; 
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.06); 
+    padding: 15px; 
+    border: 1px solid #cbd5e1;
+}
 </style>
 """, unsafe_allow_html=True)
 
