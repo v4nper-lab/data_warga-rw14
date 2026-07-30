@@ -588,13 +588,41 @@ with tab6:
         df_kas_display["SALDO"] = (val_m_sum - val_k_sum).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
         
         st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
+        
+    st.write("---")
+    st.subheader("📄 Dokumen Laporan Kas Resmi (PDF)")
+    folder_pdf_kas = "pdf_kas"
+    if os.path.exists(folder_pdf_kas):
+        daftar_pdf_kas = [f for f in os.listdir(folder_pdf_kas) if f.lower().endswith('.pdf')]
+        if daftar_pdf_kas:
+            for pdf_f in daftar_pdf_kas:
+                with open(os.path.join(folder_pdf_kas, pdf_f), "rb") as f_pdf:
+                    st.download_button(label=f"📥 Download Laporan Kas: {pdf_f}", data=f_pdf, file_name=pdf_f, mime="application/pdf", key=f"dl_kas_{pdf_f}")
+        else:
+            st.info("ℹ️ Belum ada file PDF laporan kas yang diunggah.")
+    else:
+        st.info("ℹ️ Belum ada file PDF laporan kas yang diunggah.")
 
 with tab7:
-    st.subheader("📢 Informasi & Rapat")
+    st.subheader("📢 Informasi Kegiatan & Hasil Rapat RW 14")
     if not df_info.empty:
         for _, r in df_info.iterrows():
             with st.expander(f"📌 [{r.get('TANGGAL', '')}] — {r.get('JUDUL', '')}"):
                 st.write(r.get('ISI / KATEGORI', ''))
+
+    st.write("---")
+    st.subheader("📄 Dokumen Hasil Rapat (PDF)")
+    folder_pdf_info = "pdf_info"
+    if os.path.exists(folder_pdf_info):
+        daftar_pdf_info = [f for f in os.listdir(folder_pdf_info) if f.lower().endswith('.pdf')]
+        if daftar_pdf_info:
+            for pdf_f in daftar_pdf_info:
+                with open(os.path.join(folder_pdf_info, pdf_f), "rb") as f_pdf:
+                    st.download_button(label=f"📥 Download Dokumen Rapat: {pdf_f}", data=f_pdf, file_name=pdf_f, mime="application/pdf", key=f"dl_rapat_{pdf_f}")
+        else:
+            st.info("ℹ️ Belum ada file PDF hasil rapat yang diunggah.")
+    else:
+        st.info("ℹ️ Belum ada file PDF hasil rapat yang diunggah.")
 
 with tab8:
     st.subheader("🖼️ Galeri Kegiatan")
@@ -606,12 +634,72 @@ with tab8:
                 st.image(p, caption=str(row.get("KETERANGAN", "")), width=300)
 
 with tab9:
-    st.subheader("💬 Saran Pengurus")
+    st.subheader("💬 Kotak Aspirasi, Saran, & Pendapat Pengurus RW 14")
+    st.markdown("Menu khusus bagi **Ketua RT 01 s.d. 07** serta **Pengurus Inti RW** untuk memberikan masukan, evaluasi, dan pendapat.")
+
     if st.session_state.get("saran_terverifikasi", False):
-        st.write(f"Login sebagai: {st.session_state.get('saran_nama')}")
+        st.success(f"Login sebagai: **{st.session_state.get('saran_nama')} ({st.session_state.get('saran_jabatan')})**")
+        if st.button("🔄 Keluar / Ganti Akun Pengurus", key="btn_keluar_saran"):
+            st.session_state["saran_terverifikasi"] = False
+            st.rerun()
+            
+        with st.form("form_kirim_saran_aktif"):
+            pesan_saran = st.text_area("Tuliskan Saran, Pendapat, atau Evaluasi Anda:")
+            if st.form_submit_button("📤 Kirim Saran", type="primary"):
+                if not pesan_saran.strip():
+                    st.warning("⚠️ Saran tidak boleh kosong.")
+                else:
+                    wkt = (datetime.utcnow() + timedelta(hours=7)).strftime("%d-%m-%Y %H:%M")
+                    new_s = pd.DataFrame([{
+                        "WAKTU": wkt,
+                        "PENGIRIM": st.session_state.get('saran_nama'),
+                        "JABATAN": st.session_state.get('saran_jabatan'),
+                        "SARAN_PENDAPAT": pesan_saran.strip()
+                    }])
+                    if os.path.exists("datasaran.xlsx"):
+                        df_s_ex = pd.read_excel("datasaran.xlsx")
+                        df_s_ex.columns = df_s_ex.columns.str.strip().str.upper()
+                        df_s_up = pd.concat([df_s_ex, new_s], ignore_index=True)
+                    else:
+                        df_s_up = new_s
+                    df_s_up.to_excel("datasaran.xlsx", index=False)
+                    st.cache_data.clear()
+                    st.success("✅ Saran berhasil dikirim!")
+                    st.rerun()
     else:
-        pass_saran = st.text_input("Kode Akses Pengurus:", type="password", key="pass_saran")
-        if pass_saran == "@pengurusrw14": st.session_state["saran_terverifikasi"] = True; st.rerun()
+        with st.form("form_login_saran_aktif"):
+            jab_pilih = st.selectbox("Pilih Jabatan:", ["-- Pilih Jabatan --", "Ketua RT 01", "Ketua RT 02", "Ketua RT 03", "Ketua RT 04", "Ketua RT 05", "Ketua RT 06", "Ketua RT 07", "Pengurus Inti"])
+            nama_pilih = st.text_input("Nama Lengkap:")
+            kode_pilih = st.text_input("Kode Akses Pengurus:", type="password")
+            if st.form_submit_button("🔓 Verifikasi & Masuk"):
+                if jab_pilih == "-- Pilih Jabatan --" or not nama_pilih.strip() or not kode_pilih.strip():
+                    st.error("❌ Lengkapi semua kolom!")
+                elif kode_pilih.strip() == "@pengurusrw14":
+                    st.session_state["saran_terverifikasi"] = True
+                    st.session_state["saran_nama"] = nama_pilih.strip()
+                    st.session_state["saran_jabatan"] = jab_pilih
+                    st.success("✅ Berhasil masuk!")
+                    st.rerun()
+                else:
+                    st.error("❌ Kode akses salah!")
+
+    st.markdown("---")
+    st.markdown("### 📋 Daftar Saran yang Masuk")
+    if os.path.exists("datasaran.xlsx"):
+        df_s_t = pd.read_excel("datasaran.xlsx")
+        df_s_t.columns = df_s_t.columns.str.strip().str.upper()
+        if not df_s_t.empty:
+            for _, r in df_s_t.iloc[::-1].iterrows():
+                st.markdown(f"""
+                <div style="background-color: white; padding: 12px; border-radius: 8px; border-left: 4px solid #0D47A1; margin-bottom: 10px; box-shadow: 0px 1px 3px rgba(0,0,0,0.05);">
+                    <p style="margin: 0; font-size: 13px; color: #555;"><b>👤 {r.get('PENGIRIM', '')}</b> ({r.get('JABATAN', '')}) &bull; <i>🕒 {r.get('WAKTU', '')}</i></p>
+                    <p style="margin: 6px 0 0 0; font-size: 14px; color: #222; white-space: pre-wrap;">{r.get('SARAN_PENDAPAT', '')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ Belum ada saran.")
+    else:
+        st.info("ℹ️ Belum ada saran.")
 
 with tab10:
     st.subheader("⚙️ Panel Admin")
