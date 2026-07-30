@@ -39,7 +39,7 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk menyeragamkan seluruh foto menjadi resolusi tepat 300x400 piksel
+# Fungsi untuk menyeragamkan foto pengurus RT/RW
 def muat_dan_seragamkan_foto(path_file, ukuran=(300, 400)):
     try:
         img = Image.open(path_file)
@@ -725,7 +725,7 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada file PDF hasil rapat yang diunggah.")
 
-# ================= TAB GALERI (TERSUSUN BERDASARKAN BULAN & TAHUN) =================
+# ================= TAB GALERI (FOTO UKURAN KECIL / PROPOSIONAL & TERSUSUN) =================
 with tab8:
     st.subheader("🖼️ Galeri Kegiatan Warga RW 14")
     folder_galeri = "galeri"
@@ -748,7 +748,8 @@ with tab8:
             st.markdown(f"### 🗓️ Periode: {bln} {thn}")
             st.markdown("---")
             
-            cols = st.columns(3)
+            # Tampilkan foto dalam grid 4 kolom dengan ukuran lebih kecil tanpa cropping berlebihan
+            cols = st.columns(4)
             for idx, (_, row) in enumerate(group_df.iterrows()):
                 nama_file = str(row.get("NAMA_FILE", ""))
                 p_foto = os.path.join(folder_galeri, nama_file)
@@ -757,13 +758,20 @@ with tab8:
                 tgl_foto = str(row.get("TANGGAL", ""))
                 
                 if os.path.exists(p_foto):
-                    with cols[idx % 3]:
-                        img_g = muat_dan_seragamkan_foto(p_foto, ukuran=(300, 400))
-                        st.image(img_g, use_container_width=True)
+                    with cols[idx % 4]:
+                        try:
+                            img_asli = Image.open(p_foto)
+                            img_asli = ImageOps.exif_transpose(img_asli)
+                            # Menyesuaikan lebar maksimal agar kecil dan proporsional
+                            img_asli.thumbnail((250, 250))
+                            st.image(img_asli, use_container_width=True)
+                        except Exception:
+                            st.image(p_foto, use_container_width=True)
+                            
                         st.markdown(f"""
-                        <div style="background-color: white; padding: 10px; border-radius: 0 0 10px 10px; border: 1px solid #90CAF9; border-top: none; margin-bottom: 20px; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
-                            <p style="margin: 0; font-size: 12px; color: #1976D2; font-weight: bold;">📅 {hari_foto}, {tgl_foto} {bln} {thn}</p>
-                            <p style="margin: 4px 0 0 0; font-size: 14px; color: #333; font-weight: bold;">{ket_foto}</p>
+                        <div style="background-color: white; padding: 8px; border-radius: 0 0 8px 8px; border: 1px solid #90CAF9; border-top: none; margin-bottom: 20px; box-shadow: 0px 2px 4px rgba(0,0,0,0.05);">
+                            <p style="margin: 0; font-size: 11px; color: #1976D2; font-weight: bold;">📅 {hari_foto}, {tgl_foto} {bln} {thn}</p>
+                            <p style="margin: 3px 0 0 0; font-size: 12px; color: #333; font-weight: bold;">{ket_foto}</p>
                         </div>
                         """, unsafe_allow_html=True)
     else:
