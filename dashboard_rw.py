@@ -16,13 +16,13 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.stApp { background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); background-attachment: fixed; }
-div[data-testid="metric-container"] { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 15px; border-radius: 12px; box-shadow: 0px 6px 15px rgba(0,0,0,0.04); border-left: 6px solid #0D47A1; }
-div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 38px !important; color: #0D47A1 !important; font-weight: 900 !important; }
-div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 16px !important; font-weight: bold !important; color: #334155 !important; }
-h3 { font-size: 24px !important; color: #0D47A1; font-weight: 800; }
+.stApp { background-color: #F4F9F9; }
+div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1976D2; }
+div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
+div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
+h3 { font-size: 24px !important; color: #0D47A1; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
-.stPlotlyChart { background: rgba(255, 255, 255, 0.9); border-radius: 12px; box-shadow: 0px 6px 15px rgba(0,0,0,0.06); padding: 15px; border: 1px solid #cbd5e1; }
+.stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -39,6 +39,7 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
+# Fungsi untuk menyeragamkan foto pengurus RT/RW
 def muat_dan_seragamkan_foto(path_file, ukuran=(300, 400)):
     try:
         img = Image.open(path_file)
@@ -103,8 +104,8 @@ def load_kas():
         
         kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk[0] if kolom_masuk else df_kas.columns[2] if len(df_kas.columns) > 2 else "PEMASUKAN"
-        k_col = kolom_keluar[0] if kolom_keluar else df_kas.columns[3] if len(df_kas.columns) > 3 else "PENGELUARAN"
+        m_col = kolom_masuk[0] if kolom_masuk else "PEMASUKAN"
+        k_col = kolom_keluar[0] if kolom_keluar else "PENGELUARAN"
         
         if m_col not in df_kas.columns: df_kas[m_col] = 0
         if k_col not in df_kas.columns: df_kas[k_col] = 0
@@ -133,8 +134,8 @@ def load_kas_pemakaman():
         
         kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else df_kp.columns[2] if len(df_kp.columns) > 2 else "PEMASUKAN"
-        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else df_kp.columns[3] if len(df_kp.columns) > 3 else "PENGELUARAN"
+        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else "PEMASUKAN"
+        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
         
         if m_col not in df_kp.columns: df_kp[m_col] = 0
         if k_col not in df_kp.columns: df_kp[k_col] = 0
@@ -289,6 +290,10 @@ if not df.empty and "RT" in df.columns:
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
+    
+    folder_foto_rt = "rt"
+    if not os.path.exists(folder_foto_rt):
+        os.makedirs(folder_foto_rt)
 
     daftar_ketua_rt_resmi = {
         "1": "M. Husni Mubarak", "2": "Casnanto", "3": "Ucok Yudho Hartono",
@@ -298,11 +303,10 @@ if not df.empty and "RT" in df.columns:
     for rt_pilih in pilihan_rt_format:
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         path_foto = None
-        
         kemungkinan_nama = [
-            f"RT {rt_num_clean.zfill(2)}.png", f"RT {rt_num_clean.zfill(2)}.PNG",
-            f"RT {rt_num_clean}.png", f"RT {rt_num_clean}.PNG",
-            f"RT 0{rt_num_clean}.png", f"RT {rt_num_clean}.jpg", f"RT {rt_num_clean}.JPG"
+            os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
+            os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -329,7 +333,7 @@ if not df.empty and "RT" in df.columns:
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 15px;">
                 <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
-                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto RT {rt_num_clean.zfill(2)}.png siap tampil)</i></p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto belum diunggah via Admin)</i></p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -435,27 +439,29 @@ with tab0:
                 elif "BENDAHARA" in jab: nama_bend = nama_val
 
         col_pengurus1, col_pengurus2, col_pengurus3 = st.columns(3)
+        folder_pengurus = "pengurus"
+        if not os.path.exists(folder_pengurus): os.makedirs(folder_pengurus)
 
-        def cari_foto_pengurus_root(nama_file_dasar):
-            for ext in ['.png', '.PNG', '.jpg', '.JPG', '.jpeg', '.JPEG']:
-                p = f"{nama_file_dasar}{ext}"
+        def cari_foto_pengurus(nama_file_dasar):
+            for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+                p = os.path.join(folder_pengurus, f"{nama_file_dasar}{ext}")
                 if os.path.exists(p): return p
             return None
 
         with col_pengurus1:
-            foto_rw = cari_foto_pengurus_root("KETUA RW")
+            foto_rw = cari_foto_pengurus("ketuarw")
             if foto_rw: st.image(muat_dan_seragamkan_foto(foto_rw, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
 
         with col_pengurus2:
-            foto_sek = cari_foto_pengurus_root("SEKRETARIS")
+            foto_sek = cari_foto_pengurus("sekretaris")
             if foto_sek: st.image(muat_dan_seragamkan_foto(foto_sek, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_sek}<br><span style='font-size: 12px; color: #555;'>Sekretaris</span></div>", unsafe_allow_html=True)
 
         with col_pengurus3:
-            foto_bend = cari_foto_pengurus_root("BENDAHARA")
+            foto_bend = cari_foto_pengurus("bendahara")
             if foto_bend: st.image(muat_dan_seragamkan_foto(foto_bend, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_bend}<br><span style='font-size: 12px; color: #555;'>Bendahara</span></div>", unsafe_allow_html=True)
@@ -743,6 +749,7 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada file PDF hasil rapat yang diunggah.")
 
+# ================= TAB GALERI (FOTO KECIL, TAJAM & PROPORSIONAL) =================
 with tab8:
     st.subheader("🖼️ Galeri Kegiatan Warga RW 14")
     folder_galeri = "galeri"
@@ -985,7 +992,7 @@ with tab10:
                 st.rerun()
 
         elif menu_admin == "Upload Foto Galeri":
-            st.markdown("### 🖼️ Upload Foto Kegiatan ke Galeri")
+            st.markdown("### 🖼️ Unggah Foto Kegiatan ke Galeri")
             foto_up = st.file_uploader("Pilih File Foto (JPG/PNG):", type=["jpg", "jpeg", "png"], key="up_foto_galeri_file")
             if foto_up is not None:
                 col_i1, col_i2 = st.columns(2)
