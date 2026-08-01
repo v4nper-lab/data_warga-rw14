@@ -539,9 +539,26 @@ with tab3:
     if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
         df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
         df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
-        fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Prism)
-        fig_pendidikan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14))
-        st.plotly_chart(fig_pendidikan, use_container_width=True)
+        
+        # Layout terbagi 2: Grafik di kiri (2 kolom), Keterangan Legenda di kanan (1 kolom)
+        col_g1, col_g2 = st.columns([2, 1])
+        
+        with col_g1:
+            fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Prism)
+            fig_pendidikan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14))
+            st.plotly_chart(fig_pendidikan, use_container_width=True)
+            
+        with col_g2:
+            st.markdown("<h4 style='color: #0D47A1; margin-top: 15px;'>📑 Keterangan Tingkat Pendidikan</h4>", unsafe_allow_html=True)
+            warna_palet_prism = px.colors.qualitative.Prism
+            for idx, row_p in df_pendidikan.iterrows():
+                warna_item = warna_palet_prism[idx % len(warna_palet_prism)]
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <div style="width: 20px; height: 20px; background-color: {warna_item}; border-radius: 4px; margin-right: 10px; border: 1px solid #333;"></div>
+                    <span style="font-size: 14px; font-weight: bold; color: #333;">{row_p['Tingkat Pendidikan']}: <span style="color: #0D47A1;">{row_p['Jumlah']} Jiwa</span></span>
+                </div>
+                """, unsafe_allow_html=True)
 
 with tab4:
     st.subheader("🗂️ Data Seluruh Warga (Akses Khusus Pengurus)")
