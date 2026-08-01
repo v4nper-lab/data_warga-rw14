@@ -58,11 +58,10 @@ def urutkan_data_warga(df):
         df["RT_NUM"] = 99
         
     kolom_nama = None
-    for k in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]:
-        if k in df.columns:
+    for k in df.columns:
+        if "NAMA" in k:
             kolom_nama = k
             break
-            
     if not kolom_nama and len(df.columns) > 1:
         kolom_nama = df.columns[1]
 
@@ -620,43 +619,33 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
-        # PENCARIAN SUPER FLEKSIBEL: MENDETEKSI KOLOM NAMA DAN NOMOR KK DENGAN AMAN
-        kolom_nama = None
-        for k in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]:
-            if k in df.columns:
-                kolom_nama = k
-                break
-        if not kolom_nama and len(df.columns) > 1:
-            kolom_nama = df.columns[1]
-
-        kolom_kk = None
-        for k in df.columns:
-            if "KK" in k:
-                kolom_kk = k
-                break
-        if not kolom_kk:
-            kolom_kk = df.columns[0]
-
-        kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
-
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: aan, asep):", key="input_pencarian_bebas_final")
+        # PENCARIAN UNIVERSAL: MEMINDAI SELURUH KOLOM EXCEL TANPA PANDANG BULU
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan):", key="input_pencarian_universal_final")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
-            # Cek kecocokan di seluruh baris data warga tanpa peduli huruf besar/kecil
-            df_temp = df.copy()
-            df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
-            df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
-            
-            hasil_ketemu = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
-            
-            if not hasil_ketemu.empty:
-                daftar_no_kk = hasil_ketemu["_CARI_KK_"].dropna().unique()
+            # Cari di SEMUA kolom yang ada di file Excel secara bersamaan
+            mask_total = pd.Series(False, index=df.index)
+            for col in df.columns:
+                mask_total = mask_total | df[col].astype(str).str.strip().str.lower().str.contains(kw, na=False)
                 
-                for no_kk in daftar_no_kk:
+            hasil_cari = df[mask_total]
+            
+            kolom_kk = next((c for c in df.columns if "KK" in c), df.columns[0])
+            kolom_nama = next((c for c in df.columns if "NAMA" in c), df.columns[1] if len(df.columns) > 1 else df.columns[0])
+            kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
+
+            if not hasil_cari.empty:
+                # Ambil nomor KK dari hasil pencarian
+                hasil_cari["_KK_STR_"] = hasil_cari[kolom_kk].astype(str).str.strip()
+                nomor_kk_ditemukan = hasil_cari["_KK_STR_"].dropna().unique()
+                
+                for no_kk in nomor_kk_ditemukan:
                     # Ambil SEMUA anggota keluarga dalam 1 KK yang sama secara utuh
-                    keluarga_df = df_temp[df_temp["_CARI_KK_"] == str(no_kk)].drop(columns=["_CARI_NAMA_", "_CARI_KK_"], errors="ignore")
+                    keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
+                    if "_KK_STR_" in keluarga_df.columns:
+                        keluarga_df = keluarga_df.drop(columns=["_KK_STR_"], errors="ignore")
                     
                     kk_row = keluarga_df[
                         keluarga_df[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)
@@ -673,7 +662,7 @@ with tab5:
                     rw_kk = utama.get("RW", "14")
                     ds_kk = utama.get("DUSUN", "-")
                     
-                    # Tampilkan Dokumen Kartu Keluarga
+                    # Tampilkan Lembar Dokumen KK
                     st.markdown(f"""
                     <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                         <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
@@ -697,7 +686,7 @@ with tab5:
                     st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan. Coba ketik kata lain.")
+                st.warning(f"⚠️ Data dengan kata '{kata_kunci}' tidak ditemukan. Coba ketik kata lain.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
