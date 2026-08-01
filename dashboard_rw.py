@@ -604,7 +604,7 @@ with tab4:
         st.dataframe(df_filtered.drop(columns=["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
-    st.subheader("🔍 Pencarian KK Berdasarkan Kepala Keluarga")
+    st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
     if "cari_terbuka" not in st.session_state: st.session_state["cari_terbuka"] = False
     if not st.session_state["cari_terbuka"]:
         pass_cari = st.text_input("Kata Sandi Akses Pencarian KK:", type="password", key="pass_input_cari_kk")
@@ -615,7 +615,7 @@ with tab5:
         with col_btn1:
             if st.button("🔒 Kunci Kembali Pencarian"): st.session_state["cari_terbuka"] = False; st.rerun()
         with col_btn2:
-            st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Hasil Pencarian</button>", unsafe_allow_html=True)
+            st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
         kata_kunci = st.text_input("🔎 Masukkan Nama Kepala Keluarga:")
         if kata_kunci:
@@ -624,7 +624,7 @@ with tab5:
             kolom_kk = next((c for c in df.columns if "KK" in c), None)
             
             if kolom_nama_warga and kolom_kk:
-                # Filter ketat: cari warga yang status hubungannya Kepala Keluarga DAN namanya mengandung kata kunci utuh
+                # 1. Cari baris yang benar-benar Kepala Keluarga dengan kata utuh
                 df_kk_filter = pd.DataFrame()
                 if kolom_hub:
                     df_kk_filter = df[
@@ -632,7 +632,6 @@ with tab5:
                         df[kolom_nama_warga].astype(str).str.contains(r'(?i)\b' + str(kata_kunci).strip() + r'\b', na=False)
                     ]
                 
-                # Jika tidak ketemu dengan filter kepala keluarga, gunakan pencocokan nama utuh langsung
                 if df_kk_filter.empty:
                     df_kk_filter = df[
                         df[kolom_nama_warga].astype(str).str.contains(r'(?i)\b' + str(kata_kunci).strip() + r'\b', na=False)
@@ -641,11 +640,43 @@ with tab5:
                 nomor_kk_ditemukan = df_kk_filter[kolom_kk].dropna().unique()
                 
                 if len(nomor_kk_ditemukan) > 0:
-                    hasil_keluarga = df[df[kolom_kk].isin(nomor_kk_ditemukan)]
-                    st.success(f"✅ Ditemukan Kartu Keluarga untuk pencarian '{kata_kunci}'. Berikut adalah seluruh anggota keluarga di dalam 1 KK:")
-                    st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
+                    for no_kk_val in nomor_kk_ditemukan:
+                        hasil_keluarga = df[df[kolom_kk] == no_kk_val]
+                        
+                        # Ambil info utama KK dari baris kepala keluarga atau baris pertama
+                        row_ kk_utama = hasil_keluarga.iloc[0]
+                        nama_kk = row_kk_utama.get(kolom_nama_warga, "-")
+                        alamat_kk = row_kk_utama.get("ALAMAT", "-")
+                        rt_kk = row_kk_utama.get("RT", "-")
+                        rw_kk = row_kk_utama.get("RW", "14")
+                        dusun_kk = row_kk_utama.get("DUSUN", "-")
+                        
+                        # Tampilkan Header Lembar Dokumen KK
+                        st.markdown(f"""
+                        <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
+                            <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: #0D47A1; font-size: 20px;">KARTU KELUARGA (KK)</h3>
+                                <p style="margin: 3px 0 0 0; font-weight: bold; color: #555; font-size: 14px;">No. KK : {no_kk_val}</p>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 15px; color: #333;">
+                                <div>
+                                    <p style="margin: 4px 0;"><b>Nama Kepala Keluarga :</b> {nama_kk}</p>
+                                    <p style="margin: 4px 0;"><b>Alamat :</b> {alamat_kk}</p>
+                                </div>
+                                <div>
+                                    <p style="margin: 4px 0;"><b>RT / RW :</b> {rt_kk} / {rw_kk}</p>
+                                    <p style="margin: 4px 0;"><b>Dusun / Desa :</b> {dusun_kk} / Nanjung Mekar</p>
+                                </div>
+                            </div>
+                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Daftar Anggota Keluarga:</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Tampilkan Tabel Anggota Keluarga
+                        st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
+                        st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
                 else:
-                    st.warning(f"⚠️ Tidak ditemukan data kepala keluarga dengan nama '{kata_kunci}'.")
+                    st.warning(f"⚠️ Tidak ditemukan data Kartu Keluarga untuk pencarian '{kata_kunci}'.")
             else:
                 hasil_default = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
                 st.dataframe(hasil_default, use_container_width=True, hide_index=True)
