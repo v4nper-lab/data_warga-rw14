@@ -604,7 +604,7 @@ with tab4:
         st.dataframe(df_filtered.drop(columns=["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
-    st.subheader("🔍 Pencarian KK")
+    st.subheader("🔍 Pencarian KK Berdasarkan Kepala Keluarga")
     if "cari_terbuka" not in st.session_state: st.session_state["cari_terbuka"] = False
     if not st.session_state["cari_terbuka"]:
         pass_cari = st.text_input("Kata Sandi Akses Pencarian KK:", type="password", key="pass_input_cari_kk")
@@ -617,10 +617,34 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Hasil Pencarian</button>", unsafe_allow_html=True)
         
-        kata_kunci = st.text_input("🔎 Masukkan Nama Warga atau No KK:")
+        kata_kunci = st.text_input("🔎 Masukkan Nama Kepala Keluarga (cth: Aan):")
         if kata_kunci:
-            hasil = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
-            st.dataframe(hasil, use_container_width=True, hide_index=True)
+            # 1. Cari baris warga yang namanya mengandung kata kunci DAN status hubungannya adalah Kepala Keluarga
+            kolom_nama_warga = next((c for c in df.columns if c in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]), None)
+            kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c), None)
+            kolom_kk = next((c for c in df.columns if "KK" in c), None)
+            
+            if kolom_nama_warga and kolom_hub and kolom_kk:
+                # Filter baris yang cocok sebagai Kepala Keluarga
+                df_kk_cocok = df[
+                    df[kolom_nama_warga].astype(str).str.contains(kata_kunci, case=False, na=False) & 
+                    df[kolom_hub].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)
+                ]
+                
+                if not df_kk_cocok.empty:
+                    nomor_kk_ditemukan = df_kk_cocok[kolom_kk].unique()
+                    # Ambil seluruh anggota keluarga yang memiliki Nomor KK tersebut
+                    hasil_keluarga = df[df[kolom_kk].isin(nomor_kk_ditemukan)]
+                    st.success(f"✅ Ditemukan Kepala Keluarga yang sesuai. Berikut adalah seluruh anggota keluarga dalam 1 KK:")
+                    st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
+                else:
+                    # Fallback jika tidak pas sebagai KK, cari secara umum tapi beri info
+                    st.warning("⚠️ Tidak ditemukan Kepala Keluarga dengan nama persis tersebut. Menampilkan hasil pencarian umum:")
+                    hasil_umum = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
+                    st.dataframe(hasil_umum, use_container_width=True, hide_index=True)
+            else:
+                hasil_default = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
+                st.dataframe(hasil_default, use_container_width=True, hide_index=True)
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
