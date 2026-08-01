@@ -644,7 +644,7 @@ with tab5:
                         hasil_keluarga = df[df[kolom_kk] == no_kk_val]
                         
                         # Ambil info utama KK dari baris kepala keluarga atau baris pertama
-                        row_ kk_utama = hasil_keluarga.iloc[0]
+                        row_kk_utama = hasil_keluarga.iloc[0]
                         nama_kk = row_kk_utama.get(kolom_nama_warga, "-")
                         alamat_kk = row_kk_utama.get("ALAMAT", "-")
                         rt_kk = row_kk_utama.get("RT", "-")
