@@ -464,11 +464,14 @@ with tab0:
 
 with tab_struk:
     st.subheader("👥 Bagan & Uraian Tugas Struktur Pengurus RW 14")
-    path_struktur_img = "struktur_rw.jpg" if os.path.exists("struktur_rw.jpg") else "struktur_rw.png"
-    if os.path.exists(path_struktur_img):
-        st.image(path_struktur_img, caption="Struktur Pengurus RW 014 Griya Permata Raya Periode 2024 - 2029", use_container_width=True)
+    path_struktur_img = "struktur_rw.jpg" if os.path.exists("struktur_rw.jpg") else ("struktur_rw.png" if os.path.exists("struktur_rw.png") else None)
+    if path_struktur_img:
+        try:
+            st.image(path_struktur_img, caption="Struktur Pengurus RW 014 Griya Permata Raya Periode 2024 - 2029", use_container_width=True)
+        except Exception:
+            st.warning("⚠️ File gambar struktur rusak atau format tidak didukung. Mohon unggah ulang file gambar JPG/PNG yang valid.")
     else:
-        st.info("ℹ️ File gambar struktur belum diunggah.")
+        st.info("ℹ️ File gambar 'struktur_rw.jpg' atau 'struktur_rw.png' belum diunggah ke folder utama GitHub.")
     st.write("---")
     if not df_struktur.empty: st.dataframe(df_struktur, use_container_width=True, hide_index=True)
 
