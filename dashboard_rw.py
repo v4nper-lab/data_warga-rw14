@@ -6,7 +6,6 @@ import os
 from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
-# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL
 st.set_page_config(
     page_title="Portal Resmi RW 14 Griya Permata Raya",
     layout="wide",
@@ -73,117 +72,142 @@ def urutkan_data_warga(df):
 @st.cache_data
 def load_data():
     if os.path.exists("datawarga.xlsx"):
-        df = pd.read_excel("datawarga.xlsx")
-        df = urutkan_data_warga(df)
-        if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
-        if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
-        if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
-        if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
-        if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
-        
-        if "STATUS PENDUDUK" not in df.columns:
-            df["STATUS PENDUDUK"] = "Tetap"
-        else:
-            df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
-            df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
-        return df
+        try:
+            df = pd.read_excel("datawarga.xlsx")
+            df = urutkan_data_warga(df)
+            if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
+            if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
+            if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
+            if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
+            if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
+            
+            if "STATUS PENDUDUK" not in df.columns:
+                df["STATUS PENDUDUK"] = "Tetap"
+            else:
+                df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
+                df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
+            return df
+        except Exception:
+            return pd.DataFrame()
     return pd.DataFrame()
 
 @st.cache_data
 def load_kas():
     if os.path.exists("datakas.xlsx"):
-        df_kas = pd.read_excel("datakas.xlsx")
-        df_kas.columns = df_kas.columns.str.strip().str.upper()
-        if "TANGGAL" not in df_kas.columns: df_kas["TANGGAL"] = ""
-        if "KETERANGAN" not in df_kas.columns: df_kas["KETERANGAN"] = ""
+        try:
+            df_kas = pd.read_excel("datakas.xlsx")
+        except Exception:
+            df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+    else:
+        df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
         
-        kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
-        kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk[0] if kolom_masuk else "PEMASUKAN"
-        k_col = kolom_keluar[0] if kolom_keluar else "PENGELUARAN"
+    if df_kas.empty:
+        df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
         
-        if m_col not in df_kas.columns: df_kas[m_col] = 0
-        if k_col not in df_kas.columns: df_kas[k_col] = 0
-        
-        df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
-        df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
-        
-        # Pembersihan angka murni agar tidak ada desimal aneh / koma salah
-        df_kas[m_col] = pd.to_numeric(
-            df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
-            errors="coerce"
-        ).fillna(0).round(0)
-        
-        df_kas[k_col] = pd.to_numeric(
-            df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
-            errors="coerce"
-        ).fillna(0).round(0)
-        
-        df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
-        
-        df_kas = df_kas[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
-        df_kas.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
-        return df_kas
-    return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
+    df_kas.columns = df_kas.columns.str.strip().str.upper()
+    if "TANGGAL" not in df_kas.columns: df_kas["TANGGAL"] = ""
+    if "KETERANGAN" not in df_kas.columns: df_kas["KETERANGAN"] = ""
+    
+    kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
+    kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
+    m_col = kolom_masuk[0] if kolom_masuk else "PEMASUKAN"
+    k_col = kolom_keluar[0] if kolom_keluar else "PENGELUARAN"
+    
+    if m_col not in df_kas.columns: df_kas[m_col] = 0
+    if k_col not in df_kas.columns: df_kas[k_col] = 0
+    
+    df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
+    df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
+    
+    df_kas[m_col] = pd.to_numeric(
+        df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+        errors="coerce"
+    ).fillna(0).round(0)
+    
+    df_kas[k_col] = pd.to_numeric(
+        df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+        errors="coerce"
+    ).fillna(0).round(0)
+    
+    df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
+    df_kas = df_kas[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
+    df_kas.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
+    return df_kas
 
 @st.cache_data
 def load_kas_pemakaman():
     if os.path.exists("datakaspemakaman.xlsx"):
-        df_kp = pd.read_excel("datakaspemakaman.xlsx")
-        df_kp.columns = df_kp.columns.str.strip().str.upper()
-        if "TANGGAL" not in df_kp.columns: df_kp["TANGGAL"] = ""
-        if "KETERANGAN" not in df_kp.columns: df_kp["KETERANGAN"] = ""
+        try:
+            df_kp = pd.read_excel("datakaspemakaman.xlsx")
+        except Exception:
+            df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+    else:
+        df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
         
-        kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
-        kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else "PEMASUKAN"
-        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
+    if df_kp.empty:
+        df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
         
-        if m_col not in df_kp.columns: df_kp[m_col] = 0
-        if k_col not in df_kp.columns: df_kp[k_col] = 0
-        
-        df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
-        df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
-        
-        df_kp[m_col] = pd.to_numeric(
-            df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
-            errors="coerce"
-        ).fillna(0).round(0)
-        
-        df_kp[k_col] = pd.to_numeric(
-            df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
-            errors="coerce"
-        ).fillna(0).round(0)
-        
-        df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
-        
-        df_kp = df_kp[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
-        df_kp.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
-        return df_kp
-    return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
+    df_kp.columns = df_kp.columns.str.strip().str.upper()
+    if "TANGGAL" not in df_kp.columns: df_kp["TANGGAL"] = ""
+    if "KETERANGAN" not in df_kp.columns: df_kp["KETERANGAN"] = ""
+    
+    kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
+    kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
+    m_col = kolom_masuk_kp[0] if kolom_masuk_kp else "PEMASUKAN"
+    k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
+    
+    if m_col not in df_kp.columns: df_kp[m_col] = 0
+    if k_col not in df_kp.columns: df_kp[k_col] = 0
+    
+    df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
+    df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
+    
+    df_kp[m_col] = pd.to_numeric(
+        df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+        errors="coerce"
+    ).fillna(0).round(0)
+    
+    df_kp[k_col] = pd.to_numeric(
+        df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+        errors="coerce"
+    ).fillna(0).round(0)
+    
+    df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
+    df_kp = df_kp[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
+    df_kp.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
+    return df_kp
 
 @st.cache_data
 def load_info():
     if os.path.exists("datainfo.xlsx"):
-        df_info = pd.read_excel("datainfo.xlsx")
-        df_info.columns = df_info.columns.str.strip().str.upper()
-        return df_info
+        try:
+            df_info = pd.read_excel("datainfo.xlsx")
+            df_info.columns = df_info.columns.str.strip().str.upper()
+            return df_info
+        except Exception:
+            return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
     return pd.DataFrame(columns=["TANGGAL", "JUDUL", "ISI / KATEGORI"])
 
 @st.cache_data
 def load_galeri_meta():
     if os.path.exists("datagaleri.xlsx"):
-        df_g = pd.read_excel("datagaleri.xlsx")
-        df_g.columns = df_g.columns.str.strip().str.upper()
-        return df_g
+        try:
+            df_g = pd.read_excel("datagaleri.xlsx")
+            df_g.columns = df_g.columns.str.strip().str.upper()
+            return df_g
+        except Exception:
+            return pd.DataFrame(columns=["NAMA_FILE", "HARI", "TANGGAL", "BULAN", "TAHUN", "KETERANGAN"])
     return pd.DataFrame(columns=["NAMA_FILE", "HARI", "TANGGAL", "BULAN", "TAHUN", "KETERANGAN"])
 
 @st.cache_data
 def load_saran():
     if os.path.exists("datasaran.xlsx"):
-        df_s = pd.read_excel("datasaran.xlsx")
-        df_s.columns = df_s.columns.str.strip().str.upper()
-        return df_s
+        try:
+            df_s = pd.read_excel("datasaran.xlsx")
+            df_s.columns = df_s.columns.str.strip().str.upper()
+            return df_s
+        except Exception:
+            return pd.DataFrame(columns=["WAKTU", "PENGIRIM", "JABATAN", "SARAN_PENDAPAT"])
     return pd.DataFrame(columns=["WAKTU", "PENGIRIM", "JABATAN", "SARAN_PENDAPAT"])
 
 @st.cache_data
@@ -552,7 +576,7 @@ with tab5:
 
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
-    if not df_kas.empty:
+    if not df_kas.empty and len(df_kas) > 0 and "PEMASUKAN" in df_kas.columns:
         val_m_sum = pd.to_numeric(df_kas["PEMASUKAN"], errors="coerce").fillna(0)
         val_k_sum = pd.to_numeric(df_kas["PENGELUARAN"], errors="coerce").fillna(0)
         total_masuk = val_m_sum.sum()
@@ -572,11 +596,11 @@ with tab6:
         
         st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
     else:
-        st.info("Data kas belum tersedia.")
+        st.info("💡 Belum ada data kas yang tersimpan. Silakan isi melalui menu Admin di tab paling kanan.")
 
 with tab_kas_pemakaman_pub:
     st.subheader("🪦 Transparansi Laporan Kas Pemakaman")
-    if not df_kas_pemakaman.empty:
+    if not df_kas_pemakaman.empty and len(df_kas_pemakaman) > 0 and "PEMASUKAN" in df_kas_pemakaman.columns:
         val_m_kp = pd.to_numeric(df_kas_pemakaman["PEMASUKAN"], errors="coerce").fillna(0)
         val_k_kp = pd.to_numeric(df_kas_pemakaman["PENGELUARAN"], errors="coerce").fillna(0)
         tot_m_kp = val_m_kp.sum()
@@ -596,7 +620,7 @@ with tab_kas_pemakaman_pub:
         
         st.dataframe(df_kp_display, use_container_width=True, hide_index=True)
     else:
-        st.info("Data kas pemakaman belum tersedia.")
+        st.info("💡 Belum ada data kas pemakaman yang tersimpan. Silakan isi melalui menu Admin di tab paling kanan.")
 
 with tab7:
     st.subheader("📢 Informasi Kegiatan & Hasil Rapat")
@@ -665,6 +689,26 @@ with tab10:
                         kas_terbaru.to_excel("datakas.xlsx", index=False)
                         st.cache_data.clear()
                         st.success("✅ Laporan Kas RW berhasil disimpan!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan: {e}")
+        elif menu_admin == "Laporan Kas Pemakaman/Sosial":
+            st.markdown("💡 *Input atau edit data kas pemakaman di bawah ini, lalu klik tombol **Simpan Kas Pemakaman**.*")
+            df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
+            kp_terbaru = st.data_editor(df_kp_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_kp_admin")
+            
+            if st.button("💾 Simpan Kas Pemakaman"):
+                try:
+                    if not kp_terbaru.empty:
+                        m = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
+                        k = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
+                        kp_terbaru["TANGGAL"] = kp_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
+                        kp_terbaru[m] = pd.to_numeric(kp_terbaru[m].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
+                        kp_terbaru[k] = pd.to_numeric(kp_terbaru[k].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
+                        kp_terbaru["SALDO"] = (kp_terbaru[m] - kp_terbaru[k]).cumsum()
+                        kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
+                        st.cache_data.clear()
+                        st.success("✅ Laporan Kas Pemakaman berhasil disimpan!")
                         st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan: {e}")
