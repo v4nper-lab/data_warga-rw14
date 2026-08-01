@@ -290,10 +290,6 @@ if not df.empty and "RT" in df.columns:
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
-    
-    folder_foto_rt = "rt"
-    if not os.path.exists(folder_foto_rt):
-        os.makedirs(folder_foto_rt)
 
     daftar_ketua_rt_resmi = {
         "1": "M. Husni Mubarak", "2": "Casnanto", "3": "Ucok Yudho Hartono",
@@ -303,11 +299,12 @@ if not df.empty and "RT" in df.columns:
     for rt_pilih in pilihan_rt_format:
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         path_foto = None
+        
+        # Mencocokkan langsung format nama file seperti di gambar GitHub Anda (KETUA RT 01.jpg, dll)
         kemungkinan_nama = [
-            os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
-            os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
-            os.path.join(folder_foto_rt, f"RT{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"RT{rt_num_clean}.png"),
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
+            f"KETUA RT {rt_num_clean}.jpg", f"KETUA RT {rt_num_clean}.JPG",
+            f"KETUA RT 0{rt_num_clean}.jpg", f"KETUA RT 0{rt_num_clean}.JPG",
+            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.JPG"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -323,7 +320,7 @@ if not df.empty and "RT" in df.columns:
                 <span style="background-color: #0D47A1; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
             </div>
             """, unsafe_allow_html=True)
-            img_terluruskan = muat_dan_seragamkan_foto(path_foto, ukuran=(300, 400))
+            img_terluruskan = Image.open(path_foto)
             st.sidebar.image(img_terluruskan, use_container_width=True)
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 8px; border-radius: 0 0 10px 10px; border: 2px solid #90CAF9; border-top: none; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
@@ -334,7 +331,7 @@ if not df.empty and "RT" in df.columns:
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 15px;">
                 <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
-                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto belum diunggah via Admin)</i></p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(File foto KETUA RT {rt_num_clean}.jpg tidak ditemukan di root)</i></p>
             </div>
             """, unsafe_allow_html=True)
 
