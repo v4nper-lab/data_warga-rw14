@@ -933,7 +933,8 @@ with tab10:
                     if not kp_terbaru.empty:
                         m = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
-                        kp_terbaru["TANGGAL"] = kp_terbaru["TANGGAL"].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
+                        kp_terbaru["TANGGAL"] = kp_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
+                        kp_terbaru[m] = pd.to_numeric(kp_terbaru[m].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
                         kp_terbaru[k] = pd.to_numeric(kp_terbaru[k].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
                         kp_terbaru["SALDO"] = (kp_terbaru[m] - kp_terbaru[k]).cumsum()
                         kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
