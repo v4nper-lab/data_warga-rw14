@@ -216,7 +216,7 @@ df_struktur = load_struktur()
 df_galeri_meta = load_galeri_meta()
 df_saran = load_saran()
 
-# ================= SIDEBAR (WAKTU, JADWAL SHOLAT, MUSIK, FOTO RT) =================
+# ================= SIDEBAR =================
 st.sidebar.markdown("---")
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 hari_list = {"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu", "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"}
@@ -429,9 +429,14 @@ with tab0:
         """, unsafe_allow_html=True)
 
 with tab_struk:
-    st.subheader("👥 Struktur Pengurus RW 14")
-    if not df_struktur.empty:
-        st.dataframe(df_struktur, use_container_width=True, hide_index=True)
+    st.subheader("👥 Bagan & Uraian Tugas Struktur Pengurus RW 14")
+    path_struktur_img = "struktur_rw.jpg" if os.path.exists("struktur_rw.jpg") else "struktur_rw.png"
+    if os.path.exists(path_struktur_img):
+        st.image(path_struktur_img, caption="Struktur Pengurus RW 014 Griya Permata Raya Periode 2024 - 2029", use_container_width=True)
+    else:
+        st.info("ℹ️ File gambar struktur belum diunggah.")
+    st.write("---")
+    if not df_struktur.empty: st.dataframe(df_struktur, use_container_width=True, hide_index=True)
 
 with tab1:
     st.subheader("Angka Kunci Kependudukan Terkini")
@@ -445,35 +450,60 @@ with tab1:
     col4.metric("👩 Perempuan", pr_count)
 
     st.write("---")
-    st.subheader("Sebaran Penduduk per RT (Interaktif)")
+    st.subheader("Sebaran Penduduk per RT")
     if not df_filtered.empty and "RT_FORMAT" in df_filtered.columns:
         df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
         df_rt = df_rt.sort_values("RT_FORMAT")
         fig_rt = px.bar(df_rt, x="RT_FORMAT", y="Jumlah Warga", color="RT_FORMAT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
-        fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
+        fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, xaxis=dict(title="", tickfont=dict(size=16, color="black", weight="bold")), yaxis=dict(title="Jumlah Penduduk (Jiwa)")) 
+        fig_rt.update_traces(textfont_size=18, textfont_color="black", textposition="outside")
         st.plotly_chart(fig_rt, use_container_width=True)
 
 with tab2:
-    st.subheader("📊 Analisis Demografi Warga RW 14 (Interaktif)")
+    st.subheader("📊 Analisis Demografi Warga RW 14")
+    palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
     if not df_filtered.empty:
-        col_a, col_b = st.columns(2)
+        col_a, col_b, col_c = st.columns(3)
         with col_a:
             st.markdown("#### 🚻 Jenis Kelamin")
             if "JENIS KELAMIN" in df_filtered.columns:
                 fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
+                fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=13), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
+                fig_jk.update_traces(textposition='inside', textfont_size=14, textfont_color="white", textinfo="label+percent")
                 st.plotly_chart(fig_jk, use_container_width=True)
+                
         with col_b:
             st.markdown("#### ☪️ Sebaran Agama")
             if "AGAMA" in df_filtered.columns:
-                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0)
+                agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
+                color_map = {ag: ("#2E8B57" if "ISLAM" in ag.upper() else palet_agama_lain[i % len(palet_agama_lain)]) for i, ag in enumerate(agama_list)}
+                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color="AGAMA", color_discrete_map=color_map)
+                fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=12), legend=dict(orientation="h", yanchor="bottom", y=-0.4, xanchor="center", x=0.5), margin=dict(t=20, b=80, l=10, r=10))
+                teks_warna_list = ["white" if "ISLAM" in str(x).upper() else "black" for x in df_filtered["AGAMA"]]
+                fig_agama.update_traces(textposition='inside', textfont_size=12, textfont_color=teks_warna_list, textinfo="label+percent")
                 st.plotly_chart(fig_agama, use_container_width=True)
 
+                df_agama_summary = df_filtered["AGAMA"].astype(str).str.title().value_counts().reset_index()
+                df_agama_summary.columns = ["Agama", "Jumlah (Jiwa)"]
+                df_agama_summary["Persentase (%)"] = ((df_agama_summary["Jumlah (Jiwa)"] / len(df_filtered)) * 100).round(2).astype(str) + "%"
+                st.dataframe(df_agama_summary, use_container_width=True, hide_index=True)
+                
+        with col_c:
+            st.markdown("#### 💍 Status Perkawinan")
+            if "STATUS PERKAWINAN" in df_filtered.columns:
+                df_status = df_filtered["STATUS PERKAWINAN"].astype(str).str.title().value_counts().reset_index()
+                df_status.columns = ["Status", "Jumlah"]
+                fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57'])
+                fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=13))
+                st.plotly_chart(fig_status, use_container_width=True)
+
 with tab3:
-    st.subheader("🎓 Tingkat Pendidikan Warga RW 14 (Interaktif)")
+    st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
     if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
         df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
         df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
-        fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True)
+        fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Prism)
+        fig_pendidikan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14))
         st.plotly_chart(fig_pendidikan, use_container_width=True)
 
 with tab4:
@@ -484,28 +514,82 @@ with tab4:
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
     if not df_kas.empty:
-        st.dataframe(df_kas, use_container_width=True, hide_index=True)
+        val_m_sum = pd.to_numeric(df_kas["PEMASUKAN"], errors="coerce").fillna(0)
+        val_k_sum = pd.to_numeric(df_kas["PENGELUARAN"], errors="coerce").fillna(0)
+        total_masuk = val_m_sum.sum()
+        total_keluar = val_k_sum.sum()
+        saldo_akhir = (val_m_sum - val_k_sum).cumsum().iloc[-1] if not df_kas.empty else 0
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("💵 Total Pemasukan", f"Rp {total_masuk:,.0f}".replace(",", "."))
+        c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
+        c3.metric("💰 Saldo Akhir", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
+        
+        df_kas_display = df_kas.copy()
+        df_kas_display["TANGGAL"] = df_kas_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
+        df_kas_display["PEMASUKAN"] = val_m_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
+        df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
+        df_kas_display["SALDO"] = (val_m_sum - val_k_sum).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        
+        st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
     else:
         st.info("Data kas belum tersedia.")
 
 with tab_kas_pemakaman_pub:
     st.subheader("🪦 Transparansi Laporan Kas Pemakaman")
     if not df_kas_pemakaman.empty:
-        st.dataframe(df_kas_pemakaman, use_container_width=True, hide_index=True)
+        val_m_kp = pd.to_numeric(df_kas_pemakaman["PEMASUKAN"], errors="coerce").fillna(0)
+        val_k_kp = pd.to_numeric(df_kas_pemakaman["PENGELUARAN"], errors="coerce").fillna(0)
+        tot_m_kp = val_m_kp.sum()
+        tot_k_kp = val_k_kp.sum()
+        saldo_kp = (val_m_kp - val_k_kp).cumsum().iloc[-1] if not df_kas_pemakaman.empty else 0
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("💵 Total Pemasukan", f"Rp {tot_m_kp:,.0f}".replace(",", "."))
+        c2.metric("💸 Total Pengeluaran", f"Rp {tot_k_kp:,.0f}".replace(",", "."))
+        c3.metric("💰 Saldo Akhir", f"Rp {saldo_kp:,.0f}".replace(",", "."))
+        
+        df_kp_display = df_kas_pemakaman.copy()
+        df_kp_display["TANGGAL"] = df_kp_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
+        df_kp_display["PEMASUKAN"] = val_m_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
+        df_kp_display["PENGELUARAN"] = val_k_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
+        df_kp_display["SALDO"] = (val_m_kp - val_k_kp).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        
+        st.dataframe(df_kp_display, use_container_width=True, hide_index=True)
     else:
         st.info("Data kas pemakaman belum tersedia.")
 
 with tab7:
     st.subheader("📢 Informasi Kegiatan & Hasil Rapat")
     if not df_info.empty:
-        st.dataframe(df_info, use_container_width=True, hide_index=True)
+        for _, r in df_info.iterrows():
+            with st.expander(f"📌 [{r.get('TANGGAL', '')}] — {r.get('JUDUL', '')}"):
+                st.write(r.get('ISI / KATEGORI', ''))
     else:
         st.info("Belum ada informasi.")
 
 with tab8:
     st.subheader("🖼️ Galeri Kegiatan Warga")
-    if not df_galeri_meta.empty:
-        st.dataframe(df_galeri_meta, use_container_width=True, hide_index=True)
+    folder_galeri = "galeri"
+    if os.path.exists(folder_galeri) and not df_galeri_meta.empty:
+        mapping_bulan = {'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4, 'Mei': 5, 'Juni': 6, 'Juli': 7, 'Agustus': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Desember': 12}
+        df_g_sort = df_galeri_meta.copy()
+        df_g_sort["BULAN_NUM"] = df_g_sort["BULAN"].map(mapping_bulan).fillna(0)
+        df_g_sort["TAHUN_NUM"] = pd.to_numeric(df_g_sort["TAHUN"], errors="coerce").fillna(0)
+        df_g_sort["TANGGAL_NUM"] = pd.to_numeric(df_g_sort["TANGGAL"], errors="coerce").fillna(0)
+        df_g_sort = df_g_sort.sort_values(by=["TAHUN_NUM", "BULAN_NUM", "TANGGAL_NUM"], ascending=[False, False, False]).reset_index(drop=True)
+        
+        for (thn, bln), group_df in df_g_sort.groupby(["TAHUN", "BULAN"]):
+            st.markdown(f"### 🗓️ Periode: {bln} {thn}")
+            st.markdown("---")
+            cols = st.columns(4)
+            for idx, (_, row) in enumerate(group_df.iterrows()):
+                nama_file = str(row.get("NAMA_FILE", ""))
+                p_foto = os.path.join(folder_galeri, nama_file)
+                if os.path.exists(p_foto):
+                    with cols[idx % 4]:
+                        st.image(muat_dan_seragamkan_foto(p_foto, ukuran=(400, 300)), use_container_width=True)
+                        st.markdown(f"<p style='font-size: 12px; font-weight: bold;'>{row.get('KETERANGAN', '')}</p>", unsafe_allow_html=True)
     else:
         st.info("Belum ada foto galeri.")
 
