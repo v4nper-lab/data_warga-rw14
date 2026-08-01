@@ -624,27 +624,39 @@ with tab5:
             kolom_kk = next((c for c in df.columns if "KK" in c), None)
             
             if kolom_nama_warga and kolom_kk:
-                # 1. Cari baris yang benar-benar Kepala Keluarga dengan kata utuh
+                kw_clean = str(kata_kunci).strip().upper()
+                
+                # Saring secara ketat baris yang namanya PERSIS sama atau mengandung kata tersebut sebagai Kepala Keluarga
                 df_kk_filter = pd.DataFrame()
                 if kolom_hub:
                     df_kk_filter = df[
                         df[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False) &
-                        df[kolom_nama_warga].astype(str).str.contains(r'(?i)\b' + str(kata_kunci).strip() + r'\b', na=False)
+                        (df[kolom_nama_warga].astype(str).str.strip().str.upper() == kw_clean)
                     ]
                 
+                # Jika tidak ketemu dengan saringan persis, coba saring berdasarkan kemiripan kata mutlak
                 if df_kk_filter.empty:
                     df_kk_filter = df[
-                        df[kolom_nama_warga].astype(str).str.contains(r'(?i)\b' + str(kata_kunci).strip() + r'\b', na=False)
+                        df[kolom_nama_warga].astype(str).str.strip().str.upper() == kw_clean
                     ]
                 
                 nomor_kk_ditemukan = df_kk_filter[kolom_kk].dropna().unique()
                 
                 if len(nomor_kk_ditemukan) > 0:
                     for no_kk_val in nomor_kk_ditemukan:
-                        hasil_keluarga = df[df[kolom_kk] == no_kk_val]
+                        # Ambil SEMUA anggota keluarga yang memiliki Nomor KK persis sama
+                        hasil_keluarga = df[df[kolom_kk].astype(str).str.strip() == str(no_kk_val).strip()]
                         
-                        # Ambil info utama KK dari baris kepala keluarga atau baris pertama
-                        row_kk_utama = hasil_keluarga.iloc[0]
+                        # Cari baris Kepala Keluarga untuk header dokumen
+                        kepala_keluarga_row = hasil_keluarga[
+                            hasil_keluarga[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)
+                        ] if kolom_hub else pd.DataFrame()
+                        
+                        if not kepala_keluarga_row.empty:
+                            row_kk_utama = kepala_keluarga_row.iloc[0]
+                        else:
+                            row_kk_utama = hasil_keluarga.iloc[0]
+                            
                         nama_kk = row_kk_utama.get(kolom_nama_warga, "-")
                         alamat_kk = row_kk_utama.get("ALAMAT", "-")
                         rt_kk = row_kk_utama.get("RT", "-")
@@ -668,15 +680,15 @@ with tab5:
                                     <p style="margin: 4px 0;"><b>Dusun / Desa :</b> {dusun_kk} / Nanjung Mekar</p>
                                 </div>
                             </div>
-                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Daftar Anggota Keluarga:</p>
+                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Daftar Seluruh Anggota Keluarga:</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Tampilkan Tabel Anggota Keluarga
+                        # Tampilkan Tabel Anggota Keluarga secara lengkap
                         st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
                         st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
                 else:
-                    st.warning(f"⚠️ Tidak ditemukan data Kartu Keluarga untuk pencarian '{kata_kunci}'.")
+                    st.warning(f"⚠️ Tidak ditemukan Kepala Keluarga dengan nama '{kata_kunci}'. Pastikan penulisan namanya sudah benar.")
             else:
                 hasil_default = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
                 st.dataframe(hasil_default, use_container_width=True, hide_index=True)
@@ -921,8 +933,7 @@ with tab10:
                     if not kp_terbaru.empty:
                         m = [c for c in kp_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k = [c for c in kp_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
-                        kp_terbaru["TANGGAL"] = kp_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
-                        kp_terbaru[m] = pd.to_numeric(kp_terbaru[m].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
+                        kp_terbaru["TANGGAL"] = kp_terbaru["TANGGAL"].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
                         kp_terbaru[k] = pd.to_numeric(kp_terbaru[k].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
                         kp_terbaru["SALDO"] = (kp_terbaru[m] - kp_terbaru[k]).cumsum()
                         kp_terbaru.to_excel("datakaspemakaman.xlsx", index=False)
