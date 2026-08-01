@@ -592,26 +592,97 @@ with tab_rekap_rt:
         st.info("Data RT belum tersedia.")
 
 with tab_update_kk:
-    st.subheader("📤 Perubahan & Update Data RT & KK (Admin Pengurus)")
-    st.markdown("💡 *Gunakan tombol centang di sebelah kiri baris atau **ikon tempat sampah** di dalam tabel untuk menghapus data warga. Anda juga bisa langsung mengetik untuk menambah atau mengubah data.*")
-    pass_update = st.text_input("Masukkan Password Admin untuk Update Data:", type="password", key="pass_update_data_warga_tab")
-    if pass_update == "V@nadminrw14":
-        st.success("✅ Akses Update Data Diizinkan.")
-        edited_df = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True, key="editor_update_warga_master")
-        if st.button("💾 Simpan Perubahan Data Warga"):
+    st.subheader("📤 Formulir Pengajuan Perubahan Data RT & KK")
+    st.markdown("💡 *Gunakan formulir di bawah ini untuk melaporkan perubahan data Kartu Keluarga (seperti penambahan/pengurangan anggota keluarga atau pindah alamat) lengkap dengan lampiran dokumen PDF KK terbaru.*")
+    
+    file_pengajuan_log = "pengajuan_kk.xlsx"
+    
+    with st.form("form_update_kk"):
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            nama_pelapor = st.text_input("Nama Kepala Keluarga / Pelapor:")
+            no_kk_pelapor = st.text_input("Nomor Kartu Keluarga (KK):")
+            rt_pelapor = st.selectbox("Asal RT:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07"])
+        with col_f2:
+            jenis_perubahan = st.selectbox("Jenis Perubahan Data:", [
+                "Penambahan Anggota Keluarga (Kelahiran/Menikah)", 
+                "Pengurangan Anggota Keluarga (Meninggal/Pindah)", 
+                "Perubahan Alamat / Pindah Rumah di Dalam RW", 
+                "Perbaikan Data (Nama/NIK/Pendidikan)", 
+                "Lainnya"
+            ])
+            no_wa = st.text_input("Nomor WhatsApp yang Bisa Dihubungi:")
+            
+        keterangan_detail = st.text_area("Keterangan Detail Perubahan (Tuliskan nama anggota keluarga yang bertambah/berkurang atau catatan penting lainnya):")
+        upload_pdf_kk = st.file_uploader("📎 Unggah Dokumen KK Terbaru (Format PDF):", type=["pdf"])
+        
+        submitted_form = st.form_submit_button("📨 Kirim Pengajuan ke Pengurus RW")
+        
+        if submitted_form:
+            if nama_pelapor and no_kk_pelapor and no_wa:
+                nama_pdf_simpan = "-"
+                if upload_pdf_kk is not None:
+                    os.makedirs("dokumen_kk", exist_ok=True)
+                    nama_pdf_simpan = f"{no_kk_pelapor}_{upload_pdf_kk.name}"
+                    path_simpan_pdf = os.path.join("dokumen_kk", nama_pdf_simpan)
+                    with open(path_simpan_pdf, "wb") as f:
+                        f.write(upload_pdf_kk.getbuffer())
+                
+                data_baru_form = {
+                    "WAKTU": [datetime.utcnow().strftime("%Y-%m-%d %H:%M")],
+                    "NAMA": [nama_pelapor],
+                    "NO_KK": [no_kk_pelapor],
+                    "RT": [rt_pelapor],
+                    "JENIS_PERUBAHAN": [jenis_perubahan],
+                    "KETERANGAN": [keterangan_detail],
+                    "WHATSAPP": [no_wa],
+                    "LAMPIRAN_PDF": [nama_pdf_simpan]
+                }
+                df_form_baru = pd.DataFrame(data_baru_form)
+                
+                if os.path.exists(file_pengajuan_log):
+                    try:
+                        df_lama = pd.read_excel(file_pengajuan_log)
+                        df_gabung = pd.concat([df_lama, df_form_baru], ignore_index=True)
+                    except Exception:
+                        df_gabung = df_form_baru
+                else:
+                    df_gabung = df_form_baru
+                    
+                df_gabung.to_excel(file_pengajuan_log, index=False)
+                st.success("✅ Pengajuan perubahan data KK berhasil dikirim ke Pengurus RW! Terima kasih.")
+            else:
+                st.error("⚠️ Mohon lengkapi Nama, Nomor KK, dan Nomor WhatsApp Anda.")
+
+    st.markdown("---")
+    st.markdown("### 📋 Riwayat & Rekap Pengajuan Masuk (Khusus Pengurus)")
+    pass_riwayat = st.text_input("Masukkan Password Admin untuk Melihat Riwayat Pengajuan:", type="password", key="pass_riwayat_pengajuan")
+    if pass_riwayat == "V@nadminrw14":
+        st.success("✅ Riwayat Pengajuan Warga:")
+        if os.path.exists(file_pengajuan_log):
             try:
-                df_baru_simpan = pd.DataFrame(edited_df)
-                df_terurut_simpan = urutkan_data_warga(df_baru_simpan)
-                df_terurut_simpan.to_excel("datawarga.xlsx", index=False)
-                st.cache_data.clear()
-                st.success("✅ Perubahan data warga dan KK berhasil disimpan permanen!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"❌ Gagal menyimpan data: {e}")
-    elif pass_update != "":
-        st.error("❌ Kata sandi admin salah!")
-    else:
-        st.info("🔒 Silakan masukkan password admin di atas untuk melakukan perubahan data.")
+                df_riwayat = pd.read_excel(file_pengajuan_log)
+                st.dataframe(df_riwayat, use_container_width=True, hide_index=True)
+                
+                for idx, row in df_riwayat.iterrows():
+                    lampiran = row.get("LAMPIRAN_PDF", "-")
+                    if lampiran != "-" and isinstance(lampiran, str):
+                        p_pdf = os.path.join("dokumen_kk", lampiran)
+                        if os.path.exists(p_pdf):
+                            with open(p_pdf, "rb") as f:
+                                st.download_button(
+                                    label=f"📥 Unduh PDF KK ({row.get('NAMA', 'Warga')})",
+                                    data=f,
+                                    file_name=lampiran,
+                                    mime="application/pdf",
+                                    key=f"dl_pdf_{idx}"
+                                )
+            except Exception:
+                st.info("Belum ada data pengajuan yang tersimpan.")
+        else:
+            st.info("Belum ada warga yang mengirimkan pengajuan perubahan.")
+    elif pass_riwayat != "":
+        st.error("❌ Kata sandi salah!")
 
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
