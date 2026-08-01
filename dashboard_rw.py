@@ -299,11 +299,11 @@ if not df.empty and "RT" in df.columns:
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         path_foto = None
         
-        # Mendukung pencarian file foto dengan nama KETUA RT 01.jpg / KETUA RT 1.jpg langsung di root GitHub
+        # Sesuai dengan nama file di gambar GitHub Anda: RT 01.png, RT 02.png, dst.
         kemungkinan_nama = [
-            f"KETUA RT {rt_num_clean}.jpg", f"KETUA RT {rt_num_clean}.JPG",
-            f"KETUA RT 0{rt_num_clean}.jpg", f"KETUA RT 0{rt_num_clean}.JPG",
-            f"ketua rt {rt_num_clean}.jpg", f"ketua rt {rt_num_clean}.JPG"
+            f"RT {rt_num_clean.zfill(2)}.png", f"RT {rt_num_clean.zfill(2)}.PNG",
+            f"RT {rt_num_clean}.png", f"RT {rt_num_clean}.PNG",
+            f"RT 0{rt_num_clean}.png", f"RT {rt_num_clean}.jpg"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -330,7 +330,7 @@ if not df.empty and "RT" in df.columns:
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 15px;">
                 <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
-                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto KETUA RT {rt_num_clean}.jpg siap tampil)</i></p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto RT {rt_num_clean.zfill(2)}.png siap tampil)</i></p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -436,29 +436,28 @@ with tab0:
                 elif "BENDAHARA" in jab: nama_bend = nama_val
 
         col_pengurus1, col_pengurus2, col_pengurus3 = st.columns(3)
-        folder_pengurus = "pengurus"
-        if not os.path.exists(folder_pengurus): os.makedirs(folder_pengurus)
 
-        def cari_foto_pengurus(nama_file_dasar):
-            for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
-                p = os.path.join(folder_pengurus, f"{nama_file_dasar}{ext}")
+        # Sesuai dengan nama file foto pengurus di GitHub: KETUA RW.png, SEKRETARIS.png, BENDAHARA.png
+        def cari_foto_pengurus_root(nama_file_dasar):
+            for ext in ['.png', '.PNG', '.jpg', '.JPG']:
+                p = f"{nama_file_dasar}{ext}"
                 if os.path.exists(p): return p
             return None
 
         with col_pengurus1:
-            foto_rw = cari_foto_pengurus("ketuarw")
+            foto_rw = cari_foto_pengurus_root("KETUA RW")
             if foto_rw: st.image(muat_dan_seragamkan_foto(foto_rw, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
 
         with col_pengurus2:
-            foto_sek = cari_foto_pengurus("sekretaris")
+            foto_sek = cari_foto_pengurus_root("SEKRETARIS")
             if foto_sek: st.image(muat_dan_seragamkan_foto(foto_sek, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_sek}<br><span style='font-size: 12px; color: #555;'>Sekretaris</span></div>", unsafe_allow_html=True)
 
         with col_pengurus3:
-            foto_bend = cari_foto_pengurus("bendahara")
+            foto_bend = cari_foto_pengurus_root("BENDAHARA")
             if foto_bend: st.image(muat_dan_seragamkan_foto(foto_bend, ukuran=(300, 400)), use_container_width=True)
             else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
             st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_bend}<br><span style='font-size: 12px; color: #555;'>Bendahara</span></div>", unsafe_allow_html=True)
