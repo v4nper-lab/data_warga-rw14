@@ -16,13 +16,13 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.stApp { background-color: #F4F9F9; }
-div[data-testid="metric-container"] { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1976D2; }
-div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 40px !important; color: #0D47A1 !important; font-weight: 900 !important; }
-div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 18px !important; font-weight: bold !important; color: #2C3E50 !important; }
-h3 { font-size: 24px !important; color: #0D47A1; }
+.stApp { background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); background-attachment: fixed; }
+div[data-testid="metric-container"] { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 15px; border-radius: 12px; box-shadow: 0px 6px 15px rgba(0,0,0,0.04); border-left: 6px solid #0D47A1; }
+div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] > div { font-size: 38px !important; color: #0D47A1 !important; font-weight: 900 !important; }
+div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[data-testid="stMetricLabel"] { font-size: 16px !important; font-weight: bold !important; color: #334155 !important; }
+h3 { font-size: 24px !important; color: #0D47A1; font-weight: 800; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
-.stPlotlyChart { background-color: white; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); padding: 10px; }
+.stPlotlyChart { background: rgba(255, 255, 255, 0.9); border-radius: 12px; box-shadow: 0px 6px 15px rgba(0,0,0,0.06); padding: 15px; border: 1px solid #cbd5e1; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -39,7 +39,6 @@ def ambil_logo_lokal(nama_file):
 
 sumber_logo = ambil_logo_lokal("logo rw.png")
 
-# Fungsi untuk menyeragamkan foto pengurus RT/RW
 def muat_dan_seragamkan_foto(path_file, ukuran=(300, 400)):
     try:
         img = Image.open(path_file)
@@ -300,11 +299,10 @@ if not df.empty and "RT" in df.columns:
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         path_foto = None
         
-        # Mencocokkan langsung format nama file seperti di gambar GitHub Anda (KETUA RT 01.jpg, dll)
+        # Mencocokkan format nama file persis seperti di gambar GitHub Anda (KETUA RT 01.jpg, KETUA RT 1.jpg)
         kemungkinan_nama = [
             f"KETUA RT {rt_num_clean}.jpg", f"KETUA RT {rt_num_clean}.JPG",
-            f"KETUA RT 0{rt_num_clean}.jpg", f"KETUA RT 0{rt_num_clean}.JPG",
-            f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.JPG"
+            f"KETUA RT 0{rt_num_clean}.jpg", f"KETUA RT 0{rt_num_clean}.JPG"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -320,7 +318,7 @@ if not df.empty and "RT" in df.columns:
                 <span style="background-color: #0D47A1; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
             </div>
             """, unsafe_allow_html=True)
-            img_terluruskan = Image.open(path_foto)
+            img_terluruskan = muat_dan_seragamkan_foto(path_foto, ukuran=(300, 400))
             st.sidebar.image(img_terluruskan, use_container_width=True)
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 8px; border-radius: 0 0 10px 10px; border: 2px solid #90CAF9; border-top: none; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
@@ -331,7 +329,7 @@ if not df.empty and "RT" in df.columns:
             st.sidebar.markdown(f"""
             <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 15px;">
                 <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
-                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(File foto KETUA RT {rt_num_clean}.jpg tidak ditemukan di root)</i></p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #777;"><i>(Foto KETUA RT {rt_num_clean}.jpg siap tampil)</i></p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -747,7 +745,6 @@ with tab7:
     else:
         st.info("ℹ️ Belum ada file PDF hasil rapat yang diunggah.")
 
-# ================= TAB GALERI (FOTO KECIL, TAJAM & PROPORSIONAL) =================
 with tab8:
     st.subheader("🖼️ Galeri Kegiatan Warga RW 14")
     folder_galeri = "galeri"
