@@ -593,9 +593,10 @@ with tab_rekap_rt:
 
 with tab_update_kk:
     st.subheader("📤 Perubahan & Update Data RT & KK (Admin Pengurus)")
+    st.markdown("💡 *Gunakan tombol centang di sebelah kiri baris atau **ikon tempat sampah** di dalam tabel untuk menghapus data warga. Anda juga bisa langsung mengetik untuk menambah atau mengubah data.*")
     pass_update = st.text_input("Masukkan Password Admin untuk Update Data:", type="password", key="pass_update_data_warga_tab")
     if pass_update == "V@nadminrw14":
-        st.success("✅ Akses Update Data Diizinkan. Anda dapat menambah, mengubah, atau menghapus data warga di bawah ini secara langsung.")
+        st.success("✅ Akses Update Data Diizinkan.")
         edited_df = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True, key="editor_update_warga_master")
         if st.button("💾 Simpan Perubahan Data Warga"):
             try:
@@ -713,7 +714,7 @@ with tab10:
             ]
         )
         if menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Input atau edit data kas langsung di bawah ini (ketik angka murni tanpa titik/koma), lalu klik tombol **Simpan Laporan Kas**.*")
+            st.markdown("💡 *Gunakan ikon tempat sampah di tabel untuk menghapus baris kas. Ketik angka murni tanpa titik/koma, lalu klik **Simpan Laporan Kas**.*")
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
             
@@ -733,7 +734,7 @@ with tab10:
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan: {e}")
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
-            st.markdown("💡 *Input atau edit data kas pemakaman di bawah ini, lalu klik tombol **Simpan Kas Pemakaman**.*")
+            st.markdown("💡 *Gunakan ikon tempat sampah di tabel untuk menghapus baris kas. Lalu klik **Simpan Kas Pemakaman**.*")
             df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
             kp_terbaru = st.data_editor(df_kp_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_kp_admin")
             
