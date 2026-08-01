@@ -99,8 +99,8 @@ def load_kas():
         
         kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk[0] if kolom_masuk else df_kas.columns[2] if len(df_kas.columns) > 2 else "PEMASUKAN"
-        k_col = kolom_keluar[0] if kolom_keluar else df_kas.columns[3] if len(df_kas.columns) > 3 else "PENGELUARAN"
+        m_col = kolom_masuk[0] if kolom_masuk else "PEMASUKAN"
+        k_col = kolom_keluar[0] if kolom_keluar else "PENGELUARAN"
         
         if m_col not in df_kas.columns: df_kas[m_col] = 0
         if k_col not in df_kas.columns: df_kas[k_col] = 0
@@ -126,8 +126,8 @@ def load_kas_pemakaman():
         
         kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else df_kp.columns[2] if len(df_kp.columns) > 2 else "PEMASUKAN"
-        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else df_kp.columns[3] if len(df_kp.columns) > 3 else "PENGELUARAN"
+        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else "PEMASUKAN"
+        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
         
         if m_col not in df_kp.columns: df_kp[m_col] = 0
         if k_col not in df_kp.columns: df_kp[k_col] = 0
@@ -507,9 +507,29 @@ with tab3:
         st.plotly_chart(fig_pendidikan, use_container_width=True)
 
 with tab4:
-    st.subheader("🗂️ Data Seluruh Warga")
-    if not df_filtered.empty:
-        st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+    st.subheader("🗂️ Data Seluruh Warga (Akses Khusus Pengurus)")
+    if "warga_terbuka" not in st.session_state: st.session_state["warga_terbuka"] = False
+    if not st.session_state["warga_terbuka"]:
+        pass_warga = st.text_input("Kata Sandi Akses Data Warga:", type="password", key="pass_input_data_warga")
+        if pass_warga == "ijindibuka": st.session_state["warga_terbuka"] = True; st.rerun()
+        elif pass_warga != "": st.error("❌ Kata sandi salah!")
+    else:
+        if st.button("🔒 Kunci Kembali"): st.session_state["warga_terbuka"] = False; st.rerun()
+        st.dataframe(df_filtered.drop(columns=["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
+
+with tab5:
+    st.subheader("🔍 Pencarian KK")
+    if "cari_terbuka" not in st.session_state: st.session_state["cari_terbuka"] = False
+    if not st.session_state["cari_terbuka"]:
+        pass_cari = st.text_input("Kata Sandi Akses Pencarian KK:", type="password", key="pass_input_cari_kk")
+        if pass_cari == "ijindibuka": st.session_state["cari_terbuka"] = True; st.rerun()
+        elif pass_cari != "": st.error("❌ Kata sandi salah!")
+    else:
+        if st.button("🔒 Kunci Kembali Pencarian"): st.session_state["cari_terbuka"] = False; st.rerun()
+        kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
+        if kata_kunci:
+            hasil = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
+            st.dataframe(hasil, use_container_width=True, hide_index=True)
 
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
