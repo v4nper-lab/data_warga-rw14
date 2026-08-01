@@ -410,10 +410,10 @@ with col_teks:
 
 st.write("---")
 
-tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab_kas_pemakaman_pub, tab7, tab8, tab9, tab10 = st.tabs([
+tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
     "🗂️ Data Warga", "🔍 Cari KK", "📊 Rekap RT", "📤 Update Data RT & KK", "💰 Kas RW", 
-    "🪦 Kas Pemakaman", "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
+    "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
 ])
 
 with tab0:
@@ -704,30 +704,6 @@ with tab6:
     else:
         st.info("ℹ️ Belum ada file PDF laporan kas yang diunggah.")
 
-with tab_kas_pemakaman_pub:
-    st.subheader("🪦 Transparansi Laporan Kas Pemakaman / Sosial")
-    if not df_kas_pemakaman.empty:
-        val_m_kp = pd.to_numeric(df_kas_pemakaman["PEMASUKAN"], errors="coerce").fillna(0)
-        val_k_kp = pd.to_numeric(df_kas_pemakaman["PENGELUARAN"], errors="coerce").fillna(0)
-        tot_m_kp = val_m_kp.sum()
-        tot_k_kp = val_k_kp.sum()
-        saldo_kp = (val_m_kp - val_k_kp).cumsum().iloc[-1] if not df_kas_pemakaman.empty else 0
-
-        c1, c2, c3 = st.columns(3)
-        c1.metric("💵 Total Pemasukan", f"Rp {tot_m_kp:,.0f}".replace(",", "."))
-        c2.metric("💸 Total Pengeluaran", f"Rp {tot_k_kp:,.0f}".replace(",", "."))
-        c3.metric("💰 Saldo Akhir", f"Rp {saldo_kp:,.0f}".replace(",", "."))
-        
-        df_kp_display = df_kas_pemakaman.copy()
-        df_kp_display["TANGGAL"] = df_kp_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
-        df_kp_display["PEMASUKAN"] = val_m_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kp_display["PENGELUARAN"] = val_k_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kp_display["SALDO"] = (val_m_kp - val_k_kp).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
-        
-        st.dataframe(df_kp_display, use_container_width=True, hide_index=True)
-    else:
-        st.info("ℹ️ Belum ada data kas pemakaman.")
-
 with tab7:
     st.subheader("📢 Informasi Kegiatan & Hasil Rapat RW 14")
     if not df_info.empty:
@@ -772,6 +748,7 @@ with tab8:
             st.markdown(f"### 🗓️ Periode: {bln} {thn}")
             st.markdown("---")
             
+            # Tampilkan foto dalam grid 4 kolom dengan resolusi tajam
             cols = st.columns(4)
             for idx, (_, row) in enumerate(group_df.iterrows()):
                 nama_file = str(row.get("NAMA_FILE", ""))
@@ -783,8 +760,10 @@ with tab8:
                 if os.path.exists(p_foto):
                     with cols[idx % 4]:
                         try:
+                            # Render gambar tajam menggunakan resampling kualitas tertinggi (LANCZOS)
                             img_asli = Image.open(p_foto)
                             img_asli = ImageOps.exif_transpose(img_asli)
+                            # Batasi ukuran pratinjau agar tetap kecil rapi namun jernih saat dizoom
                             img_asli.thumbnail((600, 600), Image.Resampling.LANCZOS)
                             st.image(img_asli, use_container_width=True)
                         except Exception:
@@ -940,8 +919,7 @@ with tab10:
                     st.error(f"❌ Gagal menyimpan laporan kas: {e}")
 
         elif menu_admin == "Laporan Kas Pemakaman/Sosial":
-            st.markdown("💡 *Anda dapat melakukan **Copy-Paste** tabel dari Excel secara langsung. Tanggal dan angka dibersihkan otomatis. Gunakan **Ctrl+Z** dan **Ctrl+Y** untuk Undo/Redo.*")
-            
+            st.markdown("💡 *Edit data kas pemakaman di bawah ini. Saldo dihitung otomatis.*")
             df_kp_edit = df_kas_pemakaman.drop(columns=["SALDO"], errors="ignore").copy()
             df_kp_edit["TANGGAL"] = df_kp_edit["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '')
             
