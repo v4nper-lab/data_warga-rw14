@@ -616,6 +616,49 @@ with tab8:
 with tab10:
     st.subheader("⚙️ Panel Admin")
     if admin_terverifikasi:
-        st.success("✅ Login Admin Berhasil")
+        menu_admin = st.selectbox(
+            "Menu Admin:", 
+            [
+                "Data Warga", 
+                "Struktur Organisasi", 
+                "Laporan Kas RW", 
+                "Laporan Kas Pemakaman/Sosial", 
+                "Upload File PDF (Kas & Rapat)", 
+                "Upload Foto Galeri", 
+                "Edit Keterangan Galeri",
+                "Hapus Foto Galeri"
+            ]
+        )
+        if menu_admin == "Laporan Kas RW":
+            st.markdown("💡 *Input atau edit data kas langsung di bawah ini, lalu klik tombol **Simpan Laporan Kas** di bawah.*")
+            df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
+            kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
+            
+            if st.button("💾 Simpan Laporan Kas"):
+                try:
+                    if not kas_terbaru.empty:
+                        m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
+                        k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
+                        kas_terbaru["TANGGAL"] = kas_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
+                        kas_terbaru[m] = pd.to_numeric(kas_terbaru[m].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kas_terbaru[k] = pd.to_numeric(kas_terbaru[k].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kas_terbaru["SALDO"] = (kas_terbaru[m] - kas_terbaru[k]).cumsum()
+                        kas_terbaru.to_excel("datakas.xlsx", index=False)
+                        st.cache_data.clear()
+                        st.success("✅ Laporan Kas RW berhasil disimpan dan diperbarui!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Gagal menyimpan: {e}")
+        elif menu_admin == "Data Warga":
+            ed = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
+            if st.button("Simpan Data Warga"):
+                df_baru = pd.DataFrame(ed)
+                df_terurut = urutkan_data_warga(df_baru)
+                df_terurut.to_excel("datawarga.xlsx", index=False)
+                st.cache_data.clear()
+                st.success("✅ Data warga disimpan!")
+                st.rerun()
+        else:
+            st.info("Pilih menu admin di atas sesuai kebutuhan.")
     else:
-        st.warning("Masukkan password admin di sidebar sebelah kiri.")
+        st.warning("⚠️ Masukkan password admin di sidebar.")
