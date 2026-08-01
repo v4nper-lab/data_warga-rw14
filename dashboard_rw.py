@@ -103,8 +103,8 @@ def load_kas():
         
         kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk[0] if kolom_masuk else "PEMASUKAN"
-        k_col = kolom_keluar[0] if kolom_keluar else "PENGELUARAN"
+        m_col = kolom_masuk[0] if kolom_masuk else df_kas.columns[2] if len(df_kas.columns) > 2 else "PEMASUKAN"
+        k_col = kolom_keluar[0] if kolom_keluar else df_kas.columns[3] if len(df_kas.columns) > 3 else "PENGELUARAN"
         
         if m_col not in df_kas.columns: df_kas[m_col] = 0
         if k_col not in df_kas.columns: df_kas[k_col] = 0
@@ -133,8 +133,8 @@ def load_kas_pemakaman():
         
         kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
         kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
-        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else "PEMASUKAN"
-        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
+        m_col = kolom_masuk_kp[0] if kolom_masuk_kp else df_kp.columns[2] if len(df_kp.columns) > 2 else "PEMASUKAN"
+        k_col = kolom_keluar_kp[0] if kolom_keluar_kp else df_kp.columns[3] if len(df_kp.columns) > 3 else "PENGELUARAN"
         
         if m_col not in df_kp.columns: df_kp[m_col] = 0
         if k_col not in df_kp.columns: df_kp[k_col] = 0
@@ -299,11 +299,10 @@ if not df.empty and "RT" in df.columns:
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         path_foto = None
         
-        # Sesuai dengan nama file di gambar GitHub Anda: RT 01.png, RT 02.png, dst.
         kemungkinan_nama = [
             f"RT {rt_num_clean.zfill(2)}.png", f"RT {rt_num_clean.zfill(2)}.PNG",
             f"RT {rt_num_clean}.png", f"RT {rt_num_clean}.PNG",
-            f"RT 0{rt_num_clean}.png", f"RT {rt_num_clean}.jpg"
+            f"RT 0{rt_num_clean}.png", f"RT {rt_num_clean}.jpg", f"RT {rt_num_clean}.JPG"
         ]
         
         for lokasi_file in kemungkinan_nama:
@@ -437,9 +436,8 @@ with tab0:
 
         col_pengurus1, col_pengurus2, col_pengurus3 = st.columns(3)
 
-        # Sesuai dengan nama file foto pengurus di GitHub: KETUA RW.png, SEKRETARIS.png, BENDAHARA.png
         def cari_foto_pengurus_root(nama_file_dasar):
-            for ext in ['.png', '.PNG', '.jpg', '.JPG']:
+            for ext in ['.png', '.PNG', '.jpg', '.JPG', '.jpeg', '.JPEG']:
                 p = f"{nama_file_dasar}{ext}"
                 if os.path.exists(p): return p
             return None
