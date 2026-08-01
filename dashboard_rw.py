@@ -83,6 +83,10 @@ def load_data():
             if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
             if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
             if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
+            if "PEKERJAAN" in df.columns:
+                df["PEKERJAAN"] = df["PEKERJAAN"].fillna("Belum/Tidak Bekerja").astype(str).str.strip().str.title()
+            else:
+                df["PEKERJAAN"] = "Belum/Tidak Bekerja"
             
             if "STATUS PENDUDUK" not in df.columns:
                 df["STATUS PENDUDUK"] = "Tetap"
@@ -405,8 +409,8 @@ with col_teks:
 st.write("---")
 
 # ================= TABS UTAMA =================
-tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab_kas_pemakaman_pub, tab7, tab8, tab9, tab10 = st.tabs([
-    "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
+tab0, tab_struk, tab1, tab2, tab3, tab_pek, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab_kas_pemakaman_pub, tab7, tab8, tab9, tab10 = st.tabs([
+    "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", "💼 Pekerjaan",
     "🗂️ Data Warga", "🔍 Cari KK", "📊 Rekap RT", "📤 Update Data RT & KK", "💰 Kas RW", 
     "🪦 Kas Pemakaman", "📢 Info & Rapat", "🖼️ Galeri", "💬 Saran Pengurus", "⚙️ Edit & Upload (Admin)"
 ])
@@ -540,9 +544,7 @@ with tab3:
         df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
         df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
         
-        # Layout terbagi 2: Grafik di kiri (2 kolom), Keterangan Legenda di kanan (1 kolom)
         col_g1, col_g2 = st.columns([2, 1])
-        
         with col_g1:
             fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Prism)
             fig_pendidikan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14))
@@ -559,6 +561,32 @@ with tab3:
                     <span style="font-size: 14px; font-weight: bold; color: #333;">{row_p['Tingkat Pendidikan']}: <span style="color: #0D47A1;">{row_p['Jumlah']} Jiwa</span></span>
                 </div>
                 """, unsafe_allow_html=True)
+
+with tab_pek:
+    st.subheader("💼 Jenis Pekerjaan Warga RW 14")
+    if not df_filtered.empty and "PEKERJAAN" in df_filtered.columns:
+        df_pekerjaan = df_filtered["PEKERJAAN"].astype(str).str.title().value_counts().reset_index()
+        df_pekerjaan.columns = ["Jenis Pekerjaan", "Jumlah"]
+        
+        col_pk1, col_pk2 = st.columns([2, 1])
+        with col_pk1:
+            fig_pekerjaan = px.bar(df_pekerjaan, x="Jenis Pekerjaan", y="Jumlah", color="Jenis Pekerjaan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Bold)
+            fig_pekerjaan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14), xaxis=dict(tickangle=-30))
+            st.plotly_chart(fig_pekerjaan, use_container_width=True)
+            
+        with col_pk2:
+            st.markdown("<h4 style='color: #0D47A1; margin-top: 15px;'>📑 Keterangan Pekerjaan</h4>", unsafe_allow_html=True)
+            warna_palet_bold = px.colors.qualitative.Bold
+            for idx, row_pk in df_pekerjaan.iterrows():
+                warna_item_pk = warna_palet_bold[idx % len(warna_palet_bold)]
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <div style="width: 20px; height: 20px; background-color: {warna_item_pk}; border-radius: 4px; margin-right: 10px; border: 1px solid #333;"></div>
+                    <span style="font-size: 14px; font-weight: bold; color: #333;">{row_pk['Jenis Pekerjaan']}: <span style="color: #0D47A1;">{row_pk['Jumlah']} Jiwa</span></span>
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.info("Data pekerjaan belum tersedia.")
 
 with tab4:
     st.subheader("🗂️ Data Seluruh Warga (Akses Khusus Pengurus)")
