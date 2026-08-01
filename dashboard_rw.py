@@ -624,30 +624,28 @@ with tab5:
             kolom_kk = next((c for c in df.columns if "KK" in c), None)
             
             if kolom_nama_warga and kolom_kk:
-                # Pencocokan kata utuh (menggunakan word boundary regex) agar nama seperti 'Agus Sunaryo' tidak ikut terseret
-                pattern_kata = r'(?i)\b' + str(kata_kunci).strip() + r'\b'
-                df_nama_cocok = df[df[kolom_nama_warga].astype(str).str.contains(pattern_kata, na=False)]
+                # Filter ketat: cari warga yang status hubungannya Kepala Keluarga DAN namanya mengandung kata kunci utuh
+                df_kk_filter = pd.DataFrame()
+                if kolom_hub:
+                    df_kk_filter = df[
+                        df[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False) &
+                        df[kolom_nama_warga].astype(str).str.contains(r'(?i)\b' + str(kata_kunci).strip() + r'\b', na=False)
+                    ]
                 
-                if not df_nama_cocok.empty:
-                    if kolom_hub:
-                        df_kk_filter = df_nama_cocok[
-                            df_nama_cocok[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)
-                        ]
-                        if df_kk_filter.empty:
-                            df_kk_filter = df_nama_cocok
-                    else:
-                        df_kk_filter = df_nama_cocok
-                    
-                    nomor_kk_ditemukan = df_kk_filter[kolom_kk].dropna().unique()
-                    
-                    if len(nomor_kk_ditemukan) > 0:
-                        hasil_keluarga = df[df[kolom_kk].isin(nomor_kk_ditemukan)]
-                        st.success(f"✅ Ditemukan Kartu Keluarga untuk pencarian '{kata_kunci}'. Berikut adalah seluruh anggota keluarga di dalam 1 KK:")
-                        st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
-                    else:
-                        st.warning("⚠️ Nomor KK tidak valid pada data yang cocok.")
+                # Jika tidak ketemu dengan filter kepala keluarga, gunakan pencocokan nama utuh langsung
+                if df_kk_filter.empty:
+                    df_kk_filter = df[
+                        df[kolom_nama_warga].astype(str).str.contains(r'(?i)\b' + str(kata_kunci).strip() + r'\b', na=False)
+                    ]
+                
+                nomor_kk_ditemukan = df_kk_filter[kolom_kk].dropna().unique()
+                
+                if len(nomor_kk_ditemukan) > 0:
+                    hasil_keluarga = df[df[kolom_kk].isin(nomor_kk_ditemukan)]
+                    st.success(f"✅ Ditemukan Kartu Keluarga untuk pencarian '{kata_kunci}'. Berikut adalah seluruh anggota keluarga di dalam 1 KK:")
+                    st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
                 else:
-                    st.warning(f"⚠️ Tidak ditemukan Kepala Keluarga dengan nama '{kata_kunci}'. Coba masukkan nama lengkap yang sesuai.")
+                    st.warning(f"⚠️ Tidak ditemukan data kepala keluarga dengan nama '{kata_kunci}'.")
             else:
                 hasil_default = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
                 st.dataframe(hasil_default, use_container_width=True, hide_index=True)
