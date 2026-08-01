@@ -215,6 +215,7 @@ df_struktur = load_struktur()
 df_galeri_meta = load_galeri_meta()
 df_saran = load_saran()
 
+# ================= SIDEBAR (WAKTU, JADWAL SHOLAT, MUSIK, FOTO RT) =================
 st.sidebar.markdown("---")
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 hari_list = {"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu", "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu"}
@@ -229,24 +230,109 @@ st.sidebar.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+st.sidebar.markdown("""
+<div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 12px; border-radius: 10px; color: white; margin-bottom: 15px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
+    <p style="margin: 0; font-size: 14px; font-weight: bold; text-align: center;">🕌 Jadwal Sholat & Pengingat</p>
+    <p style="margin: 2px 0 10px 0; font-size: 11px; text-align: center; color: #E3F2FD;">Nanjung Mekar, Rancaekek, Kab. Bandung</p>
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 5px 0 8px 0;">
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>🌅 Subuh:</span> <b>04:44 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>☀️ Dzuhur:</span> <b>12:00 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>🌤️ Ashar:</span> <b>15:21 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px;"><span>🌇 Maghrib:</span> <b>17:58 WIB</b></div>
+    <div style="font-size: 13px; display: flex; justify-content: space-between;"><span>🌙 Isya:</span> <b>19:06 WIB</b></div>
+</div>
+""", unsafe_allow_html=True)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 5px; font-size: 14px;'>🎵 Pemutar Musik Latar:</p>", unsafe_allow_html=True)
+file_musik = "backsound.mp3"
+if os.path.exists(file_musik):
+    with open(file_musik, "rb") as f:
+        audio_bytes = f.read()
+    audio_base64 = base64.b64encode(audio_bytes).decode()
+    st.sidebar.markdown(f"""
+    <audio controls loop style="width: 100%;">
+        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        Browser Anda tidak mendukung elemen audio.
+    </audio>
+    """, unsafe_allow_html=True)
+else:
+    st.sidebar.warning("⚠️ File 'backsound.mp3' belum ditemukan di GitHub.")
+
 st.sidebar.header("🛠️ Panel Filter Data RT & Status")
 if not df.empty and "RT" in df.columns:
     df["RT_FORMAT"] = df["RT"].apply(lambda x: f"RT{int(x):02d}" if pd.notnull(x) and str(x).isdigit() else f"RT{str(x)}")
     semua_rt_format = sorted(df["RT_FORMAT"].dropna().unique(), key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
     pilihan_rt_format = st.sidebar.multiselect("Tampilkan Data RT:", options=semua_rt_format, default=semua_rt_format)
+    pilihan_rt_format = sorted(pilihan_rt_format, key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+
     semua_status_penduduk = ["Tetap", "Musiman"]
     pilihan_status_penduduk = st.sidebar.multiselect("Filter Status Penduduk:", options=semua_status_penduduk, default=semua_status_penduduk)
-    
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("<p style='font-weight: bold; color: #0D47A1; margin-bottom: 10px; font-size: 15px;'>👨‍✈️ Profil Ketua RT Terpilih:</p>", unsafe_allow_html=True)
+
+    daftar_ketua_rt_resmi = {
+        "1": "M. Husni Mubarak", "2": "Casnanto", "3": "Ucok Yudho Hartono",
+        "4": "Salya", "5": "Suwarno", "6": "Agus Hendra", "7": "Dodi Sunardi"
+    }
+
+    for rt_pilih in pilihan_rt_format:
+        rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
+        path_foto = None
+        
+        kemungkinan_nama = [
+            f"RT {rt_num_clean.zfill(2)}.png", f"RT {rt_num_clean.zfill(2)}.PNG",
+            f"RT {rt_num_clean}.png", f"RT {rt_num_clean}.PNG",
+            f"RT 0{rt_num_clean}.png", f"RT {rt_num_clean}.jpg", f"RT {rt_num_clean}.JPG"
+        ]
+        
+        for lokasi_file in kemungkinan_nama:
+            if os.path.exists(lokasi_file):
+                path_foto = lokasi_file
+                break
+
+        nama_ketua = daftar_ketua_rt_resmi.get(rt_num_clean, f"Ketua {rt_pilih}")
+
+        if path_foto and os.path.exists(path_foto):
+            st.sidebar.markdown(f"""
+            <div style="background-color: #ffffff; padding: 10px; border-radius: 10px 10px 0 0; border: 2px solid #90CAF9; border-bottom: none; text-align: center;">
+                <span style="background-color: #0D47A1; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 12px;">{rt_pilih}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            img_terluruskan = muat_dan_seragamkan_foto(path_foto, ukuran=(300, 400))
+            st.sidebar.image(img_terluruskan, use_container_width=True)
+            st.sidebar.markdown(f"""
+            <div style="background-color: #ffffff; padding: 8px; border-radius: 0 0 10px 10px; border: 2px solid #90CAF9; border-top: none; text-align: center; margin-bottom: 15px; box-shadow: 0px 3px 8px rgba(0,0,0,0.08);">
+                <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 14px;">👨‍✈️ {nama_ketua}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.sidebar.markdown(f"""
+            <div style="background-color: #ffffff; padding: 10px; border-radius: 10px; border: 1px dashed #1976D2; text-align: center; margin-bottom: 15px;">
+                <p style="margin: 0; font-weight: bold; color: #0D47A1; font-size: 13px;">📌 {rt_pilih} - {nama_ketua}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
     df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
     if "STATUS PENDUDUK" in df_filtered.columns and pilihan_status_penduduk:
         df_filtered = df_filtered[df_filtered["STATUS PENDUDUK"].astype(str).str.title().isin(pilihan_status_penduduk)]
 else:
     df_filtered = pd.DataFrame()
 
+st.sidebar.markdown("---")
 password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
 admin_terverifikasi = (password_input == "V@nadminrw14")
 
-st.markdown("<h2 style='color: #0D47A1;'>Portal Resmi & Dashboard Warga RW 14</h2>", unsafe_allow_html=True)
+# ================= KEPALA HALAMAN & TABS UTAMA =================
+col_logo, col_teks = st.columns([1, 6])
+with col_logo:
+    st.image(sumber_logo, width=70)
+with col_teks:
+    st.markdown("<h2 style='color: #0D47A1; font-weight: 900; margin: 0; padding-top: 5px; font-size: 20px;'>Portal Resmi & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #333; font-weight: bold; margin: 3px 0 0 0; font-size: 14px;'>Pusat Layanan Informasi, Kependudukan, dan Transparansi Keuangan Lingkungan</p>", unsafe_allow_html=True)
+
+st.write("---")
 
 tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab_kas_pemakaman_pub, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
@@ -256,7 +342,54 @@ tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6
 
 with tab0:
     st.subheader("👋 Selamat Datang di Portal Warga RW 14")
-    st.write("Portal resmi layanan informasi dan kependudukan RW 14 Griya Permata Raya.")
+    col_p1, col_p2 = st.columns([2, 1])
+    with col_p1:
+        st.markdown("""
+        ### 🌟 Sambutan Pengurus RW 14
+        Assalamu’alaikum Warahmatullahi Wabarakatuh,  
+        Selamat datang di website resmi **Portal & Dashboard Warga RW 14 Perum Griya Permata Raya Desa Nanjung Mekar Kec. Rancaekek Kab. Bandung**. Website ini dikembangkan khusus untuk memudahkan warga dan pengurus dalam mengakses informasi kependudukan secara transparan, akurat, dan cepat.
+        """)
+        st.markdown("---")
+        st.markdown("### 🏛️ Jajaran Pengurus Inti RW 14")
+        nama_rw = "Triyadi Sucipto"
+        nama_sek = "Irvan Permana"
+        nama_bend = "Aan Toni Fauyi"
+        
+        col_pengurus1, col_pengurus2, col_pengurus3 = st.columns(3)
+        def cari_foto_pengurus_root(nama_file_dasar):
+            for ext in ['.png', '.PNG', '.jpg', '.JPG', '.jpeg']:
+                p = f"{nama_file_dasar}{ext}"
+                if os.path.exists(p): return p
+            return None
+
+        with col_pengurus1:
+            foto_rw = cari_foto_pengurus_root("KETUA RW")
+            if foto_rw: st.image(muat_dan_seragamkan_foto(foto_rw, ukuran=(300, 400)), use_container_width=True)
+            else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_rw}<br><span style='font-size: 12px; color: #555;'>Ketua RW 14</span></div>", unsafe_allow_html=True)
+
+        with col_pengurus2:
+            foto_sek = cari_foto_pengurus_root("SEKRETARIS")
+            if foto_sek: st.image(muat_dan_seragamkan_foto(foto_sek, ukuran=(300, 400)), use_container_width=True)
+            else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_sek}<br><span style='font-size: 12px; color: #555;'>Sekretaris</span></div>", unsafe_allow_html=True)
+
+        with col_pengurus3:
+            foto_bend = cari_foto_pengurus_root("BENDAHARA")
+            if foto_bend: st.image(muat_dan_seragamkan_foto(foto_bend, ukuran=(300, 400)), use_container_width=True)
+            else: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135673.png", use_container_width=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; color: #0D47A1; margin-top: 5px;'>{nama_bend}<br><span style='font-size: 12px; color: #555;'>Bendahara</span></div>", unsafe_allow_html=True)
+
+    with col_p2:
+        st.markdown("""
+        <div style="background-color: white; padding: 15px; border-radius: 10px; border: 1px solid #90CAF9;">
+            <h4 style="color: #0D47A1; margin-top:0;">📞 Kontak Penting RW 14</h4>
+            <p style="margin: 8px 0; font-size: 14px;">🚨 <b>Keamanan / Satpam:</b> 0812-XXXX-XXXX</p>
+            <p style="margin: 8px 0; font-size: 14px;">🏥 <b>Kesehatan / Posyandu:</b> 0813-XXXX-XXXX</p>
+            <hr style="margin: 10px 0;">
+            <p style="margin: 0; font-size: 13px; color: #0D47A1; text-align: center; font-weight: 900;">GPR NGAHIJI</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 with tab_struk:
     st.subheader("👥 Struktur Pengurus RW 14")
@@ -265,14 +398,50 @@ with tab_struk:
 
 with tab1:
     st.subheader("Angka Kunci Kependudukan Terkini")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("👥 Total Warga", f"{len(df_filtered)} Jiwa")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("👥 Total Warga", f"{len(df_filtered)} Jiwa")
     kk_count = len(df_filtered[df_filtered["HUBUNGAN"].astype(str).str.upper() == "KEPALA KELUARGA"]) if "HUBUNGAN" in df_filtered.columns else 0
-    c2.metric("👨‍💼 Kepala Keluarga", kk_count)
+    col2.metric("👨‍💼 Kepala Keluarga", kk_count)
     laki_count = len(df_filtered[df_filtered["JENIS KELAMIN"].astype(str).str.upper() == "LAKI-LAKI"]) if "JENIS KELAMIN" in df_filtered.columns else 0
-    c3.metric("👨 Laki-laki", laki_count)
+    col3.metric("👨 Laki-laki", laki_count)
     pr_count = len(df_filtered[df_filtered["JENIS KELAMIN"].astype(str).str.upper() == "PEREMPUAN"]) if "JENIS KELAMIN" in df_filtered.columns else 0
-    c4.metric("👩 Perempuan", pr_count)
+    col4.metric("👩 Perempuan", pr_count)
+
+    st.write("---")
+    st.subheader("Sebaran Penduduk per RT")
+    if not df_filtered.empty and "RT_FORMAT" in df_filtered.columns:
+        df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
+        df_rt = df_rt.sort_values("RT_FORMAT")
+        fig_rt = px.bar(df_rt, x="RT_FORMAT", y="Jumlah Warga", color="RT_FORMAT", text="Jumlah Warga", color_discrete_sequence=px.colors.qualitative.Vivid)
+        fig_rt.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
+        st.plotly_chart(fig_rt, use_container_width=True)
+
+with tab2:
+    st.subheader("📊 Analisis Demografi Warga RW 14")
+    if not df_filtered.empty and "JENIS KELAMIN" in df_filtered.columns:
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.markdown("#### 🚻 Jenis Kelamin")
+            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
+            st.plotly_chart(fig_jk, use_container_width=True)
+        with col_b:
+            st.markdown("#### ☪️ Sebaran Agama")
+            if "AGAMA" in df_filtered.columns:
+                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0)
+                st.plotly_chart(fig_agama, use_container_width=True)
+
+with tab3:
+    st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
+    if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
+        df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
+        df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
+        fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True)
+        st.plotly_chart(fig_pendidikan, use_container_width=True)
+
+with tab4:
+    st.subheader("🗂️ Data Seluruh Warga")
+    if not df_filtered.empty:
+        st.dataframe(df_filtered, use_container_width=True, hide_index=True)
 
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
@@ -280,6 +449,13 @@ with tab6:
         st.dataframe(df_kas, use_container_width=True, hide_index=True)
     else:
         st.info("Data kas belum tersedia.")
+
+with tab_kas_pemakaman_pub:
+    st.subheader("🪦 Transparansi Laporan Kas Pemakaman")
+    if not df_kas_pemakaman.empty:
+        st.dataframe(df_kas_pemakaman, use_container_width=True, hide_index=True)
+    else:
+        st.info("Data kas pemakaman belum tersedia.")
 
 with tab7:
     st.subheader("📢 Informasi Kegiatan & Hasil Rapat")
@@ -298,6 +474,6 @@ with tab8:
 with tab10:
     st.subheader("⚙️ Panel Admin")
     if admin_terverifikasi:
-        st.success("✅ Admin Aktif")
+        st.success("✅ Login Admin Berhasil")
     else:
-        st.warning("Masukkan password admin di sidebar.")
+        st.warning("Masukkan password admin di sidebar sebelah kiri.")
