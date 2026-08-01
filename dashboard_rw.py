@@ -164,7 +164,7 @@ def load_kas_pemakaman():
     k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
     
     if m_col not in df_kp.columns: df_kp[m_col] = 0
-    if k_col not in df_kp.columns: df_kp[k_col] = 0
+    if k_col not in df_kp.columns: df_kp[m_col] = 0
     
     df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
@@ -619,30 +619,39 @@ with tab5:
         
         kata_kunci = st.text_input("🔎 Masukkan Nama Kepala Keluarga (cth: Aan):")
         if kata_kunci:
-            # 1. Cari baris warga yang namanya mengandung kata kunci DAN status hubungannya adalah Kepala Keluarga
             kolom_nama_warga = next((c for c in df.columns if c in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]), None)
-            kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c), None)
+            kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
             kolom_kk = next((c for c in df.columns if "KK" in c), None)
             
-            if kolom_nama_warga and kolom_hub and kolom_kk:
-                # Filter baris yang cocok sebagai Kepala Keluarga
-                df_kk_cocok = df[
-                    df[kolom_nama_warga].astype(str).str.contains(kata_kunci, case=False, na=False) & 
-                    df[kolom_hub].astype(str).str.upper().str.contains("KEPALA KELUARGA", na=False)
-                ]
+            if kolom_nama_warga and kolom_kk:
+                # 1. Cari baris warga yang namanya mengandung kata kunci
+                df_nama_cocok = df[df[kolom_nama_warga].astype(str).str.contains(kata_kunci, case=False, na=False)]
                 
-                if not df_kk_cocok.empty:
-                    nomor_kk_ditemukan = df_kk_cocok[kolom_kk].unique()
-                    # Ambil seluruh anggota keluarga yang memiliki Nomor KK tersebut
-                    hasil_keluarga = df[df[kolom_kk].isin(nomor_kk_ditemukan)]
-                    st.success(f"✅ Ditemukan Kepala Keluarga yang sesuai. Berikut adalah seluruh anggota keluarga dalam 1 KK:")
-                    st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
+                if not df_nama_cocok.empty:
+                    # Jika ada kolom hubungan keluarga, saring yang benar-benar mengandung kata "KEPALA" atau "KDH"
+                    if kolom_hub:
+                        df_kk_filter = df_nama_cocok[
+                            df_nama_cocok[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)
+                        ]
+                        # Jika tidak ketemu dengan filter kepala keluarga, gunakan baris nama yang cocok tersebut
+                        if df_kk_filter.empty:
+                            df_kk_filter = df_nama_cocok
+                    else:
+                        df_kk_filter = df_nama_cocok
+                    
+                    nomor_kk_ditemukan = df_kk_filter[kolom_kk].dropna().unique()
+                    
+                    if len(nomor_kk_ditemukan) > 0:
+                        # Ambil seluruh anggota keluarga berdasarkan Nomor KK yang cocok secara utuh
+                        hasil_keluarga = df[df[kolom_kk].isin(nomor_kk_ditemukan)]
+                        st.success(f"✅ Ditemukan Kartu Keluarga untuk pencarian '{kata_kunci}'. Berikut adalah seluruh anggota keluarga di dalam 1 KK:")
+                        st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
+                    else:
+                        st.warning("⚠️ Nomor KK tidak valid pada data yang cocok.")
                 else:
-                    # Fallback jika tidak pas sebagai KK, cari secara umum tapi beri info
-                    st.warning("⚠️ Tidak ditemukan Kepala Keluarga dengan nama persis tersebut. Menampilkan hasil pencarian umum:")
-                    hasil_umum = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
-                    st.dataframe(hasil_umum, use_container_width=True, hide_index=True)
+                    st.warning(f"⚠️ Tidak ditemukan warga dengan nama '{kata_kunci}'. Coba kata kunci lain.")
             else:
+                # Fallback umum jika kolom spesifik tidak ditemukan
                 hasil_default = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
                 st.dataframe(hasil_default, use_container_width=True, hide_index=True)
 
