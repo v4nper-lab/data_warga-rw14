@@ -6,6 +6,7 @@ import os
 from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
+# 1. PENGATURAN HALAMAN & KOSMETIK PORTAL
 st.set_page_config(
     page_title="Portal Resmi RW 14 Griya Permata Raya",
     layout="wide",
@@ -324,7 +325,42 @@ st.sidebar.markdown("---")
 password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
 admin_terverifikasi = (password_input == "V@nadminrw14")
 
-# ================= KEPALA HALAMAN & TABS UTAMA =================
+# ================= BREAKING NEWS & MOTIVASI DI ATAS JUDUL =================
+teks_berita_online = "📢 SELAMAT DATANG DI PORTAL RESMI RW 14 GRIYA PERMATA RAYA &bull; "
+if not df_info.empty:
+    list_info_berita = []
+    for _, r in df_info.iterrows():
+        tgl_info = str(r.get("TANGGAL", ""))
+        judul_info = str(r.get("JUDUL", ""))
+        if judul_info and judul_info != "nan":
+            list_info_berita.append(f"📌 [{tgl_info}] {judul_info}")
+    if list_info_berita:
+        teks_berita_online += " &nbsp;&bull;&nbsp; ".join(list_info_berita)
+else:
+    teks_berita_online += "Pengumuman dan agenda kegiatan lingkungan akan diperbarui secara berkala oleh Pengurus."
+
+st.markdown(f"""
+<div style="background: linear-gradient(135deg, #0D47A1, #1976D2); padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0px 4px 10px rgba(0,0,0,0.15); border: 1px solid #90CAF9;">
+    <div style="display: flex; align-items: center;">
+        <span style="background-color: #ff9800; color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-right: 12px; white-space: nowrap;">📰 BREAKING NEWS</span>
+        <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #ffffff; font-weight: 900; font-size: 16px; letter-spacing: 0.5px;">
+            {teks_berita_online}
+        </marquee>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 15px; border-radius: 12px; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); margin-bottom: 15px; border: 2px solid #90CAF9;">
+    <div style="background-color: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #90CAF9; box-shadow: inset 0px 1px 3px rgba(0,0,0,0.05);">
+        <marquee behavior="scroll" direction="left" scrollamount="5" style="color: #0D47A1; font-weight: bold; font-size: 14px;">
+            🏡 Kepada seluruh Ketua RT RW 14 &nbsp;&bull;&nbsp; Mengurus data warga hari ini adalah investasi kemudahan untuk urusan sosial kemasyarakatan di masa depan &nbsp;&bull;&nbsp; Semangat terus melayani warga dengan sepenuh hati! ❤️
+        </marquee>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ================= KEPALA HALAMAN =================
 col_logo, col_teks = st.columns([1, 6])
 with col_logo:
     st.image(sumber_logo, width=70)
@@ -334,6 +370,7 @@ with col_teks:
 
 st.write("---")
 
+# ================= TABS UTAMA =================
 tab0, tab_struk, tab1, tab2, tab3, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab_kas_pemakaman_pub, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", 
     "🗂️ Data Warga", "🔍 Cari KK", "📊 Rekap RT", "📤 Update Data RT & KK", "💰 Kas RW", 
@@ -408,7 +445,7 @@ with tab1:
     col4.metric("👩 Perempuan", pr_count)
 
     st.write("---")
-    st.subheader("Sebaran Penduduk per RT")
+    st.subheader("Sebaran Penduduk per RT (Interaktif)")
     if not df_filtered.empty and "RT_FORMAT" in df_filtered.columns:
         df_rt = df_filtered.groupby("RT_FORMAT").size().reset_index(name="Jumlah Warga")
         df_rt = df_rt.sort_values("RT_FORMAT")
@@ -417,13 +454,14 @@ with tab1:
         st.plotly_chart(fig_rt, use_container_width=True)
 
 with tab2:
-    st.subheader("📊 Analisis Demografi Warga RW 14")
-    if not df_filtered.empty and "JENIS KELAMIN" in df_filtered.columns:
+    st.subheader("📊 Analisis Demografi Warga RW 14 (Interaktif)")
+    if not df_filtered.empty:
         col_a, col_b = st.columns(2)
         with col_a:
             st.markdown("#### 🚻 Jenis Kelamin")
-            fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
-            st.plotly_chart(fig_jk, use_container_width=True)
+            if "JENIS KELAMIN" in df_filtered.columns:
+                fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
+                st.plotly_chart(fig_jk, use_container_width=True)
         with col_b:
             st.markdown("#### ☪️ Sebaran Agama")
             if "AGAMA" in df_filtered.columns:
@@ -431,7 +469,7 @@ with tab2:
                 st.plotly_chart(fig_agama, use_container_width=True)
 
 with tab3:
-    st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
+    st.subheader("🎓 Tingkat Pendidikan Warga RW 14 (Interaktif)")
     if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
         df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
         df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
