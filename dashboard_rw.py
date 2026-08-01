@@ -306,6 +306,7 @@ if not df.empty and "RT" in df.columns:
         kemungkinan_nama = [
             os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.jpeg"), os.path.join(folder_foto_rt, f"rt{rt_num_clean}.png"),
             os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"rt0{rt_num_clean}.png"),
+            os.path.join(folder_foto_rt, f"RT{rt_num_clean}.jpg"), os.path.join(folder_foto_rt, f"RT{rt_num_clean}.png"),
             f"rt{rt_num_clean}.jpg", f"rt{rt_num_clean}.png"
         ]
         
@@ -992,7 +993,7 @@ with tab10:
                 st.rerun()
 
         elif menu_admin == "Upload Foto Galeri":
-            st.markdown("### 🖼️ Unggah Foto Kegiatan ke Galeri")
+            st.markdown("### 🖼️ Upload Foto Kegiatan ke Galeri")
             foto_up = st.file_uploader("Pilih File Foto (JPG/PNG):", type=["jpg", "jpeg", "png"], key="up_foto_galeri_file")
             if foto_up is not None:
                 col_i1, col_i2 = st.columns(2)
