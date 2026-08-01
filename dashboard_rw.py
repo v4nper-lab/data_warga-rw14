@@ -299,10 +299,11 @@ if not df.empty and "RT" in df.columns:
         rt_num_clean = str(int(''.join(filter(str.isdigit, str(rt_pilih))) or 0))
         path_foto = None
         
-        # Mencocokkan format nama file persis seperti di gambar GitHub Anda (KETUA RT 01.jpg, KETUA RT 1.jpg)
+        # Mendukung pencarian file foto dengan nama KETUA RT 01.jpg / KETUA RT 1.jpg langsung di root GitHub
         kemungkinan_nama = [
             f"KETUA RT {rt_num_clean}.jpg", f"KETUA RT {rt_num_clean}.JPG",
-            f"KETUA RT 0{rt_num_clean}.jpg", f"KETUA RT 0{rt_num_clean}.JPG"
+            f"KETUA RT 0{rt_num_clean}.jpg", f"KETUA RT 0{rt_num_clean}.JPG",
+            f"ketua rt {rt_num_clean}.jpg", f"ketua rt {rt_num_clean}.JPG"
         ]
         
         for lokasi_file in kemungkinan_nama:
