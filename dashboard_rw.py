@@ -164,7 +164,7 @@ def load_kas_pemakaman():
     k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
     
     if m_col not in df_kp.columns: df_kp[m_col] = 0
-    if k_col not in df_kp.columns: df_kp[m_col] = 0
+    if k_col not in df_kp.columns: df_kp[k_col] = 0
     
     df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
@@ -605,27 +605,44 @@ with tab4:
 
 with tab5:
     st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
-    st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
-    
-    kolom_nama_warga = next((c for c in df.columns if c in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]), None)
-    kolom_kk = next((c for c in df.columns if "KK" in c), None)
-    kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
-    
-    if kolom_nama_warga and kolom_kk:
-        # LOGIKA ASLI YANG SEDERHANA, CEPAT, DAN LANGSUNG MUNCUL TANPA PASSWORD
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kepala Keluarga (Bebas Huruf Besar/Kecil):", placeholder="Contoh: aan")
+    if "cari_terbuka" not in st.session_state: st.session_state["cari_terbuka"] = False
+    if not st.session_state["cari_terbuka"]:
+        pass_cari = st.text_input("Kata Sandi Akses Pencarian KK:", type="password", key="pass_input_cari_kk")
+        if pass_cari == "ijindibuka": st.session_state["cari_terbuka"] = True; st.rerun()
+        elif pass_cari != "": st.error("❌ Kata sandi salah!")
+    else:
+        col_btn1, col_btn2 = st.columns([1, 4])
+        with col_btn1:
+            if st.button("🔒 Kunci Kembali Pencarian"): st.session_state["cari_terbuka"] = False; st.rerun()
+        with col_btn2:
+            st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
+        # Pengecekan nama kolom secara aman agar tidak error
+        kolom_nama_warga = next((c for c in df.columns if c in ["NAMA", "NAMA LENGKAP", "NAMA WARGA"]), None)
+        kolom_kk = next((c for c in df.columns if "KK" in c), None)
+        kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
+        
+        if not kolom_nama_warga or not kolom_kk:
+            # Fallback jika nama kolom di Excel berbeda, gunakan kolom pertama dan kedua
+            if len(df.columns) >= 2:
+                kolom_nama_warga = df.columns[1] if len(df.columns) > 1 else df.columns[0]
+                kolom_kk = df.columns[0]
+            else:
+                st.error("⚠️ Struktur kolom file Excel data warga tidak dikenali.")
+                st.stop()
+
+        kata_kunci = st.text_input("🔎 Masukkan Nama Kepala Keluarga:")
         if kata_kunci:
             kw_clean = str(kata_kunci).strip().lower()
             
-            # Saring baris yang nama warganya mengandung kata kunci
+            # Cari baris yang nama warganya mengandung kata kunci secara fleksibel
             hasil_cari = df[df[kolom_nama_warga].astype(str).str.strip().str.lower().str.contains(kw_clean)]
             
             if not hasil_cari.empty:
                 nomor_kk_ditemukan = hasil_cari[kolom_kk].dropna().unique()
                 
                 for no_kk_val in nomor_kk_ditemukan:
-                    # Ambil SEMUA anggota keluarga dalam 1 KK yang sama secara utuh
+                    # Ambil seluruh anggota keluarga dalam 1 KK yang sama secara utuh
                     hasil_keluarga = df[df[kolom_kk].astype(str).str.strip() == str(no_kk_val).strip()]
                     
                     kepala_keluarga_row = hasil_keluarga[
@@ -643,7 +660,7 @@ with tab5:
                     rw_kk = row_kk_utama.get("RW", "14")
                     dusun_kk = row_kk_utama.get("DUSUN", "-")
                     
-                    # Tampilkan Header Lembar Dokumen KK
+                    # Tampilkan Lembar Dokumen KK
                     st.markdown(f"""
                     <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                         <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
@@ -668,8 +685,6 @@ with tab5:
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
                 st.warning(f"⚠️ Tidak ditemukan data warga dengan nama '{kata_kunci}'.")
-    else:
-        st.warning("⚠️ Kolom nama atau nomor KK tidak ditemukan pada file Excel.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
