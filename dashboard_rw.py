@@ -107,8 +107,18 @@ def load_kas():
         
         df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
         df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
-        df_kas[m_col] = pd.to_numeric(df_kas[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
-        df_kas[k_col] = pd.to_numeric(df_kas[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+        
+        # Pembersihan angka murni agar tidak ada desimal aneh / koma salah
+        df_kas[m_col] = pd.to_numeric(
+            df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+            errors="coerce"
+        ).fillna(0).round(0)
+        
+        df_kas[k_col] = pd.to_numeric(
+            df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+            errors="coerce"
+        ).fillna(0).round(0)
+        
         df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
         
         df_kas = df_kas[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
@@ -134,8 +144,17 @@ def load_kas_pemakaman():
         
         df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
         df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
-        df_kp[m_col] = pd.to_numeric(df_kp[m_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
-        df_kp[k_col] = pd.to_numeric(df_kp[k_col].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+        
+        df_kp[m_col] = pd.to_numeric(
+            df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+            errors="coerce"
+        ).fillna(0).round(0)
+        
+        df_kp[k_col] = pd.to_numeric(
+            df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
+            errors="coerce"
+        ).fillna(0).round(0)
+        
         df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
         
         df_kp = df_kp[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
@@ -630,7 +649,7 @@ with tab10:
             ]
         )
         if menu_admin == "Laporan Kas RW":
-            st.markdown("💡 *Input atau edit data kas langsung di bawah ini, lalu klik tombol **Simpan Laporan Kas** di bawah.*")
+            st.markdown("💡 *Input atau edit data kas langsung di bawah ini (ketik angka murni tanpa titik/koma), lalu klik tombol **Simpan Laporan Kas**.*")
             df_kas_edit = df_kas.drop(columns=["SALDO"], errors="ignore").copy()
             kas_terbaru = st.data_editor(df_kas_edit, num_rows="dynamic", use_container_width=True, key="editor_kas_rw_admin")
             
@@ -640,12 +659,12 @@ with tab10:
                         m = [c for c in kas_terbaru.columns if "PEMASUKAN" in c or "MASUK" in c][0]
                         k = [c for c in kas_terbaru.columns if "PENGELUARAN" in c or "KELUAR" in c][0]
                         kas_terbaru["TANGGAL"] = kas_terbaru["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '').str.strip()
-                        kas_terbaru[m] = pd.to_numeric(kas_terbaru[m].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
-                        kas_terbaru[k] = pd.to_numeric(kas_terbaru[k].astype(str).str.replace(r'[^0-9.-]', '', regex=True), errors="coerce").fillna(0)
+                        kas_terbaru[m] = pd.to_numeric(kas_terbaru[m].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
+                        kas_terbaru[k] = pd.to_numeric(kas_terbaru[k].astype(str).str.replace(r'[^0-9-]', '', regex=True), errors="coerce").fillna(0).round(0)
                         kas_terbaru["SALDO"] = (kas_terbaru[m] - kas_terbaru[k]).cumsum()
                         kas_terbaru.to_excel("datakas.xlsx", index=False)
                         st.cache_data.clear()
-                        st.success("✅ Laporan Kas RW berhasil disimpan dan diperbarui!")
+                        st.success("✅ Laporan Kas RW berhasil disimpan!")
                         st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan: {e}")
