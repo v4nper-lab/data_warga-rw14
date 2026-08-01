@@ -624,22 +624,19 @@ with tab5:
             kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
             
             if kolom_nama_warga and kolom_kk:
-                kw_clean = str(kata_kunci).strip().upper()
+                kw_clean = str(kata_kunci).strip().lower()
                 
-                # Cari baris warga yang namanya mengandung kata kunci secara utuh (dipisah spasi)
-                df_cocok = df[
-                    df[kolom_nama_warga].astype(str).str.strip().str.upper().apply(lambda x: any(kw_clean == bag or kw_clean in x for bag in x.split()))
-                ]
+                # Filter pencarian langsung berdasarkan kecocokan nama pada kolom nama warga
+                hasil_cocok_nama = df[df[kolom_nama_warga].astype(str).str.strip().str.lower().str.contains(kw_clean)]
                 
-                if not df_cocok.empty:
-                    # Ambil daftar No. KK unik dari warga yang cocok tersebut
-                    nomor_kk_ditemukan = df_cocok[kolom_kk].dropna().unique()
+                if not hasil_cocok_nama.empty:
+                    # Ambil daftar No. KK dari warga yang ditemukan
+                    nomor_kk_ditemukan = hasil_cocok_nama[kolom_kk].dropna().unique()
                     
                     for no_kk_val in nomor_kk_ditemukan:
-                        # Ambil SEMUA anggota keluarga dalam 1 KK yang sama secara murni
+                        # Tampilkan seluruh anggota keluarga dalam 1 KK yang sama secara murni dan lengkap
                         hasil_keluarga = df[df[kolom_kk].astype(str).str.strip() == str(no_kk_val).strip()]
                         
-                        # Ambil data Kepala Keluarga untuk header dokumen
                         kepala_keluarga_row = hasil_keluarga[
                             hasil_keluarga[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)
                         ] if kolom_hub else pd.DataFrame()
@@ -655,7 +652,7 @@ with tab5:
                         rw_kk = row_kk_utama.get("RW", "14")
                         dusun_kk = row_kk_utama.get("DUSUN", "-")
                         
-                        # Tampilkan Lembar Dokumen KK
+                        # Tampilkan Header Lembar Dokumen KK
                         st.markdown(f"""
                         <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                             <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
@@ -679,7 +676,7 @@ with tab5:
                         st.dataframe(hasil_keluarga, use_container_width=True, hide_index=True)
                         st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
                 else:
-                    st.warning(f"⚠️ Tidak ditemukan data warga atau Kartu Keluarga dengan nama '{kata_kunci}'.")
+                    st.warning(f"⚠️ Tidak ditemukan data warga dengan nama '{kata_kunci}'.")
             else:
                 st.warning("⚠️ Kolom nama atau nomor KK tidak ditemukan pada file Excel.")
 
