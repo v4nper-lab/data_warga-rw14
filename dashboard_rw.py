@@ -22,6 +22,9 @@ div[data-testid="stMetricLabel"] p, div[data-testid="stMetricLabel"] > div, div[
 h3 { font-size: 24px !important; color: #0D47A1; font-weight: 800; }
 button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p { font-size: 13px !important; font-weight: bold; }
 .stPlotlyChart { background: rgba(255, 255, 255, 0.9); border-radius: 12px; box-shadow: 0px 6px 15px rgba(0,0,0,0.06); padding: 15px; border: 1px solid #cbd5e1; }
+@media print {
+    .stSidebar, .stButton, header, footer { display: none !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -200,17 +203,6 @@ def load_galeri_meta():
     return pd.DataFrame(columns=["NAMA_FILE", "HARI", "TANGGAL", "BULAN", "TAHUN", "KETERANGAN"])
 
 @st.cache_data
-def load_saran():
-    if os.path.exists("datasaran.xlsx"):
-        try:
-            df_s = pd.read_excel("datasaran.xlsx")
-            df_s.columns = df_s.columns.str.strip().str.upper()
-            return df_s
-        except Exception:
-            return pd.DataFrame(columns=["WAKTU", "PENGIRIM", "JABATAN", "SARAN_PENDAPAT"])
-    return pd.DataFrame(columns=["WAKTU", "PENGIRIM", "JABATAN", "SARAN_PENDAPAT"])
-
-@st.cache_data
 def load_struktur():
     data_resmi = {
         "JABATAN / SEKSI": [
@@ -257,7 +249,6 @@ df_kas_pemakaman = load_kas_pemakaman()
 df_info = load_info()
 df_struktur = load_struktur()
 df_galeri_meta = load_galeri_meta()
-df_saran = load_saran()
 
 # ================= SIDEBAR =================
 st.sidebar.markdown("---")
@@ -557,7 +548,11 @@ with tab4:
         if pass_warga == "ijindibuka": st.session_state["warga_terbuka"] = True; st.rerun()
         elif pass_warga != "": st.error("❌ Kata sandi salah!")
     else:
-        if st.button("🔒 Kunci Kembali"): st.session_state["warga_terbuka"] = False; st.rerun()
+        col_btn1, col_btn2 = st.columns([1, 4])
+        with col_btn1:
+            if st.button("🔒 Kunci Kembali"): st.session_state["warga_terbuka"] = False; st.rerun()
+        with col_btn2:
+            st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
         st.dataframe(df_filtered.drop(columns=["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
@@ -568,11 +563,54 @@ with tab5:
         if pass_cari == "ijindibuka": st.session_state["cari_terbuka"] = True; st.rerun()
         elif pass_cari != "": st.error("❌ Kata sandi salah!")
     else:
-        if st.button("🔒 Kunci Kembali Pencarian"): st.session_state["cari_terbuka"] = False; st.rerun()
-        kata_kunci = st.text_input("🔎 Masukkan Nama Warga:")
+        col_btn1, col_btn2 = st.columns([1, 4])
+        with col_btn1:
+            if st.button("🔒 Kunci Kembali Pencarian"): st.session_state["cari_terbuka"] = False; st.rerun()
+        with col_btn2:
+            st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Hasil Pencarian</button>", unsafe_allow_html=True)
+        
+        kata_kunci = st.text_input("🔎 Masukkan Nama Warga atau No KK:")
         if kata_kunci:
             hasil = df[df.astype(str).apply(lambda x: x.str.contains(kata_kunci, case=False)).any(axis=1)]
             st.dataframe(hasil, use_container_width=True, hide_index=True)
+
+with tab_rekap_rt:
+    st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
+    if not df.empty and "RT_FORMAT" in df.columns:
+        df_rekap_group = df.groupby("RT_FORMAT").agg(
+            Total_Jiwa=("RT_FORMAT", "count"),
+            Total_KK=("HUBUNGAN", lambda x: (x.astype(str).str.upper() == "KEPALA KELUARGA").sum()),
+            Laki_Laki=("JENIS KELAMIN", lambda x: (x.astype(str).str.upper() == "LAKI-LAKI").sum()),
+            Perempuan=("JENIS KELAMIN", lambda x: (x.astype(str).str.upper() == "PEREMPUAN").sum())
+        ).reset_index()
+        df_rekap_group.columns = ["Nomor RT", "Total Jiwa", "Jumlah KK", "Laki-laki", "Perempuan"]
+        df_rekap_group = df_rekap_group.sort_values("Nomor RT")
+        
+        st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Rekap RT</button>", unsafe_allow_html=True)
+        st.dataframe(df_rekap_group, use_container_width=True, hide_index=True)
+    else:
+        st.info("Data RT belum tersedia.")
+
+with tab_update_kk:
+    st.subheader("📤 Perubahan & Update Data RT & KK (Admin Pengurus)")
+    pass_update = st.text_input("Masukkan Password Admin untuk Update Data:", type="password", key="pass_update_data_warga_tab")
+    if pass_update == "V@nadminrw14":
+        st.success("✅ Akses Update Data Diizinkan. Anda dapat menambah, mengubah, atau menghapus data warga di bawah ini secara langsung.")
+        edited_df = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True, key="editor_update_warga_master")
+        if st.button("💾 Simpan Perubahan Data Warga"):
+            try:
+                df_baru_simpan = pd.DataFrame(edited_df)
+                df_terurut_simpan = urutkan_data_warga(df_baru_simpan)
+                df_terurut_simpan.to_excel("datawarga.xlsx", index=False)
+                st.cache_data.clear()
+                st.success("✅ Perubahan data warga dan KK berhasil disimpan permanen!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Gagal menyimpan data: {e}")
+    elif pass_update != "":
+        st.error("❌ Kata sandi admin salah!")
+    else:
+        st.info("🔒 Silakan masukkan password admin di atas untuk melakukan perubahan data.")
 
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
@@ -594,6 +632,7 @@ with tab6:
         df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kas_display["SALDO"] = (val_m_sum - val_k_sum).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
         
+        st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Laporan Kas RW</button>", unsafe_allow_html=True)
         st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
     else:
         st.info("💡 Belum ada data kas yang tersimpan. Silakan isi melalui menu Admin di tab paling kanan.")
@@ -618,6 +657,7 @@ with tab_kas_pemakaman_pub:
         df_kp_display["PENGELUARAN"] = val_k_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kp_display["SALDO"] = (val_m_kp - val_k_kp).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
         
+        st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Kas Pemakaman</button>", unsafe_allow_html=True)
         st.dataframe(df_kp_display, use_container_width=True, hide_index=True)
     else:
         st.info("💡 Belum ada data kas pemakaman yang tersimpan. Silakan isi melalui menu Admin di tab paling kanan.")
