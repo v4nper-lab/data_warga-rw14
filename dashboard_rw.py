@@ -124,15 +124,16 @@ def load_kas():
     df_clean["TANGGAL"] = df_kas[t_col].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_clean["KETERANGAN"] = df_kas[ket_col].fillna("").astype(str)
     
+    # Pembagi otomatis / 10 untuk menormalkan digit angka kas RW yang kelebihan 1 digit
     val_m = pd.to_numeric(
         df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0)
+    ).fillna(0) / 10
     
     val_k = pd.to_numeric(
         df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0)
+    ).fillna(0) / 10
     
     df_clean["PEMASUKAN"] = val_m.round(0)
     df_clean["PENGELUARAN"] = val_k.round(0)
@@ -172,12 +173,12 @@ def load_kas_pemakaman():
     val_m_kp = pd.to_numeric(
         df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0)
+    ).fillna(0) / 10
     
     val_k_kp = pd.to_numeric(
         df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0)
+    ).fillna(0) / 10
     
     df_clean_kp["PEMASUKAN"] = val_m_kp.round(0)
     df_clean_kp["PENGELUARAN"] = val_k_kp.round(0)
@@ -633,7 +634,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v21")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v22")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
