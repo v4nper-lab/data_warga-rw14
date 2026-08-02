@@ -120,7 +120,6 @@ def load_kas():
     if df_kas.empty or len(df_kas.columns) < 2:
         return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
         
-    # Ambil berdasarkan urutan kolom standar (Kolom 1: Tanggal, Kolom 2: Keterangan, Kolom 3: Masuk, Kolom 4: Keluar)
     cols = df_kas.columns
     t_col = cols[0]
     ket_col = cols[1]
@@ -131,16 +130,19 @@ def load_kas():
     df_clean["TANGGAL"] = df_kas[t_col].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_clean["KETERANGAN"] = df_kas[ket_col].fillna("").astype(str)
     
-    df_clean["PEMASUKAN"] = pd.to_numeric(
+    # Konversi nilai angka agar presisi tanpa kelebihan digit
+    val_m = pd.to_numeric(
         df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0).round(0)
+    ).fillna(0)
     
-    df_clean["PENGELUARAN"] = pd.to_numeric(
+    val_k = pd.to_numeric(
         df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0).round(0)
+    ).fillna(0)
     
+    df_clean["PEMASUKAN"] = val_m.round(0)
+    df_clean["PENGELUARAN"] = val_k.round(0)
     df_clean["SALDO"] = (df_clean["PEMASUKAN"] - df_clean["PENGELUARAN"]).cumsum()
     return df_clean
 
@@ -174,16 +176,18 @@ def load_kas_pemakaman():
     df_clean_kp["TANGGAL"] = df_kp[t_col].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_clean_kp["KETERANGAN"] = df_kp[ket_col].fillna("").astype(str)
     
-    df_clean_kp["PEMASUKAN"] = pd.to_numeric(
+    val_m_kp = pd.to_numeric(
         df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0).round(0)
+    ).fillna(0)
     
-    df_clean_kp["PENGELUARAN"] = pd.to_numeric(
+    val_k_kp = pd.to_numeric(
         df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0).round(0)
+    ).fillna(0)
     
+    df_clean_kp["PEMASUKAN"] = val_m_kp.round(0)
+    df_clean_kp["PENGELUARAN"] = val_k_kp.round(0)
     df_clean_kp["SALDO"] = (df_clean_kp["PEMASUKAN"] - df_clean_kp["PENGELUARAN"]).cumsum()
     return df_clean_kp
 
@@ -634,7 +638,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v13")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v14")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
