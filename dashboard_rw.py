@@ -52,21 +52,32 @@ def urutkan_data_warga(df):
     if df.empty:
         return df
     df.columns = df.columns.str.strip().str.upper()
+    
+    # 1. Ambil nomor RT
     if "RT" in df.columns:
         df["RT_NUM"] = pd.to_numeric(df["RT"].astype(str).str.replace(r'[^0-9]', '', regex=True), errors="coerce").fillna(99)
     else:
         df["RT_NUM"] = 99
         
+    # 2. Cari kolom KK dan kolom Hubungan Keluarga
     kolom_kk = next((k for k in df.columns if "KK" in k), None)
+    kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
     
-    # Mengelompokkan berdasarkan Nomor KK agar anggota keluarga selalu tampil berdampingan di bawah kepala keluarga
+    # 3. Beri bobot urutan: Kepala Keluarga diletakkan di baris paling atas (0), anggota lain di bawahnya (1)
+    if kolom_hub:
+        df["_HUB_SORT_"] = df[kolom_hub].astype(str).str.upper().apply(lambda x: 0 if "KEPALA" in x or "KDH" in x else 1)
+    else:
+        df["_HUB_SORT_"] = 1
+        
+    # 4. Urutkan berdasarkan RT -> Nomor KK -> Status Hubungan (Kepala Keluarga duluan)
     if kolom_kk:
         df["_KK_STR_"] = df[kolom_kk].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-        df = df.sort_values(by=["RT_NUM", "_KK_STR_"], ascending=[True, True]).reset_index(drop=True)
-        df = df.drop(columns=["RT_NUM", "_KK_STR_"], errors="ignore")
+        df = df.sort_values(by=["RT_NUM", "_KK_STR_", "_HUB_SORT_"], ascending=[True, True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "_KK_STR_", "_HUB_SORT_"], errors="ignore")
     else:
-        df = df.sort_values(by=["RT_NUM"], ascending=[True]).reset_index(drop=True)
-        df = df.drop(columns=["RT_NUM"], errors="ignore")
+        df = df.sort_values(by=["RT_NUM", "_HUB_SORT_"], ascending=[True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "_HUB_SORT_"], errors="ignore")
+        
     return df
 
 @st.cache_data
