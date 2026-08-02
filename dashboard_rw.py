@@ -58,21 +58,15 @@ def urutkan_data_warga(df):
         df["RT_NUM"] = 99
         
     kolom_kk = next((k for k in df.columns if "KK" in k), None)
-    kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
     
-    # Mengelompokkan berdasarkan KK dan meletakkan Kepala Keluarga di baris pertama tiap KK
-    if kolom_hub:
-        df["_HUB_SORT_"] = df[kolom_hub].astype(str).str.upper().apply(lambda x: 0 if "KEPALA" in x or "KDH" in x else 1)
-    else:
-        df["_HUB_SORT_"] = 1
-        
+    # Mengelompokkan berdasarkan Nomor KK agar anggota keluarga selalu tampil berdampingan di bawah kepala keluarga
     if kolom_kk:
         df["_KK_STR_"] = df[kolom_kk].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-        df = df.sort_values(by=["RT_NUM", "_KK_STR_", "_HUB_SORT_"], ascending=[True, True, True]).reset_index(drop=True)
-        df = df.drop(columns=["RT_NUM", "_KK_STR_", "_HUB_SORT_"], errors="ignore")
+        df = df.sort_values(by=["RT_NUM", "_KK_STR_"], ascending=[True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "_KK_STR_"], errors="ignore")
     else:
-        df = df.sort_values(by=["RT_NUM", "_HUB_SORT_"], ascending=[True, True]).reset_index(drop=True)
-        df = df.drop(columns=["RT_NUM", "_HUB_SORT_"], errors="ignore")
+        df = df.sort_values(by=["RT_NUM"], ascending=[True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM"], errors="ignore")
     return df
 
 @st.cache_data
@@ -605,7 +599,7 @@ with tab4:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
         
-        st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga dan seluruh anggota keluarganya secara berdampingan dan berurutan berdasarkan Nomor Kartu Keluarga (KK).*")
+        st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga beserta seluruh anggota keluarganya secara lengkap dan berurutan berdasarkan Nomor Kartu Keluarga (KK).*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 with tab5:
     st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
