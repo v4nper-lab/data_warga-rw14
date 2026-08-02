@@ -57,18 +57,12 @@ def urutkan_data_warga(df):
     else:
         df["RT_NUM"] = 99
         
-    kolom_nama = None
-    for k in df.columns:
-        if "NAMA" in k:
-            kolom_nama = k
-            break
-    if not kolom_nama and len(df.columns) > 1:
-        kolom_nama = df.columns[1]
-
-    if kolom_nama:
-        df["NAMA_STR"] = df[kolom_nama].astype(str).str.strip().str.upper()
-        df = df.sort_values(by=["RT_NUM", "NAMA_STR"], ascending=[True, True]).reset_index(drop=True)
-        df = df.drop(columns=["RT_NUM", "NAMA_STR"], errors="ignore")
+    kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
+    
+    if kolom_kk in df.columns:
+        df["_KK_STR_"] = df[kolom_kk].astype(str).str.strip()
+        df = df.sort_values(by=["RT_NUM", "_KK_STR_"], ascending=[True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "_KK_STR_"], errors="ignore")
     else:
         df = df.sort_values(by=["RT_NUM"], ascending=[True]).reset_index(drop=True)
         df = df.drop(columns=["RT_NUM"], errors="ignore")
@@ -133,12 +127,12 @@ def load_kas():
     val_m = pd.to_numeric(
         df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     val_k = pd.to_numeric(
         df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     df_clean["PEMASUKAN"] = val_m.round(0)
     df_clean["PENGELUARAN"] = val_k.round(0)
@@ -178,12 +172,12 @@ def load_kas_pemakaman():
     val_m_kp = pd.to_numeric(
         df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     val_k_kp = pd.to_numeric(
         df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     df_clean_kp["PEMASUKAN"] = val_m_kp.round(0)
     df_clean_kp["PENGELUARAN"] = val_k_kp.round(0)
@@ -591,7 +585,7 @@ with tab_pek:
         st.info("Data pekerjaan belum tersedia.")
 
 with tab4:
-    st.subheader("🗂️ Data Seluruh Warga (Akses Khusus Pengurus)")
+    st.subheader("🗂️ Data Seluruh Warga (Berdasarkan Anggota Keluarga per KK)")
     if "warga_terbuka" not in st.session_state: st.session_state["warga_terbuka"] = False
     if not st.session_state["warga_terbuka"]:
         pass_warga = st.text_input("Kata Sandi Akses Data Warga:", type="password", key="pass_input_data_warga")
@@ -603,7 +597,17 @@ with tab4:
             if st.button("🔒 Kunci Kembali"): st.session_state["warga_terbuka"] = False; st.rerun()
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
-        st.dataframe(df_filtered.drop(columns=["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
+        
+        kolom_kk = next((k for k in df_filtered.columns if "KK" in k), None)
+        if kolom_kk and not df_filtered.empty:
+            list_nomor_kk = df_filtered[kolom_kk].astype(str).str.strip().unique()
+            st.info(f"💡 Menampilkan seluruh data warga yang dikelompokkan utuh bersama anggota keluarganya (Total: {len(list_nomor_kk)} Kartu Keluarga).")
+            
+            # Tampilkan data dengan pengelompokan KK yang rapi
+            df_tampil_warga = df_filtered.drop(columns=["RT_FORMAT"], errors="ignore")
+            st.dataframe(df_tampil_warga, use_container_width=True, hide_index=True)
+        else:
+            st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
     st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
@@ -637,7 +641,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v18")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v19")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
