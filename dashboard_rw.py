@@ -102,7 +102,7 @@ def load_data():
 
 @st.cache_data
 def load_kas():
-    target_file = "datakas.xlsx" if os.path.exists("datakas.xlsx") else ("datakas.xlsx" if os.path.exists("datakas.xlsx") else None)
+    target_file = "datakas.xlsx" if os.path.exists("datakas.xlsx") else None
     if not target_file:
         for f in os.listdir("."):
             if "kas" in f.lower() and f.endswith(".xlsx"):
@@ -113,42 +113,36 @@ def load_kas():
         try:
             df_kas = pd.read_excel(target_file)
         except Exception:
-            df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+            df_kas = pd.DataFrame()
     else:
-        df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+        df_kas = pd.DataFrame()
         
-    if df_kas.empty:
-        df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+    if df_kas.empty or len(df_kas.columns) < 2:
+        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
         
-    df_kas.columns = df_kas.columns.str.strip().str.upper()
-    if "TANGGAL" not in df_kas.columns: df_kas["TANGGAL"] = ""
-    if "KETERANGAN" not in df_kas.columns: df_kas["KETERANGAN"] = ""
+    # Ambil berdasarkan urutan kolom standar (Kolom 1: Tanggal, Kolom 2: Keterangan, Kolom 3: Masuk, Kolom 4: Keluar)
+    cols = df_kas.columns
+    t_col = cols[0]
+    ket_col = cols[1]
+    m_col = cols[2] if len(cols) > 2 else cols[1]
+    k_col = cols[3] if len(cols) > 3 else cols[1]
     
-    kolom_masuk = [c for c in df_kas.columns if "PEMASUKAN" in c or "MASUK" in c]
-    kolom_keluar = [c for c in df_kas.columns if "PENGELUARAN" in c or "KELUAR" in c]
-    m_col = kolom_masuk[0] if kolom_masuk else "PEMASUKAN"
-    k_col = kolom_keluar[0] if kolom_keluar else "PENGELUARAN"
+    df_clean = pd.DataFrame()
+    df_clean["TANGGAL"] = df_kas[t_col].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
+    df_clean["KETERANGAN"] = df_kas[ket_col].fillna("").astype(str)
     
-    if m_col not in df_kas.columns: df_kas[m_col] = 0
-    if k_col not in df_kas.columns: df_kas[k_col] = 0
-    
-    df_kas["TANGGAL"] = df_kas["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
-    df_kas["KETERANGAN"] = df_kas["KETERANGAN"].fillna("").astype(str)
-    
-    df_kas[m_col] = pd.to_numeric(
+    df_clean["PEMASUKAN"] = pd.to_numeric(
         df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
     ).fillna(0).round(0)
     
-    df_kas[k_col] = pd.to_numeric(
+    df_clean["PENGELUARAN"] = pd.to_numeric(
         df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
     ).fillna(0).round(0)
     
-    df_kas["SALDO"] = (df_kas[m_col] - df_kas[k_col]).cumsum()
-    df_kas = df_kas[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
-    df_kas.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
-    return df_kas
+    df_clean["SALDO"] = (df_clean["PEMASUKAN"] - df_clean["PENGELUARAN"]).cumsum()
+    return df_clean
 
 @st.cache_data
 def load_kas_pemakaman():
@@ -163,42 +157,35 @@ def load_kas_pemakaman():
         try:
             df_kp = pd.read_excel(target_file)
         except Exception:
-            df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+            df_kp = pd.DataFrame()
     else:
-        df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+        df_kp = pd.DataFrame()
         
-    if df_kp.empty:
-        df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
+    if df_kp.empty or len(df_kp.columns) < 2:
+        return pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"])
         
-    df_kp.columns = df_kp.columns.str.strip().str.upper()
-    if "TANGGAL" not in df_kp.columns: df_kp["TANGGAL"] = ""
-    if "KETERANGAN" not in df_kp.columns: df_kp["KETERANGAN"] = ""
+    cols = df_kp.columns
+    t_col = cols[0]
+    ket_col = cols[1]
+    m_col = cols[2] if len(cols) > 2 else cols[1]
+    k_col = cols[3] if len(cols) > 3 else cols[1]
     
-    kolom_masuk_kp = [c for c in df_kp.columns if "PEMASUKAN" in c or "MASUK" in c]
-    kolom_keluar_kp = [c for c in df_kp.columns if "PENGELUARAN" in c or "KELUAR" in c]
-    m_col = kolom_masuk_kp[0] if kolom_masuk_kp else "PEMASUKAN"
-    k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
+    df_clean_kp = pd.DataFrame()
+    df_clean_kp["TANGGAL"] = df_kp[t_col].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
+    df_clean_kp["KETERANGAN"] = df_kp[ket_col].fillna("").astype(str)
     
-    if m_col not in df_kp.columns: df_kp[m_col] = 0
-    if k_col not in df_kp.columns: df_kp[k_col] = 0
-    
-    df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
-    df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
-    
-    df_kp[m_col] = pd.to_numeric(
+    df_clean_kp["PEMASUKAN"] = pd.to_numeric(
         df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
     ).fillna(0).round(0)
     
-    df_kp[k_col] = pd.to_numeric(
+    df_clean_kp["PENGELUARAN"] = pd.to_numeric(
         df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
     ).fillna(0).round(0)
     
-    df_kp["SALDO"] = (df_kp[m_col] - df_kp[k_col]).cumsum()
-    df_kp = df_kp[["TANGGAL", "KETERANGAN", m_col, k_col, "SALDO"]]
-    df_kp.columns = ["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN", "SALDO"]
-    return df_kp
+    df_clean_kp["SALDO"] = (df_clean_kp["PEMASUKAN"] - df_clean_kp["PENGELUARAN"]).cumsum()
+    return df_clean_kp
 
 @st.cache_data
 def load_info():
@@ -647,7 +634,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v12")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v13")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
@@ -816,12 +803,12 @@ with tab_update_kk:
 
 with tab6:
     st.subheader("💰 Transparansi Laporan Kas RW 14")
-    if not df_kas.empty and len(df_kas) > 0 and "PEMASUKAN" in df_kas.columns:
+    if not df_kas.empty and len(df_kas) > 0:
         val_m_sum = pd.to_numeric(df_kas["PEMASUKAN"], errors="coerce").fillna(0)
         val_k_sum = pd.to_numeric(df_kas["PENGELUARAN"], errors="coerce").fillna(0)
         total_masuk = val_m_sum.sum()
         total_keluar = val_k_sum.sum()
-        saldo_akhir = (val_m_sum - val_k_sum).cumsum().iloc[-1] if not df_kas.empty else 0
+        saldo_akhir = df_kas["SALDO"].iloc[-1] if "SALDO" in df_kas.columns and not df_kas.empty else 0
 
         c1, c2, c3 = st.columns(3)
         c1.metric("💵 Total Pemasukan", f"Rp {total_masuk:,.0f}".replace(",", "."))
@@ -832,7 +819,7 @@ with tab6:
         df_kas_display["TANGGAL"] = df_kas_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
         df_kas_display["PEMASUKAN"] = val_m_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kas_display["SALDO"] = (val_m_sum - val_k_sum).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        df_kas_display["SALDO"] = df_kas_display["SALDO"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
         
         st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Laporan Kas RW</button>", unsafe_allow_html=True)
         st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
@@ -841,12 +828,12 @@ with tab6:
 
 with tab_kas_pemakaman_pub:
     st.subheader("🪦 Transparansi Laporan Kas Pemakaman")
-    if not df_kas_pemakaman.empty and len(df_kas_pemakaman) > 0 and "PEMASUKAN" in df_kas_pemakaman.columns:
+    if not df_kas_pemakaman.empty and len(df_kas_pemakaman) > 0:
         val_m_kp = pd.to_numeric(df_kas_pemakaman["PEMASUKAN"], errors="coerce").fillna(0)
         val_k_kp = pd.to_numeric(df_kas_pemakaman["PENGELUARAN"], errors="coerce").fillna(0)
         tot_m_kp = val_m_kp.sum()
         tot_k_kp = val_k_kp.sum()
-        saldo_kp = (val_m_kp - val_k_kp).cumsum().iloc[-1] if not df_kas_pemakaman.empty else 0
+        saldo_kp = df_kas_pemakaman["SALDO"].iloc[-1] if "SALDO" in df_kas_pemakaman.columns and not df_kas_pemakaman.empty else 0
 
         c1, c2, c3 = st.columns(3)
         c1.metric("💵 Total Pemasukan", f"Rp {tot_m_kp:,.0f}".replace(",", "."))
@@ -857,7 +844,7 @@ with tab_kas_pemakaman_pub:
         df_kp_display["TANGGAL"] = df_kp_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
         df_kp_display["PEMASUKAN"] = val_m_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
         df_kp_display["PENGELUARAN"] = val_k_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kp_display["SALDO"] = (val_m_kp - val_k_kp).cumsum().apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        df_kp_display["SALDO"] = df_kp_display["SALDO"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
         
         st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Kas Pemakaman</button>", unsafe_allow_html=True)
         st.dataframe(df_kp_display, use_container_width=True, hide_index=True)
