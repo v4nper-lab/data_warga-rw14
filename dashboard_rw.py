@@ -52,14 +52,37 @@ def urutkan_data_warga(df):
     if df.empty:
         return df
     df.columns = df.columns.str.strip().str.upper()
+    
     if "RT" in df.columns:
         df["RT_NUM"] = pd.to_numeric(df["RT"].astype(str).str.replace(r'[^0-9]', '', regex=True), errors="coerce").fillna(99)
     else:
         df["RT_NUM"] = 99
         
-    df = df.sort_values(by=["RT_NUM"]).reset_index(drop=True)
-    df = df.drop(columns=["RT_NUM"], errors="ignore")
-    return df
+    kolom_kk = next((k for k in df.columns if "KK" in k), None)
+    kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
+    
+    if not kolom_kk:
+        return df.sort_values(by=["RT_NUM"]).reset_index(drop=True).drop(columns=["RT_NUM"], errors="ignore")
+
+    df["_KK_STR_"] = df[kolom_kk].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+    
+    list_terurut = []
+    for _, group in df.groupby(["RT_NUM", "_KK_STR_"], sort=False):
+        if kolom_hub:
+            kk_baris = group[group[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)]
+            sisa_baris = group[~group.index.isin(kk_baris.index)]
+            keluarga_gabung = pd.concat([kk_baris, sisa_baris])
+        else:
+            keluarga_gabung = group
+        list_terurut.append(keluarga_gabung)
+        
+    if list_terurut:
+        df_final = pd.concat(list_terurut).reset_index(drop=True)
+    else:
+        df_final = df
+        
+    df_final = df_final.drop(columns=["RT_NUM", "_KK_STR_"], errors="ignore")
+    return df_final
 
 @st.cache_data
 def load_data():
