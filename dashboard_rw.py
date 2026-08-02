@@ -641,43 +641,33 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
-        kolom_nama = None
-        for k in df.columns:
-            if "NAMA" in k:
-                kolom_nama = k
-                break
-        if not kolom_nama and len(df.columns) > 1:
-            kolom_nama = df.columns[1]
-
-        kolom_kk = None
-        for k in df.columns:
-            if "KK" in k:
-                kolom_kk = k
-                break
-        if not kolom_kk:
-            kolom_kk = df.columns[0]
-
+        # Deteksi kolom nama dan kolom KK secara otomatis
+        kolom_nama = next((k for k in df.columns if "NAMA" in k), df.columns[1] if len(df.columns) > 1 else df.columns[0])
+        kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Bebas huruf besar/kecil, misal: adsari, agus):", key="input_pencarian_nama_fleksibel")
+        kata_kunci = st.text_input("🔎 Ketik Nama (Bebas acak, huruf besar/kecil, misal: adsari, budi, siti):", key="input_pencarian_nama_acak_v2")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
+            # Buat salinan dataframe untuk pencarian substring/acak
             df_temp = df.copy()
             df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
             df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
             
-            # Pencarian fleksibel (cocok meskipun diketik sebagian nama atau nama depan)
+            # Filter baris yang mengandung teks acak yang diketik user
             hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
             
             if not hasil_cari.empty:
+                # Ambil seluruh nomor KK unik dari hasil pencarian
                 nomor_kk_ditemukan = hasil_cari["_CARI_KK_"].dropna().unique()
                 
                 for no_kk in nomor_kk_ditemukan:
-                    # Menarik seluruh anggota keluarga berdasarkan No. KK yang sama secara utuh
+                    # Ambil MURNI seluruh anggota keluarga dari master data utama (df) yang memiliki No. KK sama persis
                     keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
                     
+                    # Cari baris Kepala Keluarga untuk ditampilkan sebagai header informasi KK
                     kk_row = keluarga_df[
                         keluarga_df[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)
                     ] if kolom_hub else pd.DataFrame()
@@ -693,6 +683,7 @@ with tab5:
                     rw_kk = utama.get("RW", "14")
                     ds_kk = utama.get("DUSUN", "-")
                     
+                    # Tampilan kotak informasi Kartu Keluarga
                     st.markdown(f"""
                     <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                         <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
@@ -713,10 +704,12 @@ with tab5:
                     </div>
                     """, unsafe_allow_html=True)
                     
+                    # Tampilkan tabel seluruh anggota keluarga dalam satu Kartu Keluarga tersebut
                     st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan. Silakan coba kata kunci nama lainnya.")
+                st.warning(f"⚠️ Warga dengan nama mengandung '{kata_kunci}' tidak ditemukan. Coba ketik kata kunci lain.")
+Den
 
 
 
