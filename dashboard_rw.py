@@ -90,8 +90,6 @@ def load_data():
         try:
             df = pd.read_excel("datawarga.xlsx")
             df = urutkan_data_warga(df)
-            
-            # Penyesuaian nama kolom agar seragam
             if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
             if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
             if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
@@ -122,7 +120,7 @@ def load_data():
             return df
         except Exception:
             return pd.DataFrame()
-    return pd.DataFrame(
+    return pd.DataFrame()
 @st.cache_data
 def load_kas():
     target_file = "datakas.xlsx" if os.path.exists("datakas.xlsx") else None
