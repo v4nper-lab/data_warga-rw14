@@ -56,11 +56,23 @@ def urutkan_data_warga(df):
         df["RT_NUM"] = pd.to_numeric(df["RT"].astype(str).str.replace(r'[^0-9]', '', regex=True), errors="coerce").fillna(99)
     else:
         df["RT_NUM"] = 99
+        
+    kolom_kk = next((k for k in df.columns if "KK" in k), None)
+    kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
     
-    kolom_nama = next((k for k in df.columns if "NAMA" in k), df.columns[1] if len(df.columns) > 1 else df.columns[0])
-    df["NAMA_STR"] = df[kolom_nama].astype(str).str.strip().str.upper()
-    df = df.sort_values(by=["RT_NUM", "NAMA_STR"], ascending=[True, True]).reset_index(drop=True)
-    df = df.drop(columns=["RT_NUM", "NAMA_STR"], errors="ignore")
+    # Beri bobot urutan: Kepala Keluarga (0) diletakkan di atas, diikuti anggota keluarga (1)
+    if kolom_hub:
+        df["_HUB_SORT_"] = df[kolom_hub].astype(str).str.upper().apply(lambda x: 0 if "KEPALA" in x or "KDH" in x else 1)
+    else:
+        df["_HUB_SORT_"] = 1
+        
+    if kolom_kk:
+        df["_KK_STR_"] = df[kolom_kk].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+        df = df.sort_values(by=["RT_NUM", "_KK_STR_", "_HUB_SORT_"], ascending=[True, True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "_KK_STR_", "_HUB_SORT_"], errors="ignore")
+    else:
+        df = df.sort_values(by=["RT_NUM", "_HUB_SORT_"], ascending=[True, True]).reset_index(drop=True)
+        df = df.drop(columns=["RT_NUM", "_HUB_SORT_"], errors="ignore")
     return df
 
 @st.cache_data
@@ -119,7 +131,6 @@ def load_kas():
     df_clean["TANGGAL"] = df_kas[t_col].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_clean["KETERANGAN"] = df_kas[ket_col].fillna("").astype(str)
     
-    # Pembagi otomatis / 10 dikembalikan agar digit angka kas RW pas dan akurat 100%
     val_m = pd.to_numeric(
         df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
@@ -581,7 +592,7 @@ with tab_pek:
         st.info("Data pekerjaan belum tersedia.")
 
 with tab4:
-    st.subheader("🗂️ Data Seluruh Warga (Akses Khusus Pengurus)")
+    st.subheader("🗂️ Data Seluruh Warga (Kepala Keluarga & Anggota Keluarga)")
     if "warga_terbuka" not in st.session_state: st.session_state["warga_terbuka"] = False
     if not st.session_state["warga_terbuka"]:
         pass_warga = st.text_input("Kata Sandi Akses Data Warga:", type="password", key="pass_input_data_warga")
@@ -593,6 +604,8 @@ with tab4:
             if st.button("🔒 Kunci Kembali"): st.session_state["warga_terbuka"] = False; st.rerun()
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
+        
+        st.markdown("💡 *Menampilkan seluruh data warga lengkap dengan Kepala Keluarga dan seluruh anggota keluarganya.*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
@@ -627,7 +640,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v29")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v30")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
