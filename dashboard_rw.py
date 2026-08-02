@@ -517,12 +517,9 @@ with tab2:
         with col_b:
             st.markdown("#### ☪️ Sebaran Agama")
             if "AGAMA" in df_filtered.columns:
-                agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
-                color_map = {ag: ("#2E8B57" if "ISLAM" in ag.upper() else ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6'][i % 6]) for i, ag in enumerate(agama_list)}
-                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color="AGAMA", color_discrete_map=color_map)
+                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color_discrete_sequence=px.colors.qualitative.Safe)
                 fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=12), legend=dict(orientation="h", yanchor="bottom", y=-0.4, xanchor="center", x=0.5), margin=dict(t=20, b=80, l=10, r=10))
-                teks_warna_list = ["white" if "ISLAM" in str(x).upper() else "black" for x in df_filtered["AGAMA"]]
-                fig_agama.update_traces(textposition='inside', textfont_size=12, textfont_color=teks_warna_list, textinfo="label+percent")
+                fig_agama.update_traces(textposition='inside', textfont_size=12, textfont_color="white", textinfo="label+percent")
                 st.plotly_chart(fig_agama, use_container_width=True)
 
                 df_agama_summary = df_filtered["AGAMA"].astype(str).str.title().value_counts().reset_index()
@@ -636,7 +633,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v9")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v10")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
