@@ -410,7 +410,7 @@ with col_teks:
 
 st.write("---")
 
-# ================= TABS UTAMA =================
+# ================= TABS UTAMA (LENGKAP 16 TAB SESUAI URUTAN) =================
 tab0, tab_struk, tab1, tab2, tab3, tab_pek, tab4, tab5, tab_rekap_rt, tab_update_kk, tab6, tab_kas_pemakaman_pub, tab7, tab8, tab9, tab10 = st.tabs([
     "🏠 Beranda", "👥 Struktur", "📋 Statistik", "👫 Demografi", "🎓 Pendidikan", "💼 Pekerjaan",
     "🗂️ Data Warga", "🔍 Cari KK", "📊 Rekap RT", "📤 Update Data RT & KK", "💰 Kas RW", 
@@ -633,7 +633,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v10")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v11")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
@@ -883,6 +883,58 @@ with tab8:
                         st.markdown(f"<p style='font-size: 12px; font-weight: bold;'>{row.get('KETERANGAN', '')}</p>", unsafe_allow_html=True)
     else:
         st.info("Belum ada foto galeri.")
+
+with tab9:
+    st.subheader("💬 Kotak Saran & Aspirasi Warga")
+    st.markdown("💡 *Sampaikan saran, masukan, atau laporan Anda untuk kemajuan lingkungan RW 14 melalui formulir di bawah ini.*")
+    
+    file_saran_log = "saran_warga.xlsx"
+    
+    with st.form("form_saran_warga"):
+        nama_pengirim = st.text_input("Nama Warga (Opsional / Boleh Anonim):")
+        rt_pengirim = st.selectbox("Asal RT Pengirim:", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07", "Warga Luar / Umum"])
+        isi_saran = st.text_area("Pesan / Saran / Aspirasi Anda:")
+        submitted_saran = st.form_submit_button("📤 Kirim Saran")
+        
+        if submitted_saran:
+            if isi_saran.strip() != "":
+                data_saran_baru = {
+                    "WAKTU": [datetime.utcnow().strftime("%Y-%m-%d %H:%M")],
+                    "NAMA": [nama_pengirim if nama_pengirim.strip() != "" else "Anonim"],
+                    "RT": [rt_pengirim],
+                    "PESAN": [isi_saran]
+                }
+                df_saran_baru = pd.DataFrame(data_saran_baru)
+                
+                if os.path.exists(file_saran_log):
+                    try:
+                        df_saran_lama = pd.read_excel(file_saran_log)
+                        df_saran_gabung = pd.concat([df_saran_lama, df_saran_baru], ignore_index=True)
+                    except Exception:
+                        df_saran_gabung = df_saran_baru
+                else:
+                    df_saran_gabung = df_saran_baru
+                    
+                df_saran_gabung.to_excel(file_saran_log, index=False)
+                st.success("✅ Terima kasih! Saran dan aspirasi Anda berhasil dikirim ke pengurus.")
+            else:
+                st.error("⚠️ Mohon isi pesan atau saran Anda terlebih dahulu.")
+
+    st.markdown("---")
+    st.markdown("### 📋 Daftar Aspirasi & Saran Masuk (Khusus Pengurus)")
+    pass_saran = st.text_input("Masukkan Password Admin untuk Membaca Saran:", type="password", key="pass_saran_admin")
+    if pass_saran == "V@nadminrw14":
+        st.success("✅ Kotak Masuk Aspirasi Warga:")
+        if os.path.exists(file_saran_log):
+            try:
+                df_saran_list = pd.read_excel(file_saran_log)
+                st.dataframe(df_saran_list, use_container_width=True, hide_index=True)
+            except Exception:
+                st.info("Belum ada saran yang tersimpan.")
+        else:
+            st.info("Belum ada saran yang masuk.")
+    elif pass_saran != "":
+        st.error("❌ Kata sandi salah!")
 
 with tab10:
     st.subheader("⚙️ Panel Admin")
