@@ -645,7 +645,7 @@ with tab5:
         kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Bebas huruf besar/kecil, misal: fahmi, adsari):", key="input_pencarian_nama_fahmi_v4")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Contoh: asep, fahmi, adsari):", key="input_pencarian_nama_presisi_v5")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
@@ -654,12 +654,18 @@ with tab5:
             df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
             df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
             
-            hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
+            # Pencarian presisi: Memeriksa apakah kata yang diketik ada di dalam string nama
+            hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(r'\b' + kw, regex=True, na=False)]
+            if hasil_cari.empty:
+                # Jika pencarian kata utuh tidak ketemu, gunakan pencarian substring biasa
+                hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
             
             if not hasil_cari.empty:
+                # Ambil nomor KK yang unik dari hasil pencarian terdekat
                 nomor_kk_ditemukan = hasil_cari["_CARI_KK_"].dropna().unique()
                 
                 for no_kk in nomor_kk_ditemukan:
+                    # Ambil murni seluruh anggota keluarga berdasarkan No. KK yang sama
                     keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
                     
                     kk_row = keluarga_df[
@@ -700,7 +706,7 @@ with tab5:
                     st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Warga dengan nama mengandung '{kata_kunci}' tidak ditemukan. Silakan coba kata kunci nama lainnya.")
+                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan. Silakan coba kata kunci nama lainnya.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
