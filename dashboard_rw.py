@@ -52,41 +52,14 @@ def urutkan_data_warga(df):
     if df.empty:
         return df
     df.columns = df.columns.str.strip().str.upper()
-    
     if "RT" in df.columns:
         df["RT_NUM"] = pd.to_numeric(df["RT"].astype(str).str.replace(r'[^0-9]', '', regex=True), errors="coerce").fillna(99)
     else:
         df["RT_NUM"] = 99
         
-    kolom_kk = next((k for k in df.columns if "KK" in k), None)
-    kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
-    
-    if not kolom_kk:
-        return df.sort_values(by=["RT_NUM"]).reset_index(drop=True).drop(columns=["RT_NUM"], errors="ignore")
-
-    df["_KK_STR_"] = df[kolom_kk].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-    
-    # Fungsi penataan ulang per kelompok KK agar Kepala Keluarga selalu di atas dan anggota di bawahnya
-    list_kelompok = []
-    for _, group in df.groupby("_KK_STR_"):
-        if kolom_hub:
-            # Pisahkan Kepala Keluarga / KDH
-            kk_row = group[group[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)]
-            # Ambil anggota keluarga lainnya
-            anggota_row = group[~group.index.isin(kk_row.index)]
-            # Gabungkan kembali: Kepala Keluarga di atas, anggota di bawahnya
-            kelompok_terurut = pd.concat([kk_row, anggota_row])
-        else:
-            kelompok_terurut = group
-        list_kelompok.append(kelompok_terurut)
-        
-    if list_kelompok:
-        df_final = pd.concat(list_kelompok).reset_index(drop=True)
-    else:
-        df_final = df
-        
-    df_final = df_final.drop(columns=["RT_NUM", "_KK_STR_"], errors="ignore")
-    return df_final
+    df = df.sort_values(by=["RT_NUM"]).reset_index(drop=True)
+    df = df.drop(columns=["RT_NUM"], errors="ignore")
+    return df
 
 @st.cache_data
 def load_data():
