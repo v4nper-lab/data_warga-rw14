@@ -645,24 +645,23 @@ with tab5:
         kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Contoh: asep, fahmi, adsari):", key="input_pencarian_nama_akurat_final")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Contoh: asep, fahmi, adsari):", key="input_pencarian_nama_aman_v6")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
             df_temp = df.copy()
-            df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
-            df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
+            df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].fillna("").astype(str).str.strip().str.lower()
+            df_temp["_CARI_KK_"] = df_temp[kolom_kk].fillna("").astype(str).str.strip()
             
-            # FILTER AKURAT: Mencari kata yang diawali dengan keyword yang diketik (misal: "asep" akan mencocokkan nama yang depannya asep atau berdiri sendiri)
-            hasil_cari = df_temp[df_temp["_CARI_NAMA_"].apply(lambda x: any(kata == kw or kata.startswith(kw) for kata in x.split()))]
-            if hasil_cari.empty:
-                hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
+            # PENCARIAN AMAN: Menggunakan filter string standar pandas tanpa fungsi split() yang rentan error
+            hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
             
             if not hasil_cari.empty:
                 nomor_kk_ditemukan = hasil_cari["_CARI_KK_"].dropna().unique()
                 
                 for no_kk in nomor_kk_ditemukan:
+                    if not no_kk or no_kk == "nan": continue
                     keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
                     
                     kk_row = keluarga_df[
@@ -703,7 +702,7 @@ with tab5:
                     st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan.")
+                st.warning(f"⚠️ Warga dengan nama mengandung '{kata_kunci}' tidak ditemukan.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
