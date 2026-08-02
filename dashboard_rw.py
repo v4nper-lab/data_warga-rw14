@@ -360,8 +360,10 @@ if not df.empty and "RT" in df.columns:
             """, unsafe_allow_html=True)
 
     df_filtered = df[df["RT_FORMAT"].isin(pilihan_rt_format)].copy()
+    if "STATUS PENDUDUK" in df_filtered.columns and pilihan_status_penduduk:
+        df_filtered = df_filtered[df_filtered["STATUS PENDUDUK"].astype(str).str.title().isin(pilihan_status_penduduk)]
 else:
-    df_filtered = pd.DataFrame()
+    df_filtered = df.copy()
 
 st.sidebar.markdown("---")
 password_input = st.sidebar.text_input("Masukkan Password Admin:", type="password")
@@ -602,7 +604,7 @@ with tab4:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
         
-        st.markdown("💡 *Menampilkan seluruh baris data warga dari file Excel (Kepala Keluarga dan Anggota Keluarga tampil lengkap tanpa ada yang terpotong).*")
+        st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga beserta seluruh anggota keluarga secara lengkap dan berurutan.*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
@@ -637,7 +639,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v26")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v27")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
