@@ -598,7 +598,7 @@ with tab4:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
         
-        st.markdown("💡 *Data di bawah ini diurutkan otomatis per RT berdasarkan Kartu Keluarga (Kepala Keluarga dan seluruh anggota keluarga tampil lengkap).*")
+        st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga beserta seluruh anggota keluarga secara lengkap berdasarkan Nomor KK.*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
@@ -633,7 +633,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v31")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v32")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
