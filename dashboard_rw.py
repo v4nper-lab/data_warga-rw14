@@ -133,12 +133,12 @@ def load_kas():
     val_m = pd.to_numeric(
         df_kas[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     val_k = pd.to_numeric(
         df_kas[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     df_clean["PEMASUKAN"] = val_m.round(0)
     df_clean["PENGELUARAN"] = val_k.round(0)
@@ -178,12 +178,12 @@ def load_kas_pemakaman():
     val_m_kp = pd.to_numeric(
         df_kp[m_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     val_k_kp = pd.to_numeric(
         df_kp[k_col].astype(str).str.replace('Rp', '', case=False).str.replace('.', '', regex=False).str.replace(',', '', regex=False).str.replace(r'[^0-9-]', '', regex=True),
         errors="coerce"
-    ).fillna(0) / 10
+    ).fillna(0)
     
     df_clean_kp["PEMASUKAN"] = val_m_kp.round(0)
     df_clean_kp["PENGELUARAN"] = val_k_kp.round(0)
@@ -637,7 +637,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v15")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v16")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
@@ -818,14 +818,24 @@ with tab6:
         c2.metric("💸 Total Pengeluaran", f"Rp {total_keluar:,.0f}".replace(",", "."))
         c3.metric("💰 Saldo Akhir", f"Rp {saldo_akhir:,.0f}".replace(",", "."))
         
+        def format_rupiah_warna(val):
+            try:
+                num = float(val)
+                formatted = f"Rp {num:,.0f}".replace(",", ".")
+                if num < 0:
+                    return f'<span style="color: red; font-weight: bold;">{formatted}</span>'
+                return formatted
+            except Exception:
+                return str(val)
+
         df_kas_display = df_kas.copy()
         df_kas_display["TANGGAL"] = df_kas_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
-        df_kas_display["PEMASUKAN"] = val_m_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kas_display["PENGELUARAN"] = val_k_sum.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kas_display["SALDO"] = df_kas_display["SALDO"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        df_kas_display["PEMASUKAN"] = val_m_sum.apply(format_rupiah_warna)
+        df_kas_display["PENGELUARAN"] = val_k_sum.apply(format_rupiah_warna)
+        df_kas_display["SALDO"] = df_kas_display["SALDO"].apply(format_rupiah_warna)
         
         st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Laporan Kas RW</button>", unsafe_allow_html=True)
-        st.dataframe(df_kas_display, use_container_width=True, hide_index=True)
+        st.markdown(df_kas_display.to_html(escape=False, index=False), unsafe_allow_html=True)
     else:
         st.info("💡 Belum ada data kas yang tersimpan. Silakan isi melalui menu Admin di tab paling kanan.")
 
@@ -845,12 +855,12 @@ with tab_kas_pemakaman_pub:
         
         df_kp_display = df_kas_pemakaman.copy()
         df_kp_display["TANGGAL"] = df_kp_display["TANGGAL"].astype(str).str.replace(r'\.0$', '', regex=True)
-        df_kp_display["PEMASUKAN"] = val_m_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kp_display["PENGELUARAN"] = val_k_kp.apply(lambda x: f"Rp {x:,.0f}".replace(",", ".") if x > 0 else "Rp 0")
-        df_kp_display["SALDO"] = df_kp_display["SALDO"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        df_kp_display["PEMASUKAN"] = val_m_kp.apply(format_rupiah_warna)
+        df_kp_display["PENGELUARAN"] = val_k_kp.apply(format_rupiah_warna)
+        df_kp_display["SALDO"] = df_kp_display["SALDO"].apply(format_rupiah_warna)
         
         st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:15px;'>🖨️ Cetak / Print Kas Pemakaman</button>", unsafe_allow_html=True)
-        st.dataframe(df_kp_display, use_container_width=True, hide_index=True)
+        st.markdown(df_kp_display.to_html(escape=False, index=False), unsafe_allow_html=True)
     else:
         st.info("💡 Belum ada data kas pemakaman yang tersimpan. Silakan isi melalui menu Admin di tab paling kanan.")
 
