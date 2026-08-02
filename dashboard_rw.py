@@ -504,6 +504,7 @@ with tab1:
 
 with tab2:
     st.subheader("📊 Analisis Demografi Warga RW 14")
+    palet_agama_lain = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
     if not df_filtered.empty:
         col_a, col_b, col_c = st.columns(3)
         with col_a:
@@ -517,9 +518,8 @@ with tab2:
         with col_b:
             st.markdown("#### ☪️ Sebaran Agama")
             if "AGAMA" in df_filtered.columns:
-                palet_lokal = ['#2980B9', '#A0522D', '#7F8C8D', '#3498DB', '#8B4513', '#95A5A6']
                 agama_list = df_filtered["AGAMA"].astype(str).str.title().unique()
-                color_map = {ag: ("#2E8B57" if "ISLAM" in ag.upper() else palet_lokal[i % len(palet_lokal)]) for i, ag in enumerate(agama_list)}
+                color_map = {ag: ("#2E8B57" if "ISLAM" in ag.upper() else palet_agama_lain[i % len(palet_agama_lain)]) for i, ag in enumerate(agama_list)}
                 fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color="AGAMA", color_discrete_map=color_map)
                 fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=12), legend=dict(orientation="h", yanchor="bottom", y=-0.4, xanchor="center", x=0.5), margin=dict(t=20, b=80, l=10, r=10))
                 teks_warna_list = ["white" if "ISLAM" in str(x).upper() else "black" for x in df_filtered["AGAMA"]]
@@ -619,6 +619,7 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
+        # PENCARIAN TEPAT SASARAN: HANYA MENCARI PADA KEPALA KELUARGA YANG NAMANYA DIMAKSUD
         kolom_nama = None
         for k in df.columns:
             if "NAMA" in k:
@@ -637,21 +638,31 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v7")
+        kata_kunci = st.text_input("🔎 Ketik Nama Kepala Keluarga (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_kepala_keluarga_presisi")
         
         if kata_kunci:
-            kw = str(kata_kunci).strip().lower()
+            kw = str(kata_kunci).strip().upper()
             
+            # Saring HANYA baris yang berstatus sebagai KEPALA KELUARGA dan namanya mengandung kata kunci
             df_temp = df.copy()
-            df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
-            df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
+            df_temp["_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.upper()
+            df_temp["_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
             
-            hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
+            if kolom_hub:
+                df_temp["_HUB_"] = df_temp[kolom_hub].astype(str).str.strip().str.upper()
+                # Filter ketat: Harus Kepala Keluarga DAN namanya cocok
+                hasil_cari = df_temp[
+                    df_temp["_HUB_"].str.contains("KEPALA|KDH", regex=True, na=False) & 
+                    df_temp["_NAMA_"].str.contains(kw, na=False)
+                ]
+            else:
+                hasil_cari = df_temp[df_temp["_NAMA_"].str.contains(kw, na=False)]
             
             if not hasil_cari.empty:
-                nomor_kk_ditemukan = hasil_cari["_CARI_KK_"].dropna().unique()
+                nomor_kk_ditemukan = hasil_cari["_KK_"].dropna().unique()
                 
                 for no_kk in nomor_kk_ditemukan:
+                    # Ambil SEMUA anggota keluarga dalam 1 KK yang sama secara utuh
                     keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
                     
                     kk_row = keluarga_df[
@@ -669,6 +680,7 @@ with tab5:
                     rw_kk = utama.get("RW", "14")
                     ds_kk = utama.get("DUSUN", "-")
                     
+                    # Tampilkan Lembar Dokumen KK
                     st.markdown(f"""
                     <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                         <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
@@ -692,7 +704,7 @@ with tab5:
                     st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan. Coba ketik kata lain.")
+                st.warning(f"⚠️ Kepala Keluarga dengan nama '{kata_kunci}' tidak ditemukan. Coba ketik nama kepala keluarga yang lain.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
