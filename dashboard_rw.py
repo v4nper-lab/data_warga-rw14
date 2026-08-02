@@ -57,10 +57,10 @@ def urutkan_data_warga(df):
     else:
         df["RT_NUM"] = 99
         
-    kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
+    kolom_kk = next((k for k in df.columns if "KK" in k), None)
     
-    if kolom_kk in df.columns:
-        df["_KK_STR_"] = df[kolom_kk].astype(str).str.strip()
+    if kolom_kk:
+        df["_KK_STR_"] = df[kolom_kk].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
         df = df.sort_values(by=["RT_NUM", "_KK_STR_"], ascending=[True, True]).reset_index(drop=True)
         df = df.drop(columns=["RT_NUM", "_KK_STR_"], errors="ignore")
     else:
@@ -585,7 +585,7 @@ with tab_pek:
         st.info("Data pekerjaan belum tersedia.")
 
 with tab4:
-    st.subheader("🗂️ Data Seluruh Warga (Berdasarkan Anggota Keluarga per KK)")
+    st.subheader("🗂️ Data Seluruh Warga (Kepala Keluarga & Anggota Keluarga)")
     if "warga_terbuka" not in st.session_state: st.session_state["warga_terbuka"] = False
     if not st.session_state["warga_terbuka"]:
         pass_warga = st.text_input("Kata Sandi Akses Data Warga:", type="password", key="pass_input_data_warga")
@@ -598,16 +598,8 @@ with tab4:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
         
-        kolom_kk = next((k for k in df_filtered.columns if "KK" in k), None)
-        if kolom_kk and not df_filtered.empty:
-            list_nomor_kk = df_filtered[kolom_kk].astype(str).str.strip().unique()
-            st.info(f"💡 Menampilkan seluruh data warga yang dikelompokkan utuh bersama anggota keluarganya (Total: {len(list_nomor_kk)} Kartu Keluarga).")
-            
-            # Tampilkan data dengan pengelompokan KK yang rapi
-            df_tampil_warga = df_filtered.drop(columns=["RT_FORMAT"], errors="ignore")
-            st.dataframe(df_tampil_warga, use_container_width=True, hide_index=True)
-        else:
-            st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
+        st.markdown("💡 *Data di bawah ini diurutkan otomatis per RT berdasarkan Kartu Keluarga (Kepala Keluarga dan seluruh anggota keluarga tampil lengkap bersama).*")
+        st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 
 with tab5:
     st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
@@ -641,7 +633,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v19")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v20")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
