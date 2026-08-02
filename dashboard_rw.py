@@ -605,7 +605,7 @@ with tab4:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
         
-        st.markdown("💡 *Data di bawah ini dikelompokkan berdasarkan Kartu Keluarga, menampilkan Kepala Keluarga dan seluruh anggota keluarganya secara berdampingan dan lengkap.*")
+        st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga dan seluruh anggota keluarganya secara berdampingan dan berurutan berdasarkan Nomor Kartu Keluarga (KK).*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 with tab5:
     st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
