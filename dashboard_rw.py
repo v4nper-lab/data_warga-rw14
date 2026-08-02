@@ -60,7 +60,7 @@ def urutkan_data_warga(df):
     kolom_kk = next((k for k in df.columns if "KK" in k), None)
     kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
     
-    # Mengurutkan Kepala Keluarga di baris teratas per KK, diikuti anggota keluarga lainnya
+    # Mengelompokkan berdasarkan KK dan meletakkan Kepala Keluarga di baris pertama tiap KK
     if kolom_hub:
         df["_HUB_SORT_"] = df[kolom_hub].astype(str).str.upper().apply(lambda x: 0 if "KEPALA" in x or "KDH" in x else 1)
     else:
