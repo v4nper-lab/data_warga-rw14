@@ -619,7 +619,6 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
-        # PENCARIAN TEPAT SASARAN PADA KOLOM NAMA
         kolom_nama = None
         for k in df.columns:
             if "NAMA" in k:
@@ -638,12 +637,11 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan):", key="input_pencarian_nama_akurat")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v2")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
-            # Cari khusus pada kolom nama warga
             df_temp = df.copy()
             df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
             df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
@@ -654,7 +652,6 @@ with tab5:
                 nomor_kk_ditemukan = hasil_cari["_CARI_KK_"].dropna().unique()
                 
                 for no_kk in nomor_kk_ditemukan:
-                    # Ambil SEMUA anggota keluarga dalam 1 KK yang sama secara utuh
                     keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
                     
                     kk_row = keluarga_df[
@@ -672,7 +669,6 @@ with tab5:
                     rw_kk = utama.get("RW", "14")
                     ds_kk = utama.get("DUSUN", "-")
                     
-                    # Tampilkan Lembar Dokumen KK
                     st.markdown(f"""
                     <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                         <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
