@@ -102,9 +102,16 @@ def load_data():
 
 @st.cache_data
 def load_kas():
-    if os.path.exists("datakas.xlsx"):
+    target_file = "datakas.xlsx" if os.path.exists("datakas.xlsx") else ("datakas.xlsx" if os.path.exists("datakas.xlsx") else None)
+    if not target_file:
+        for f in os.listdir("."):
+            if "kas" in f.lower() and f.endswith(".xlsx"):
+                target_file = f
+                break
+                
+    if target_file and os.path.exists(target_file):
         try:
-            df_kas = pd.read_excel("datakas.xlsx")
+            df_kas = pd.read_excel(target_file)
         except Exception:
             df_kas = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
     else:
@@ -145,9 +152,16 @@ def load_kas():
 
 @st.cache_data
 def load_kas_pemakaman():
-    if os.path.exists("datakaspemakaman.xlsx"):
+    target_file = "datakaspemakaman.xlsx" if os.path.exists("datakaspemakaman.xlsx") else None
+    if not target_file:
+        for f in os.listdir("."):
+            if "pemakaman" in f.lower() and f.endswith(".xlsx"):
+                target_file = f
+                break
+                
+    if target_file and os.path.exists(target_file):
         try:
-            df_kp = pd.read_excel("datakaspemakaman.xlsx")
+            df_kp = pd.read_excel(target_file)
         except Exception:
             df_kp = pd.DataFrame(columns=["TANGGAL", "KETERANGAN", "PEMASUKAN", "PENGELUARAN"])
     else:
@@ -633,7 +647,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v11")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v12")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
