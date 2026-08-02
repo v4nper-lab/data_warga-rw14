@@ -709,11 +709,6 @@ with tab5:
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
                 st.warning(f"⚠️ Warga dengan nama mengandung '{kata_kunci}' tidak ditemukan. Coba ketik kata kunci lain.")
-Den
-
-
-
-
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
