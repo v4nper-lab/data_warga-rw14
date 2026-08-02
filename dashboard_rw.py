@@ -659,7 +659,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v33")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Bebas huruf besar/kecil, misal: adsari, agus):", key="input_pencarian_nama_fleksibel")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
@@ -668,12 +668,14 @@ with tab5:
             df_temp["_CARI_NAMA_"] = df_temp[kolom_nama].astype(str).str.strip().str.lower()
             df_temp["_CARI_KK_"] = df_temp[kolom_kk].astype(str).str.strip()
             
+            # Pencarian fleksibel (cocok meskipun diketik sebagian nama atau nama depan)
             hasil_cari = df_temp[df_temp["_CARI_NAMA_"].str.contains(kw, na=False)]
             
             if not hasil_cari.empty:
                 nomor_kk_ditemukan = hasil_cari["_CARI_KK_"].dropna().unique()
                 
                 for no_kk in nomor_kk_ditemukan:
+                    # Menarik seluruh anggota keluarga berdasarkan No. KK yang sama secara utuh
                     keluarga_df = df[df[kolom_kk].astype(str).str.strip() == str(no_kk)].copy()
                     
                     kk_row = keluarga_df[
@@ -714,7 +716,11 @@ with tab5:
                     st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                     st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan. Coba ketik kata lain.")
+                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan. Silakan coba kata kunci nama lainnya.")
+
+
+
+
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
