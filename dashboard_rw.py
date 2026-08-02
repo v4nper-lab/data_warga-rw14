@@ -166,7 +166,7 @@ def load_kas_pemakaman():
     k_col = kolom_keluar_kp[0] if kolom_keluar_kp else "PENGELUARAN"
     
     if m_col not in df_kp.columns: df_kp[m_col] = 0
-    if k_col not in df_kp.columns: df_kp[k_col] = 0
+    if k_col not in df_kp.columns: df_kp[m_col] = 0
     
     df_kp["TANGGAL"] = df_kp["TANGGAL"].fillna("").astype(str).str.replace(r'\.0$', '', regex=True)
     df_kp["KETERANGAN"] = df_kp["KETERANGAN"].fillna("").astype(str)
@@ -637,7 +637,7 @@ with tab5:
 
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v3")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Kata Depan (Bebas Huruf Besar/Kecil, misal: agus, aan, irvan):", key="input_pencarian_stabil_v4")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
