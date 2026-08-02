@@ -597,8 +597,7 @@ with tab4:
             if st.button("🔒 Kunci Kembali"): st.session_state["warga_terbuka"] = False; st.rerun()
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Data Warga</button>", unsafe_allow_html=True)
-        st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
-
+        st.dataframe(df_filtered.drop(columns=["NO. KK", "NIK", "USIA_ANGKA", "Kelompok Usia", "RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 with tab5:
     st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
     if "cari_terbuka" not in st.session_state: st.session_state["cari_terbuka"] = False
