@@ -634,7 +634,7 @@ with tab4:
         st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga beserta seluruh anggota keluarganya secara lengkap dan berurutan berdasarkan Nomor Kartu Keluarga (KK).*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 with tab5:
-    st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (KK)")
+    st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (Berdasarkan Alamat)")
     
     if "cari_terbuka" not in st.session_state: 
         st.session_state["cari_terbuka"] = False
@@ -655,37 +655,36 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
-        # Deteksi kolom secara aman
+        # Deteksi nama kolom secara otomatis
         kolom_nama = next((k for k in df.columns if "NAMA" in k), df.columns[1] if len(df.columns) > 1 else df.columns[0])
-        kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
+        kolom_alamat = next((k for k in df.columns if "ALAMAT" in k), "ALAMAT")
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Anggota Keluarga (Misal: irma):", key="input_pencarian_keluarga_v12")
+        kata_kunci = st.text_input("🔎 Ketik Nama Anggota Keluarga (Misal: salya, irma):", key="input_pencarian_alamat_final")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
-            # Ubah data ke string dengan aman tanpa error NaN
             df_temp = df.copy()
-            df_temp["_COL_NAMA_"] = df_temp[kolom_nama].fillna("").astype(str).str.lower()
-            df_temp["_COL_KK_"] = df_temp[kolom_kk].fillna("").astype(str).str.strip()
+            df_temp["_COL_NAMA_"] = df_temp[kolom_nama].fillna("").astype(str).str.strip().str.lower()
+            df_temp["_COL_ALAMAT_"] = df_temp[kolom_alamat].fillna("").astype(str).str.strip().str.lower()
             
-            # Cari baris yang mengandung nama yang diketik (misal: "irma")
+            # Cari baris warga yang sesuai dengan kata kunci nama
             matched_rows = df_temp[df_temp["_COL_NAMA_"].str.contains(kw, na=False)]
             
             if not matched_rows.empty:
-                # Ambil daftar unik nomor KK dari orang yang ditemukan
-                list_no_kk = matched_rows["_COL_KK_"].unique()
+                # Ambil daftar alamat unik dari warga yang ditemukan
+                alamat_unik_list = matched_rows["_COL_ALAMAT_"].unique()
                 
-                for no_kk in list_no_kk:
-                    if not no_kk or no_kk.lower() == "nan" or no_kk == "": 
+                for al_clean in alamat_unik_list:
+                    if not al_clean or al_clean == "nan" or al_clean == "":
                         continue
-                    
-                    # TARIK SEMUA BARIS DATA YANG MEMILIKI NOMOR KK SAMA PERSIS (Satu Keluarga Utuh)
-                    keluarga_df = df[df[kolom_kk].fillna("").astype(str).str.strip() == no_kk].copy()
+                        
+                    # TARIK SEMUA ANGGOTA KELUARGA YANG MEMILIKI ALAMAT SAMA PERSIS
+                    keluarga_df = df[df[kolom_alamat].fillna("").astype(str).str.strip().str.lower() == al_clean].copy()
                     
                     if not keluarga_df.empty:
-                        # Susun agar Kepala Keluarga (misal: Casmudi) berada di baris pertama tabel
+                        # Susun agar Kepala Keluarga berada di baris paling atas
                         if kolom_hub:
                             kk_mask = keluarga_df[kolom_hub].fillna("").astype(str).str.upper().str.contains("KEPALA|KDH", regex=True)
                             df_kepala = keluarga_df[kk_mask]
@@ -696,38 +695,36 @@ with tab5:
                         else:
                             utama = keluarga_df.iloc[0]
                             
-                        n_kk = utama.get(kolom_nama, "-")
-                        al_kk = utama.get("ALAMAT", "-")
+                        al_kk = utama.get(kolom_alamat, "-")
                         rt_kk = utama.get("RT", "-")
                         rw_kk = utama.get("RW", "14")
                         ds_kk = utama.get("DUSUN", "-")
                         
-                        # Tampilkan Header Informasi KK
+                        # Tampilkan Header Info Kartu Keluarga Berdasarkan Alamat
                         st.markdown(f"""
                         <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                             <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #0D47A1; font-size: 20px;">KARTU KELUARGA (KK)</h3>
-                                <p style="margin: 3px 0 0 0; font-weight: bold; color: #555; font-size: 14px;">No. KK : {no_kk}</p>
+                                <h3 style="margin: 0; color: #0D47A1; font-size: 20px;">KARTU KELUARGA (BERDASARKAN ALAMAT)</h3>
+                                <p style="margin: 3px 0 0 0; font-weight: bold; color: #555; font-size: 14px;">Alamat Rumah : {al_kk}</p>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 15px; color: #333;">
                                 <div>
-                                    <p style="margin: 4px 0;"><b>Nama Kepala Keluarga :</b> {n_kk}</p>
-                                    <p style="margin: 4px 0;"><b>Alamat :</b> {al_kk}</p>
+                                    <p style="margin: 4px 0;"><b>Pencarian Nama :</b> {kata_kunci.capitalize()}</p>
+                                    <p style="margin: 4px 0;"><b>RT / RW :</b> {rt_kk} / {rw_kk}</p>
                                 </div>
                                 <div>
-                                    <p style="margin: 4px 0;"><b>RT / RW :</b> {rt_kk} / {rw_kk}</p>
                                     <p style="margin: 4px 0;"><b>Dusun / Desa :</b> {ds_kk} / Nanjung Mekar</p>
                                 </div>
                             </div>
-                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Seluruh Anggota Keluarga (Pencarian Anggota: <b>{kata_kunci}</b>):</p>
+                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Daftar Seluruh Anggota Keluarga dalam Satu Alamat:</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Tampilkan tabel anggota keluarga (Kepala Keluarga, Istri, Anak, dll.)
+                        # Tampilkan tabel anggota keluarga
                         st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                         st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Anggota keluarga dengan nama '{kata_kunci}' tidak ditemukan di database.")
+                st.warning(f"⚠️ Warga dengan nama '{kata_kunci}' tidak ditemukan di database.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
