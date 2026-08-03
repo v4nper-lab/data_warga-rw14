@@ -494,12 +494,12 @@ with tab2:
     st.header("📈 Statistik Kependudukan RW 14")
     
     if not df.empty:
-        # Deteksi nama kolom secara otomatis dengan lebih spesifik
+        import plotly.express as px
+        
+        # Deteksi nama kolom secara otomatis
         kolom_jk = next((c for c in df.columns if "KELAMIN" in c.upper() or "GENDER" in c.upper()), None)
         kolom_agama = next((c for c in df.columns if "AGAMA" in c.upper()), None)
-        
-        # Cari kolom status perkawinan secara spesifik (menghindari 'Status Keluarga')
-        kolom_nikah = next((c for c in df.columns if "PERKAWINAN" in c.upper() or "KAWIN" in c.upper() or ("STATUS" in c.upper() and "KAWIN" in c.upper())), None)
+        kolom_status = next((c for c in df.columns if c.upper() == "STATUS" or c.upper() == "STATUS KAWIN" or c.upper() == "STATUS PERKAWINAN"), None)
         
         # Buat 2 kolom untuk grafik Jenis Kelamin dan Agama berdampingan
         col_a, col_b = st.columns(2)
@@ -509,7 +509,11 @@ with tab2:
                 st.subheader("👥 Grafik Jenis Kelamin")
                 df_jk = df[kolom_jk].value_counts().reset_index()
                 df_jk.columns = ["Jenis Kelamin", "Jumlah"]
-                st.bar_chart(df_jk.set_index("Jenis Kelamin"))
+                
+                # Grafik Pie Interaktif Jenis Kelamin
+                fig_jk = px.pie(df_jk, names="Jenis Kelamin", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
+                fig_jk.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320)
+                st.plotly_chart(fig_jk, use_container_width=True)
             else:
                 st.warning("⚠️ Kolom Jenis Kelamin tidak ditemukan.")
                 
@@ -518,50 +522,29 @@ with tab2:
                 st.subheader("⛪ Sebaran Agama")
                 df_ag = df[kolom_agama].value_counts().reset_index()
                 df_ag.columns = ["Agama", "Jumlah"]
-                st.bar_chart(df_ag.set_index("Agama"))
+                
+                # Grafik Pie Interaktif Agama
+                fig_ag = px.pie(df_ag, names="Agama", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3)
+                fig_ag.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320)
+                st.plotly_chart(fig_ag, use_container_width=True)
             else:
                 st.warning("⚠️ Kolom Agama tidak ditemukan.")
                 
         st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
         
-        # Grafik Status Perkawinan di bawahnya secara penuh
-        if kolom_nikah:
-            st.subheader("💍 Grafik Status Perkawinan")
-            df_nikah = df[kolom_nikah].value_counts().reset_index()
-            df_nikah.columns = ["Status Perkawinan", "Jumlah"]
-            st.bar_chart(df_nikah.set_index("Status Perkawinan"))
+        # Grafik Status tetap Bar Chart di bawahnya
+        if kolom_status:
+            st.subheader("💍 Grafik Status")
+            df_status = df[kolom_status].value_counts().reset_index()
+            df_status.columns = ["Status", "Jumlah"]
+            st.bar_chart(df_status.set_index("Status"))
             
-            with st.expander("📋 Lihat Rincian Data Status Perkawinan"):
-                st.dataframe(df_nikah, use_container_width=True, hide_index=True)
+            with st.expander("📋 Lihat Rincian Data Status"):
+                st.dataframe(df_status, use_container_width=True, hide_index=True)
         else:
-            st.warning("⚠️ Kolom Status Perkawinan tidak terdeteksi otomatis. Berikut daftar nama kolom yang ada di file Excel Anda:")
-            st.write(list(df.columns))
+            st.warning("⚠️ Kolom 'STATUS' tidak ditemukan di Excel.")
     else:
         st.warning("⚠️ Data belum dimuat atau file Excel kosong.")
-
-with tab3:
-    st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
-    if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
-        df_pendidikan = df_filtered["PENDIDIKAN"].astype(str).str.upper().value_counts().reset_index()
-        df_pendidikan.columns = ["Tingkat Pendidikan", "Jumlah"]
-        
-        col_g1, col_g2 = st.columns([2, 1])
-        with col_g1:
-            fig_pendidikan = px.bar(df_pendidikan, x="Tingkat Pendidikan", y="Jumlah", color="Tingkat Pendidikan", text_auto=True, color_discrete_sequence=px.colors.qualitative.Prism)
-            fig_pendidikan.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=14))
-            st.plotly_chart(fig_pendidikan, use_container_width=True)
-            
-        with col_g2:
-            st.markdown("<h4 style='color: #0D47A1; margin-top: 15px;'>📑 Keterangan Tingkat Pendidikan</h4>", unsafe_allow_html=True)
-            warna_palet_prism = px.colors.qualitative.Prism
-            for idx, row_p in df_pendidikan.iterrows():
-                warna_item = warna_palet_prism[idx % len(warna_palet_prism)]
-                st.markdown(f"""
-                <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                    <div style="width: 20px; height: 20px; background-color: {warna_item}; border-radius: 4px; margin-right: 10px; border: 1px solid #333;"></div>
-                    <span style="font-size: 14px; font-weight: bold; color: #333;">{row_p['Tingkat Pendidikan']}: <span style="color: #0D47A1;">{row_p['Jumlah']} Jiwa</span></span>
-                </div>
-                """, unsafe_allow_html=True)
 
 with tab_pek:
     st.subheader("💼 Jenis Pekerjaan Warga RW 14")
