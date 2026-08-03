@@ -491,38 +491,53 @@ with tab1:
         st.plotly_chart(fig_rt, use_container_width=True)
 
 with tab2:
-    st.subheader("📊 Analisis Demografi Warga RW 14")
-    if not df_filtered.empty:
-        col_a, col_b, col_c = st.columns(3)
+    st.header("📈 Statistik Kependudukan RW 14")
+    
+    if not df.empty:
+        # Deteksi nama kolom secara otomatis dengan lebih spesifik
+        kolom_jk = next((c for c in df.columns if "KELAMIN" in c.upper() or "GENDER" in c.upper()), None)
+        kolom_agama = next((c for c in df.columns if "AGAMA" in c.upper()), None)
+        
+        # Cari kolom status perkawinan secara spesifik (menghindari 'Status Keluarga')
+        kolom_nikah = next((c for c in df.columns if "PERKAWINAN" in c.upper() or "KAWIN" in c.upper() or ("STATUS" in c.upper() and "KAWIN" in c.upper())), None)
+        
+        # Buat 2 kolom untuk grafik Jenis Kelamin dan Agama berdampingan
+        col_a, col_b = st.columns(2)
+        
         with col_a:
-            st.markdown("#### 🚻 Jenis Kelamin")
-            if "JENIS KELAMIN" in df_filtered.columns:
-                fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
-                fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=13), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
-                fig_jk.update_traces(textposition='inside', textfont_size=14, textfont_color="white", textinfo="label+percent")
-                st.plotly_chart(fig_jk, use_container_width=True)
+            if kolom_jk:
+                st.subheader("👥 Grafik Jenis Kelamin")
+                df_jk = df[kolom_jk].value_counts().reset_index()
+                df_jk.columns = ["Jenis Kelamin", "Jumlah"]
+                st.bar_chart(df_jk.set_index("Jenis Kelamin"))
+            else:
+                st.warning("⚠️ Kolom Jenis Kelamin tidak ditemukan.")
                 
         with col_b:
-            st.markdown("#### ☪️ Sebaran Agama")
-            if "AGAMA" in df_filtered.columns:
-                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color_discrete_sequence=px.colors.qualitative.Safe)
-                fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=12), legend=dict(orientation="h", yanchor="bottom", y=-0.4, xanchor="center", x=0.5), margin=dict(t=20, b=80, l=10, r=10))
-                fig_agama.update_traces(textposition='inside', textfont_size=12, textfont_color="white", textinfo="label+percent")
-                st.plotly_chart(fig_agama, use_container_width=True)
-
-                df_agama_summary = df_filtered["AGAMA"].astype(str).str.title().value_counts().reset_index()
-                df_agama_summary.columns = ["Agama", "Jumlah (Jiwa)"]
-                df_agama_summary["Persentase (%)"] = ((df_agama_summary["Jumlah (Jiwa)"] / len(df_filtered)) * 100).round(2).astype(str) + "%"
-                st.dataframe(df_agama_summary, use_container_width=True, hide_index=True)
+            if kolom_agama:
+                st.subheader("⛪ Sebaran Agama")
+                df_ag = df[kolom_agama].value_counts().reset_index()
+                df_ag.columns = ["Agama", "Jumlah"]
+                st.bar_chart(df_ag.set_index("Agama"))
+            else:
+                st.warning("⚠️ Kolom Agama tidak ditemukan.")
                 
-        with col_c:
-            st.markdown("#### 💍 Status Perkawinan")
-            if "STATUS PERKAWINAN" in df_filtered.columns:
-                df_status = df_filtered["STATUS PERKAWINAN"].astype(str).str.title().value_counts().reset_index()
-                df_status.columns = ["Status", "Jumlah"]
-                fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57'])
-                fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=13))
-                st.plotly_chart(fig_status, use_container_width=True)
+        st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
+        
+        # Grafik Status Perkawinan di bawahnya secara penuh
+        if kolom_nikah:
+            st.subheader("💍 Grafik Status Perkawinan")
+            df_nikah = df[kolom_nikah].value_counts().reset_index()
+            df_nikah.columns = ["Status Perkawinan", "Jumlah"]
+            st.bar_chart(df_nikah.set_index("Status Perkawinan"))
+            
+            with st.expander("📋 Lihat Rincian Data Status Perkawinan"):
+                st.dataframe(df_nikah, use_container_width=True, hide_index=True)
+        else:
+            st.warning("⚠️ Kolom Status Perkawinan tidak terdeteksi otomatis. Berikut daftar nama kolom yang ada di file Excel Anda:")
+            st.write(list(df.columns))
+    else:
+        st.warning("⚠️ Data belum dimuat atau file Excel kosong.")
 
 with tab3:
     st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
