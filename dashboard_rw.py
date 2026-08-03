@@ -510,10 +510,37 @@ with tab2:
                 df_jk = df[kolom_jk].value_counts().reset_index()
                 df_jk.columns = ["Jenis Kelamin", "Jumlah"]
                 
-                # Grafik Pie Interaktif Jenis Kelamin (Teks diperbesar)
-                fig_jk = px.pie(df_jk, names="Jenis Kelamin", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
-                fig_jk.update_traces(textfont_size=15, textinfo="percent+label")
-                fig_jk.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300, font=dict(size=14))
+                # Pemetaan warna khusus: Laki-laki Biru, Perempuan Pink
+                color_map_jk = {
+                    'LAKI-LAKI': '#2563eb', 
+                    'Laki-Laki': '#2563eb', 
+                    'Laki-laki': '#2563eb',
+                    'PEREMPUAN': '#ec4899', 
+                    'Perempuan': '#ec4899'
+                }
+                
+                # Grafik Pie Jenis Kelamin (Keterangan di bawah secara horizontal)
+                fig_jk = px.pie(
+                    df_jk, 
+                    names="Jenis Kelamin", 
+                    values="Jumlah", 
+                    hole=0.4, 
+                    color="Jenis Kelamin",
+                    color_discrete_map=color_map_jk
+                )
+                fig_jk.update_traces(textinfo='percent', textfont_size=14)
+                fig_jk.update_layout(
+                    margin=dict(t=20, b=50, l=20, r=20), 
+                    height=360, 
+                    font=dict(size=13, color="black"),
+                    legend=dict(
+                        orientation="h", 
+                        yanchor="bottom", 
+                        y=-0.3, 
+                        xanchor="center", 
+                        x=0.5
+                    )
+                )
                 st.plotly_chart(fig_jk, use_container_width=True)
             else:
                 st.warning("⚠️ Kolom Jenis Kelamin tidak ditemukan.")
@@ -524,25 +551,42 @@ with tab2:
                 df_ag = df[kolom_agama].value_counts().reset_index()
                 df_ag.columns = ["Agama", "Jumlah"]
                 
-                # Grafik Pie Interaktif Agama (Teks diperbesar)
-                fig_ag = px.pie(df_ag, names="Agama", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3)
-                fig_ag.update_traces(textfont_size=15, textinfo="percent+label")
-                fig_ag.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300, font=dict(size=14))
+                # Grafik Pie Agama (Keterangan di bawah secara horizontal)
+                fig_ag = px.pie(
+                    df_ag, 
+                    names="Agama", 
+                    values="Jumlah", 
+                    hole=0.4,
+                    color_discrete_sequence=px.colors.qualitative.Set3
+                )
+                fig_ag.update_traces(textinfo='percent', textfont_size=14)
+                fig_ag.update_layout(
+                    margin=dict(t=20, b=50, l=20, r=20), 
+                    height=360, 
+                    font=dict(size=13, color="black"),
+                    legend=dict(
+                        orientation="h", 
+                        yanchor="bottom", 
+                        y=-0.3, 
+                        xanchor="center", 
+                        x=0.5
+                    )
+                )
                 st.plotly_chart(fig_ag, use_container_width=True)
             else:
                 st.warning("⚠️ Kolom Agama tidak ditemukan.")
                 
-        st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 25px 0;'>", unsafe_allow_html=True)
         
-        # Grafik Status menggunakan Bar Chart Plotly dengan ukuran lebih ringkas
+        # Grafik Status menggunakan Bar Chart Plotly dengan ukuran proporsional
         if kolom_status:
             st.subheader("💍 Grafik Status")
             df_status = df[kolom_status].value_counts().reset_index()
             df_status.columns = ["Status", "Jumlah"]
             
             fig_status = px.bar(df_status, x="Status", y="Jumlah", text="Jumlah", color="Status", color_discrete_sequence=px.colors.qualitative.Bold)
-            fig_status.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=280, showlegend=False, font=dict(size=13))
-            fig_status.update_traces(texttemplate='%{text}', textposition='outside')
+            fig_status.update_layout(margin=dict(t=30, b=30, l=30, r=30), height=280, showlegend=False, font=dict(size=13))
+            fig_status.update_traces(texttemplate='%{text}', textposition='outside', textfont_size=13)
             st.plotly_chart(fig_status, use_container_width=True)
             
             with st.expander("📋 Lihat Rincian Data Status"):
