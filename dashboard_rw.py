@@ -634,7 +634,7 @@ with tab4:
         st.markdown("💡 *Data di bawah ini menampilkan Kepala Keluarga beserta seluruh anggota keluarganya secara lengkap dan berurutan berdasarkan Nomor Kartu Keluarga (KK).*")
         st.dataframe(df_filtered.drop(columns=["RT_FORMAT"], errors="ignore"), use_container_width=True, hide_index=True)
 with tab5:
-    st.subheader("🔍 Pencarian Lembar Dokumen Kartu Keluarga (Berdasarkan Alamat)")
+    st.subheader("🔍 Pencarian Dokumen KK Berdasarkan Nama & Alamat")
     
     if "cari_terbuka" not in st.session_state: 
         st.session_state["cari_terbuka"] = False
@@ -660,31 +660,39 @@ with tab5:
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
         kolom_alamat = next((k for k in df.columns if "ALAMAT" in k), "ALAMAT")
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Anggota Keluarga (Misal: salya, irma):", key="input_pencarian_alamat_final")
+        kata_kunci = st.text_input("🔎 Ketik Nama Warga (Contoh: irma, asep):", key="input_pencarian_presisi_v14")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
             df_temp = df.copy()
-            df_temp["_COL_NAMA_"] = df_temp[kolom_nama].fillna("").astype(str).str.strip().str.lower()
-            df_temp["_COL_ALAMAT_"] = df_temp[kolom_alamat].fillna("").astype(str).str.strip().str.lower()
+            df_temp["_COL_NAMA_"] = df_temp[kolom_nama].fillna("").astype(str)
             
-            # Cari baris warga yang sesuai dengan kata kunci nama
-            matched_rows = df_temp[df_temp["_COL_NAMA_"].str.contains(kw, na=False)]
+            # Fungsi mencocokkan nama (berdasarkan kata depan / nama yang diketik)
+            def cek_cocok_nama(nama_lengkap):
+                parts = str(nama_lengkap).strip().lower().split()
+                for p in parts:
+                    if p.startswith(kw):
+                        return True
+                return False
+
+            # Saring baris warga yang namanya cocok
+            matched_rows = df_temp[df_temp["_COL_NAMA_"].apply(cek_cocok_nama)]
             
             if not matched_rows.empty:
-                # Ambil daftar alamat unik dari warga yang ditemukan
-                alamat_unik_list = matched_rows["_COL_ALAMAT_"].unique()
+                # Ambil daftar alamat unik dari setiap orang yang ditemukan
+                matched_rows["_COL_ALAMAT_CLEAN_"] = matched_rows[kolom_alamat].fillna("").astype(str).str.strip()
+                alamat_list = matched_rows["_COL_ALAM_ALAMAT_CLEAN_"] if "_COL_ALAM_ALAMAT_CLEAN_" in matched_rows else matched_rows["_COL_ALAMAT_CLEAN_"].unique()
                 
-                for al_clean in alamat_unik_list:
-                    if not al_clean or al_clean == "nan" or al_clean == "":
+                for alamat_val in alamat_list:
+                    if not alamat_val or str(alamat_val).lower() == "nan" or str(alamat_val).strip() == "":
                         continue
                         
-                    # TARIK SEMUA ANGGOTA KELUARGA YANG MEMILIKI ALAMAT SAMA PERSIS
-                    keluarga_df = df[df[kolom_alamat].fillna("").astype(str).str.strip().str.lower() == al_clean].copy()
+                    # TARIK SEMUA ANGGOTA KELUARGA YANG TINGGAL DI ALAMAT TERSEBUT
+                    keluarga_df = df[df[kolom_alamat].fillna("").astype(str).str.strip() == str(alamat_val)].copy()
                     
                     if not keluarga_df.empty:
-                        # Susun agar Kepala Keluarga berada di baris paling atas
+                        # Urutkan Kepala Keluarga di baris paling atas
                         if kolom_hub:
                             kk_mask = keluarga_df[kolom_hub].fillna("").astype(str).str.upper().str.contains("KEPALA|KDH", regex=True)
                             df_kepala = keluarga_df[kk_mask]
@@ -700,27 +708,30 @@ with tab5:
                         rw_kk = utama.get("RW", "14")
                         ds_kk = utama.get("DUSUN", "-")
                         
-                        # Tampilkan Header Info Kartu Keluarga Berdasarkan Alamat
+                        # Ambil siapa saja nama warga yang cocok di alamat ini
+                        orang_cocok = matched_rows[matched_rows["_COL_ALAMAT_CLEAN_"] == alamat_val][kolom_nama].tolist()
+                        info_warga_ditemukan = ", ".join([str(x) for x in orang_cocok])
+                        
+                        # Tampilkan Header Info KK per Alamat
                         st.markdown(f"""
                         <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 2px solid #0D47A1; margin-bottom: 25px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08);">
                             <div style="text-align: center; border-bottom: 2px solid #0D47A1; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #0D47A1; font-size: 20px;">KARTU KELUARGA (BERDASARKAN ALAMAT)</h3>
-                                <p style="margin: 3px 0 0 0; font-weight: bold; color: #555; font-size: 14px;">Alamat Rumah : {al_kk}</p>
+                                <h3 style="margin: 0; color: #0D47A1; font-size: 20px;">KARTU KELUARGA (KK)</h3>
+                                <p style="margin: 3px 0 0 0; font-weight: bold; color: #555; font-size: 14px;">Alamat : {al_kk}</p>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 15px; color: #333;">
                                 <div>
-                                    <p style="margin: 4px 0;"><b>Pencarian Nama :</b> {kata_kunci.capitalize()}</p>
+                                    <p style="margin: 4px 0;"><b>Warga Ditemukan di Alamat Ini :</b> {info_warga_ditemukan}</p>
                                     <p style="margin: 4px 0;"><b>RT / RW :</b> {rt_kk} / {rw_kk}</p>
                                 </div>
                                 <div>
                                     <p style="margin: 4px 0;"><b>Dusun / Desa :</b> {ds_kk} / Nanjung Mekar</p>
                                 </div>
                             </div>
-                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Daftar Seluruh Anggota Keluarga dalam Satu Alamat:</p>
+                            <p style="font-weight: bold; color: #0D47A1; margin-bottom: 8px; font-size: 14px;">📋 Daftar Seluruh Anggota Keluarga dalam 1 Alamat:</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Tampilkan tabel anggota keluarga
                         st.dataframe(keluarga_df, use_container_width=True, hide_index=True)
                         st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
