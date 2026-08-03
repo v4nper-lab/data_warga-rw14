@@ -679,36 +679,39 @@ with tab5:
         with col_btn2:
             st.markdown("<button onclick='window.print()' style='background-color:#0D47A1; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;'>🖨️ Cetak / Print Dokumen KK</button>", unsafe_allow_html=True)
         
-        # 1. Pastikan nama kolom benar
         kolom_nama = next((k for k in df.columns if "NAMA" in k), df.columns[1] if len(df.columns) > 1 else df.columns[0])
         kolom_kk = next((k for k in df.columns if "KK" in k), df.columns[0])
         kolom_hub = next((c for c in df.columns if "HUBUNGAN" in c or "STATUS KELUARGA" in c or "KEDUDUKAN" in c), None)
 
-        kata_kunci = st.text_input("🔎 Ketik Nama Warga / Anggota Keluarga (Misal: irma, asep):", key="input_pencarian_final")
+        kata_kunci = st.text_input("🔎 Ketik NAMA DEPAN Warga (Contoh: irma, asep):", key="input_pencarian_nama_depan_saja")
         
         if kata_kunci:
             kw = str(kata_kunci).strip().lower()
             
-            # 2. Cari baris yang mengandung nama yang diketik
             df_pencarian = df.copy()
             df_pencarian["_LOWER_NAMA_"] = df_pencarian[kolom_nama].fillna("").astype(str).str.lower()
             
-            baris_ketemu = df_pencarian[df_pencarian["_LOWER_NAMA_"].str.contains(kw, na=False)]
+            # LOGIKA UTAMA: Hanya mengambil baris yang KATA DEPANNYA cocok dengan keyword
+            def cek_nama_depan(nama_lengkap):
+                part_nama = str(nama_lengkap).strip().lower().split()
+                if len(part_nama) > 0:
+                    # Memeriksa apakah kata pertama (nama depan) sama atau diawali dengan keyword
+                    return part_nama[0].startswith(kw)
+                return False
+
+            baris_ketemu = df_pencarian[df_pencarian["_LOWER_NAMA_"].apply(cek_nama_depan)]
             
             if not baris_ketemu.empty:
-                # 3. Ambil daftar Nomor KK dari orang-orang yang ditemukan
                 list_kk_ditemukan = baris_ketemu[kolom_kk].dropna().unique()
                 
                 for no_kk in list_kk_ditemukan:
-                    # Lewati jika nomor KK kosong/tidak valid
                     if pd.isna(no_kk) or str(no_kk).strip() == "": 
                         continue
                     
-                    # 4. TARIK SELURUH KELUARGA BERDASARKAN NO KK TERSEBUT DARI DATA MASTER
+                    # TARIK SELURUH KELUARGA BERDASARKAN NO KK TERSEBUT
                     keluarga_utuh = df[df[kolom_kk].astype(str) == str(no_kk)].copy()
                     
                     if not keluarga_utuh.empty:
-                        # (Opsional) Susun Kepala Keluarga di atas
                         if kolom_hub:
                             kepala = keluarga_utuh[keluarga_utuh[kolom_hub].astype(str).str.upper().str.contains("KEPALA|KDH", regex=True, na=False)]
                             sisa = keluarga_utuh[~keluarga_utuh.index.isin(kepala.index)]
@@ -717,7 +720,6 @@ with tab5:
                         else:
                             utama = keluarga_utuh.iloc[0]
                             
-                        # Ambil info alamat untuk header KK
                         n_kk = utama.get(kolom_nama, "-")
                         al_kk = utama.get("ALAMAT", "-")
                         rt_kk = utama.get("RT", "-")
@@ -744,11 +746,10 @@ with tab5:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # 5. Tampilkan tabel keluarga
                         st.dataframe(keluarga_utuh, use_container_width=True, hide_index=True)
                         st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
             else:
-                st.warning(f"⚠️ Nama '{kata_kunci}' tidak ditemukan di database.")
+                st.warning(f"⚠️ Warga dengan nama depan '{kata_kunci}' tidak ditemukan di database.")
 
 with tab_rekap_rt:
     st.subheader("📊 Rekapitulasi Data Kependudukan per RT")
