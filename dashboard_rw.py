@@ -85,42 +85,72 @@ def urutkan_data_warga(df):
     return df_final
 
 @st.cache_data
-def load_data():
-    if os.path.exists("datawarga.xlsx"):
-        try:
-            df = pd.read_excel("datawarga.xlsx")
-            df = urutkan_data_warga(df)
-            if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
-            if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
-            if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
-            if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
-            if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
-            
-            # Melakukan penyensoran (masking) otomatis pada kolom NIK dan No. KK untuk keamanan data warga
-            for col in df.columns:
-                col_up = str(col).upper()
-                if "NIK" in col_up or "KK" in col_up:
-                    def ics_sensor(val):
-                        s = str(val).strip()
-                        if len(s) > 6:
-                            return s[:6] + "XXXXXXXX" + s[-2:] if len(s) >= 8 else s[:4] + "XXXX"
-                        return s
-                    df[col] = df[col].apply(ics_sensor)
+def load_data(file_path):
+    """Load data dari Excel atau CSV sesuai format warga"""
+    try:
+        if file_path.endswith('.xlsx') or file_path.endswith('.xls'):
+            df = pd.read_excel(file_path, dtype=str) # dtype=str biar 0 di depan NIK gak hilang
+        elif file_path.endswith('.csv'):
+            df = pd.read_csv(file_path, dtype=str)
+        else:
+            print("Format file harus.xlsx atau.csv")
+            return None
 
-            if "PEKERJAAN" in df.columns:
-                df["PEKERJAAN"] = df["PEKERJAAN"].fillna("Belum/Tidak Bekerja").astype(str).str.strip().str.title()
-            else:
-                df["PEKERJAAN"] = "Belum/Tidak Bekerja"
-            
-            if "STATUS PENDUDUK" not in df.columns:
-                df["STATUS PENDUDUK"] = "Tetap"
-            else:
-                df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
-                df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
-            return df
-        except Exception:
-            return pd.DataFrame()
-    return pd.DataFrame()
+        df.columns = df.columns.str.strip() # hapus spasi di nama kolom
+
+        kolom_wajib = ['NO.KK', 'NAMA ANGGOTA KELUARGA', 'HUBUNGAN', 'RW', 'RT', 'ALAMAT', 'NAMA KEPALA KELUARGA', 'DUSUN']
+        for kolom in kolom_wajib:
+            if kolom not in df.columns:
+                print(f"Error: Kolom '{kolom}' tidak ditemukan di file")
+                print(f"Kolom yang ada: {list(df.columns)}")
+                return None
+        return df
+    except Exception as e:
+        print(f"Gagal buka file: {e}")
+        return None
+
+def cari_kk_by_nama(df, nama_cari):
+    """Cari KK berdasarkan NAMA ANGGOTA KELUARGA. Tidak case sensitive."""
+    df['nama_lower'] = df['NAMA ANGGOTA KELUARGA'].astype(str).str.lower()
+    mask = df['nama_lower'].str.contains(nama_cari.lower(), na=False)
+    no_kk_ketemu = df.loc[mask, 'NO.KK'].unique()
+
+    if len(no_kk_ketemu) == 0:
+        return pd.DataFrame()
+
+    hasil = df[df['NO.KK'].isin(no_kk_ketemu)].copy()
+    hasil = hasil.drop(columns=['nama_lower'])
+
+    # Urutkan: per NO.KK, KEPALA KELUARGA duluan
+    urutan_hubungan = {'KEPALA KELUARGA': 1, 'SUAMI': 2, 'ISTRI': 3, 'ANAK': 4}
+    hasil['urutan'] = hasil['HUBUNGAN'].str.upper().map(urutan_hubungan).fillna(99)
+    hasil = hasil.sort_values(by=['NO.KK', 'urutan', 'NAMA ANGGOTA KELUARGA'])
+    return hasil.drop(columns=['urutan'])
+
+def export_pdf_per_kk(df_hasil, nama_cari):
+    """Export setiap NO.KK jadi 1 halaman PDF landscape"""
+    if df_hasil.empty:
+        print("Tidak ada data untuk di export")
+        return
+
+    nama_file = f"hasil_cari_{nama_cari}.pdf"
+    doc = SimpleDocTemplate(nama_file, pagesize=landscape(A4)) # landscape biar kolom muat
+    styles = getSampleStyleSheet()
+    elements = []
+
+    for no_kk, grup in df_hasil.groupby('NO.KK'):
+        # Header KK
+        kepala = grup[grup['HUBUNGAN'].str.upper() == 'KEPALA KELUARGA']
+        nama_kepala = kepala['NAMA KEPALA KELUARGA'].iloc[0] if not kepala.empty else '-'
+        alamat = grup['ALAMAT'].iloc[0]
+
+        elements.append(Paragraph(f"KARTU KELUARGA NO: {no_kk}", styles['Heading2']))
+        elements.append(Paragraph(f"Nama Kepala Keluarga: {nama_kepala}", styles['Normal']))
+        elements.append(Paragraph(f"Alamat: {alamat}, RT {grup['RT'].iloc[0]}/RW {grup['RW'].iloc[0]}, Dusun {grup['DUSUN'].iloc[0]}", styles['Normal']))
+        elements.append(Spacer(1, 12))
+
+        # Tabel anggota
+        data_tabel = [df_hasil.columns
 @st.cache_data
 def load_kas():
     target_file = "datakas.xlsx" if os.path.exists("datakas.xlsx") else None
