@@ -79,6 +79,18 @@ def load_data():
             if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
             if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
             if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
+            
+            # Melakukan penyensoran (masking) otomatis pada kolom NIK dan No. KK untuk keamanan data warga
+            for col in df.columns:
+                col_up = str(col).upper()
+                if "NIK" in col_up or "KK" in col_up:
+                    def ics_sensor(val):
+                        s = str(val).strip()
+                        if len(s) > 6:
+                            return s[:6] + "XXXXXXXX" + s[-2:] if len(s) >= 8 else s[:4] + "XXXX"
+                        return s
+                    df[col] = df[col].apply(ics_sensor)
+
             if "PEKERJAAN" in df.columns:
                 df["PEKERJAAN"] = df["PEKERJAAN"].fillna("Belum/Tidak Bekerja").astype(str).str.strip().str.title()
             else:
