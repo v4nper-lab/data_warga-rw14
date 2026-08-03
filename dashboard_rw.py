@@ -70,41 +70,19 @@ def urutkan_data_warga(df):
 
 @st.cache_data
 def load_data():
-    if os.path.exists("datawarga.xlsx"):
-        try:
-            df = pd.read_excel("datawarga.xlsx")
-            df = urutkan_data_warga(df)
-            if "UMUR" in df.columns and "USIA" not in df.columns: df.rename(columns={"UMUR": "USIA"}, inplace=True)
-            if "STATUS" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS": "STATUS PERKAWINAN"}, inplace=True)
-            if "STATUS NIKAH" in df.columns and "STATUS PERKAWINAN" not in df.columns: df.rename(columns={"STATUS NIKAH": "STATUS PERKAWINAN"}, inplace=True)
-            if "NO KK" in df.columns and "NO. KK" not in df.columns: df.rename(columns={"NO KK": "NO. KK"}, inplace=True)
-            if "PENDIDIKAN TERAKHIR" in df.columns and "PENDIDIKAN" not in df.columns: df.rename(columns={"PENDIDIKAN TERAKHIR": "PENDIDIKAN"}, inplace=True)
-            
-            # Melakukan penyensoran (masking) otomatis pada kolom NIK dan No. KK untuk keamanan data warga
-            for col in df.columns:
-                col_up = str(col).upper()
-                if "NIK" in col_up or "KK" in col_up:
-                    def ics_sensor(val):
-                        s = str(val).strip()
-                        if len(s) > 6:
-                            return s[:6] + "XXXXXXXX" + s[-2:] if len(s) >= 8 else s[:4] + "XXXX"
-                        return s
-                    df[col] = df[col].apply(ics_sensor)
-
-            if "PEKERJAAN" in df.columns:
-                df["PEKERJAAN"] = df["PEKERJAAN"].fillna("Belum/Tidak Bekerja").astype(str).str.strip().str.title()
-            else:
-                df["PEKERJAAN"] = "Belum/Tidak Bekerja"
-            
-            if "STATUS PENDUDUK" not in df.columns:
-                df["STATUS PENDUDUK"] = "Tetap"
-            else:
-                df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].fillna("Tetap").astype(str).str.strip().str.title()
-                df["STATUS PENDUDUK"] = df["STATUS PENDUDUK"].apply(lambda x: x if x in ["Tetap", "Musiman"] else "Tetap")
-            return df
-        except Exception:
-            return pd.DataFrame()
-    return pd.DataFrame()
+    # Ganti "data_warga.xlsx" di bawah ini dengan NAMA FILE EXCEL ASLI Anda di GitHub
+    # Perhatikan huruf besar/kecilnya harus persis sama!
+    nama_file_excel = "data_warga.xlsx" 
+    
+    try:
+        df = pd.read_excel(nama_file_excel)
+        return df
+    except FileNotFoundError:
+        st.error(f"❌ File '{nama_file_excel}' tidak ditemukan di repository GitHub. Pastikan file Excel sudah di-upload.")
+        return pd.DataFrame()
+    except Exception as e:
+        st.error(f"❌ Terjadi kesalahan saat membaca file: {e}")
+        return pd.DataFrame()
 
 @st.cache_data
 def load_kas():
