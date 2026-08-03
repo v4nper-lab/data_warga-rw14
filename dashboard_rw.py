@@ -534,14 +534,23 @@ with tab2:
                 
         st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
         
-       with col_c:
-            st.markdown("#### 💍 Status")
-            if "STATUS" in df_filtered.columns:
-                df_status = df_filtered["STATUS"].astype(str).str.title().value_counts().reset_index()
-                df_status.columns = ["Status", "Jumlah"]
-                fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57'])
-                fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=13))
-                st.plotly_chart(fig_status, use_container_width=True)
+        # Grafik Status menggunakan Bar Chart Plotly dengan ukuran lebih ringkas
+        if kolom_status:
+            st.subheader("💍 Grafik Status")
+            df_status = df[kolom_status].value_counts().reset_index()
+            df_status.columns = ["Status", "Jumlah"]
+            
+            fig_status = px.bar(df_status, x="Status", y="Jumlah", text="Jumlah", color="Status", color_discrete_sequence=px.colors.qualitative.Bold)
+            fig_status.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=280, showlegend=False, font=dict(size=13))
+            fig_status.update_traces(texttemplate='%{text}', textposition='outside')
+            st.plotly_chart(fig_status, use_container_width=True)
+            
+            with st.expander("📋 Lihat Rincian Data Status"):
+                st.dataframe(df_status, use_container_width=True, hide_index=True)
+        else:
+            st.warning("⚠️ Kolom 'STATUS' tidak ditemukan di Excel.")
+    else:
+        st.warning("⚠️ Data belum dimuat atau file Excel kosong.")
 with tab3:
     st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
     if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
