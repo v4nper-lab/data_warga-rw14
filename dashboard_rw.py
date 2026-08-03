@@ -85,37 +85,19 @@ def urutkan_data_warga(df):
     return df_final
 
 @st.cache_data
-def load_data(file_path):
-    """Load data dari Excel atau CSV sesuai format warga"""
+def load_data():
+    # Ganti "data_warga.xlsx" di bawah ini dengan NAMA FILE EXCEL ASLI Anda di GitHub
+    # Perhatikan huruf besar/kecilnya harus persis sama!
+    nama_file_excel = "data_warga.xlsx" 
+    
     try:
-        if file_path.endswith('.xlsx') or file_path.endswith('.xls'):
-            df = pd.read_excel(file_path, dtype=str) # dtype=str biar 0 di depan NIK gak hilang
-        elif file_path.endswith('.csv'):
-            df = pd.read_csv(file_path, dtype=str)
-        else:
-            print("Format file harus.xlsx atau.csv")
-            return None
-
-        df.columns = df.columns.str.strip() # hapus spasi di nama kolom
-
-        kolom_wajib = ['NO.KK', 'NAMA ANGGOTA KELUARGA', 'HUBUNGAN', 'RW', 'RT', 'ALAMAT', 'NAMA KEPALA KELUARGA', 'DUSUN']
-        for kolom in kolom_wajib:
-            if kolom not in df.columns:
-                print(f"Error: Kolom '{kolom}' tidak ditemukan di file")
-                print(f"Kolom yang ada: {list(df.columns)}")
-                return None
+        df = pd.read_excel(nama_file_excel)
         return df
+    except FileNotFoundError:
+        st.error(f"❌ File '{nama_file_excel}' tidak ditemukan di repository GitHub. Pastikan file Excel sudah di-upload.")
+        return pd.DataFrame()
     except Exception as e:
-        print(f"Gagal buka file: {e}")
-        return None
-
-def cari_kk_by_nama(df, nama_cari):
-    """Cari KK berdasarkan NAMA ANGGOTA KELUARGA. Tidak case sensitive."""
-    df['nama_lower'] = df['NAMA ANGGOTA KELUARGA'].astype(str).str.lower()
-    mask = df['nama_lower'].str.contains(nama_cari.lower(), na=False)
-    no_kk_ketemu = df.loc[mask, 'NO.KK'].unique()
-
-    if len(no_kk_ketemu) == 0:
+        st.error(f"❌ Terjadi kesalahan saat membaca file: {e}")
         return pd.DataFrame()
 
     hasil = df[df['NO.KK'].isin(no_kk_ketemu)].copy()
