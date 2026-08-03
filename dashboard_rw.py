@@ -491,39 +491,57 @@ with tab1:
         st.plotly_chart(fig_rt, use_container_width=True)
 
 with tab2:
-    st.subheader("📊 Analisis Demografi Warga RW 14")
-    if not df_filtered.empty:
-        col_a, col_b, col_c = st.columns(3)
+    st.header("📈 Statistik Kependudukan RW 14")
+    
+    if not df.empty:
+        import plotly.express as px
+        
+        # Deteksi nama kolom secara otomatis
+        kolom_jk = next((c for c in df.columns if "KELAMIN" in c.upper() or "GENDER" in c.upper()), None)
+        kolom_agama = next((c for c in df.columns if "AGAMA" in c.upper()), None)
+        kolom_status = next((c for c in df.columns if c.upper() == "STATUS" or c.upper() == "STATUS KAWIN" or c.upper() == "STATUS PERKAWINAN"), None)
+        
+        # Buat 2 kolom untuk grafik Jenis Kelamin dan Agama berdampingan
+        col_a, col_b = st.columns(2)
+        
         with col_a:
-            st.markdown("#### 🚻 Jenis Kelamin")
-            if "JENIS KELAMIN" in df_filtered.columns:
-                fig_jk = px.pie(df_filtered, names="JENIS KELAMIN", hole=0.4, color_discrete_sequence=['#C71585', '#1B365D'])
-                fig_jk.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=13), legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
-                fig_jk.update_traces(textposition='inside', textfont_size=14, textfont_color="white", textinfo="label+percent")
+            if kolom_jk:
+                st.subheader("👥 Grafik Jenis Kelamin")
+                df_jk = df[kolom_jk].value_counts().reset_index()
+                df_jk.columns = ["Jenis Kelamin", "Jumlah"]
+                
+                # Grafik Pie Interaktif Jenis Kelamin (Teks diperbesar)
+                fig_jk = px.pie(df_jk, names="Jenis Kelamin", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
+                fig_jk.update_traces(textfont_size=15, textinfo="percent+label")
+                fig_jk.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300, font=dict(size=14))
                 st.plotly_chart(fig_jk, use_container_width=True)
+            else:
+                st.warning("⚠️ Kolom Jenis Kelamin tidak ditemukan.")
                 
         with col_b:
-            st.markdown("#### ☪️ Sebaran Agama")
-            if "AGAMA" in df_filtered.columns:
-                fig_agama = px.pie(df_filtered, names="AGAMA", hole=0.0, color_discrete_sequence=px.colors.qualitative.Safe)
-                fig_agama.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(size=12), legend=dict(orientation="h", yanchor="bottom", y=-0.4, xanchor="center", x=0.5), margin=dict(t=20, b=80, l=10, r=10))
-                fig_agama.update_traces(textposition='inside', textfont_size=12, textfont_color="white", textinfo="label+percent")
-                st.plotly_chart(fig_agama, use_container_width=True)
-
-                df_agama_summary = df_filtered["AGAMA"].astype(str).str.title().value_counts().reset_index()
-                df_agama_summary.columns = ["Agama", "Jumlah (Jiwa)"]
-                df_agama_summary["Persentase (%)"] = ((df_agama_summary["Jumlah (Jiwa)"] / len(df_filtered)) * 100).round(2).astype(str) + "%"
-                st.dataframe(df_agama_summary, use_container_width=True, hide_index=True)
+            if kolom_agama:
+                st.subheader("⛪ Sebaran Agama")
+                df_ag = df[kolom_agama].value_counts().reset_index()
+                df_ag.columns = ["Agama", "Jumlah"]
                 
-        with col_c:
-            st.markdown("#### 💍 Status Perkawinan")
-            if "STATUS PERKAWINAN" in df_filtered.columns:
-                df_status = df_filtered["STATUS PERKAWINAN"].astype(str).str.title().value_counts().reset_index()
+                # Grafik Pie Interaktif Agama (Teks diperbesar)
+                fig_ag = px.pie(df_ag, names="Agama", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3)
+                fig_ag.update_traces(textfont_size=15, textinfo="percent+label")
+                fig_ag.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300, font=dict(size=14))
+                st.plotly_chart(fig_ag, use_container_width=True)
+            else:
+                st.warning("⚠️ Kolom Agama tidak ditemukan.")
+                
+        st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
+        
+       with col_c:
+            st.markdown("#### 💍 Status")
+            if "STATUS" in df_filtered.columns:
+                df_status = df_filtered["STATUS"].astype(str).str.title().value_counts().reset_index()
                 df_status.columns = ["Status", "Jumlah"]
                 fig_status = px.bar(df_status, x="Status", y="Jumlah", color="Status", text_auto=True, color_discrete_sequence=['#1B365D', '#008080', '#D9822B', '#5C2D91', '#2E8B57'])
                 fig_status.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False, font=dict(size=13))
                 st.plotly_chart(fig_status, use_container_width=True)
-
 with tab3:
     st.subheader("🎓 Tingkat Pendidikan Warga RW 14")
     if not df_filtered.empty and "PENDIDIKAN" in df_filtered.columns:
@@ -547,7 +565,6 @@ with tab3:
                     <span style="font-size: 14px; font-weight: bold; color: #333;">{row_p['Tingkat Pendidikan']}: <span style="color: #0D47A1;">{row_p['Jumlah']} Jiwa</span></span>
                 </div>
                 """, unsafe_allow_html=True)
-
 with tab_pek:
     st.subheader("💼 Jenis Pekerjaan Warga RW 14")
     if not df_filtered.empty and "PEKERJAAN" in df_filtered.columns:
