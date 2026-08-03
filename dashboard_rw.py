@@ -510,9 +510,10 @@ with tab2:
                 df_jk = df[kolom_jk].value_counts().reset_index()
                 df_jk.columns = ["Jenis Kelamin", "Jumlah"]
                 
-                # Grafik Pie Interaktif Jenis Kelamin
+                # Grafik Pie Interaktif Jenis Kelamin (Teks diperbesar)
                 fig_jk = px.pie(df_jk, names="Jenis Kelamin", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
-                fig_jk.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320)
+                fig_jk.update_traces(textfont_size=15, textinfo="percent+label")
+                fig_jk.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300, font=dict(size=14))
                 st.plotly_chart(fig_jk, use_container_width=True)
             else:
                 st.warning("⚠️ Kolom Jenis Kelamin tidak ditemukan.")
@@ -523,21 +524,26 @@ with tab2:
                 df_ag = df[kolom_agama].value_counts().reset_index()
                 df_ag.columns = ["Agama", "Jumlah"]
                 
-                # Grafik Pie Interaktif Agama
+                # Grafik Pie Interaktif Agama (Teks diperbesar)
                 fig_ag = px.pie(df_ag, names="Agama", values="Jumlah", hole=0.4, color_discrete_sequence=px.colors.qualitative.Set3)
-                fig_ag.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320)
+                fig_ag.update_traces(textfont_size=15, textinfo="percent+label")
+                fig_ag.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300, font=dict(size=14))
                 st.plotly_chart(fig_ag, use_container_width=True)
             else:
                 st.warning("⚠️ Kolom Agama tidak ditemukan.")
                 
-        st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
         
-        # Grafik Status tetap Bar Chart di bawahnya
+        # Grafik Status menggunakan Bar Chart Plotly dengan ukuran lebih ringkas/tidak terlalu besar
         if kolom_status:
             st.subheader("💍 Grafik Status")
             df_status = df[kolom_status].value_counts().reset_index()
             df_status.columns = ["Status", "Jumlah"]
-            st.bar_chart(df_status.set_index("Status"))
+            
+            fig_status = px.bar(df_status, x="Status", y="Jumlah", text="Jumlah", color="Status", color_discrete_sequence=px.colors.qualitative.Bold)
+            fig_status.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=280, showlegend=False, font=dict(size=13))
+            fig_status.update_traces(texttemplate='%{text}', textposition='outside')
+            st.plotly_chart(fig_status, use_container_width=True)
             
             with st.expander("📋 Lihat Rincian Data Status"):
                 st.dataframe(df_status, use_container_width=True, hide_index=True)
