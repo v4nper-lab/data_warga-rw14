@@ -86,18 +86,12 @@ def urutkan_data_warga(df):
 
 @st.cache_data
 def load_data():
-    # Ganti "data_warga.xlsx" di bawah ini dengan NAMA FILE EXCEL ASLI Anda di GitHub
-    # Perhatikan huruf besar/kecilnya harus persis sama!
-    nama_file_excel = "data_warga.xlsx" 
-    
+    nama_file_excel = "data_warga.xlsx"
     try:
         df = pd.read_excel(nama_file_excel)
         return df
-    except FileNotFoundError:
-        st.error(f"❌ File '{nama_file_excel}' tidak ditemukan di repository GitHub. Pastikan file Excel sudah di-upload.")
-        return pd.DataFrame()
     except Exception as e:
-        st.error(f"❌ Terjadi kesalahan saat membaca file: {e}")
+        st.error(f"Gagal membaca file: {e}")
         return pd.DataFrame()
 
     hasil = df[df['NO.KK'].isin(no_kk_ketemu)].copy()
