@@ -150,7 +150,7 @@ def export_pdf_per_kk(df_hasil, nama_cari):
         elements.append(Spacer(1, 12))
 
         # Tabel anggota
-        data_tabel = [df_hasil.columns
+        data_tabel = [df_hasil.columns]
 @st.cache_data
 def load_kas():
     target_file = "datakas.xlsx" if os.path.exists("datakas.xlsx") else None
