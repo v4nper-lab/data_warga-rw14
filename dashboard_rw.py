@@ -1070,7 +1070,7 @@ with tab10:
                         st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan: {e}")
-     elif menu_admin == "Data Warga":
+       elif menu_admin == "Data Warga":
             st.subheader("➕ Tambah Warga Baru & Kelola Data Warga")
             
             # --- FORM TAMBAH WARGA DENGAN PILIHAN DROPDOWN & TANGGAL ---
@@ -1163,8 +1163,7 @@ with tab10:
                         df_final_warga.to_excel(nama_file_simpan, index=False)
                         st.cache_data.clear()
                         st.success(f"✅ Data warga atas nama {nama} berhasil ditambahkan!")
-                        st.rerun()
-
+                        st.rerun()g
             st.markdown("---")
             st.markdown("### 📋 Edit Langsung Tabel Data Warga")
             ed = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True, key="data_editor_warga_utama")
