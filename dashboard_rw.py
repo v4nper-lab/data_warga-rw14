@@ -1070,16 +1070,109 @@ with tab10:
                         st.rerun()
                 except Exception as e:
                     st.error(f"❌ Gagal menyimpan: {e}")
-        elif menu_admin == "Data Warga":
-            ed = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True)
-            if st.button("Simpan Data Warga"):
+     elif menu_admin == "Data Warga":
+            st.subheader("➕ Tambah Warga Baru & Kelola Data Warga")
+            
+            # --- FORM TAMBAH WARGA DENGAN PILIHAN DROPDOWN & TANGGAL ---
+            with st.form("form_tambah_warga_admin", clear_on_submit=True):
+                col_f1, col_f2 = st.columns(2)
+                
+                with col_f1:
+                    nik = st.text_input("NIK")
+                    nama = st.text_input("Nama Lengkap")
+                    no_kk = st.text_input("Nomor Kartu Keluarga (No. KK)")
+                    rt_warga = st.selectbox("RT", ["RT 01", "RT 02", "RT 03", "RT 04", "RT 05", "RT 06", "RT 07"])
+                    
+                    jenis_kelamin = st.selectbox(
+                        "Jenis Kelamin", 
+                        ["-- Pilih Jenis Kelamin --", "LAKI-LAKI", "PEREMPUAN"]
+                    )
+                    
+                    hubungan_keluarga = st.selectbox(
+                        "Hubungan Keluarga", 
+                        ["-- Pilih Hubungan Keluarga --", "KEPALA KELUARGA", "SUAMI", "ISTRI", "ANAK", "MENANTU", "CUCU", "ORANG TUA", "MERTUA", "FAMILI LAIN"]
+                    )
+                    
+                    status_perkawinan = st.selectbox(
+                        "Status Perkawinan", 
+                        ["-- Pilih Status --", "BELUM MENIKAH", "MENIKAH", "CERAI HIDUP", "CERAI MATI"]
+                    )
+                
+                with col_f2:
+                    agama = st.selectbox(
+                        "Agama", 
+                        ["-- Pilih Agama --", "ISLAM", "KRISTEN PROTESTAN", "KRISTEN KATOLIK", "HINDU", "BUDDHA", "KONGHUCU"]
+                    )
+                    
+                    pendidikan = st.selectbox(
+                        "Pendidikan Terakhir", 
+                        ["-- Pilih Pendidikan --", "TIDAK/BELUM SEKOLAH", "BELUM TAMAT SD/SEDERAJAT", "TAMAT SD/SEDERAJAT", "SLTP/SEDERAJAT", "SLTA/SEDERAJAT", "DIPLOMA I/II", "AKADEMI/DIPLOMA III", "DIPLOMA IV/STRATA I", "STRATA II", "STRATA III"]
+                    )
+                    
+                    pekerjaan = st.selectbox(
+                        "Jenis Pekerjaan", 
+                        ["-- Pilih Pekerjaan --", "BELUM/TIDAK BEKERJA", "MENGURUS RUMAH TANGGA", "PELAJAR/MAHASISWA", "PENSIUNAN", "PEGAWAI NEGERI SIPIL (PNS)", "TNI/POLRI", "KARYAWAN SWASTA", "WIRASWASTA", "PETANI/PETERNAK", "LAINNYA"]
+                    )
+                    
+                    suku = st.selectbox(
+                        "Suku", 
+                        ["-- Pilih Suku --", "SUNDA", "JAWA", "BETAWI", "MINANG", "BATAK", "TIONGHOA", "LAINNYA"]
+                    )
+                    
+                    tempat_lahir = st.text_input("Tempat Lahir")
+                    
+                    tanggal_lahir = st.date_input(
+                        "Tanggal Lahir",
+                        value=datetime(1995, 1, 1).date(),
+                        min_value=datetime(1900, 1, 1).date(),
+                        max_value=datetime.today().date()
+                    )
+                
+                status_penduduk = st.selectbox("Status Penduduk", ["Tetap", "Musiman"])
+                alamat_warga = st.text_input("Alamat Lengkap (Contoh: Griya Permata Raya B3-34)")
+                
+                submit_warga = st.form_submit_button("💾 Tambahkan Warga ke Database", use_container_width=True)
+                
+                if submit_warga:
+                    if not nama or not nik or jenis_kelamin == "-- Pilih Jenis Kelamin --":
+                        st.error("⚠️ Mohon lengkapi NIK, Nama, dan Jenis Kelamin dengan benar!")
+                    else:
+                        data_baru_warga = {
+                            "NIK": str(nik),
+                            "NAMA": str(nama).upper(),
+                            "NO_KK": str(no_kk),
+                            "RT": rt_warga.replace("RT ", ""),
+                            "JENIS KELAMIN": jenis_kelamin,
+                            "HUBUNGAN": hubungan_keluarga,
+                            "STATUS": status_perkawinan,
+                            "AGAMA": agama,
+                            "PENDIDIKAN": pendidikan,
+                            "PEKERJAAN": pekerjaan,
+                            "SUKU": suku,
+                            "TEMPAT LAHIR": tempat_lahir,
+                            "TANGGAL LAHIR": tanggal_lahir.strftime("%Y-%m-%d"),
+                            "STATUS PENDUDUK": status_penduduk,
+                            "ALAMAT": alamat_warga
+                        }
+                        
+                        df_tambah = pd.DataFrame([data_baru_warga])
+                        df_gabung_warga = pd.concat([df, df_tambah], ignore_index=True)
+                        df_final_warga = urutkan_data_warga(df_gabung_warga)
+                        
+                        nama_file_simpan = "data_warga.xlsx" if os.path.exists("data_warga.xlsx") else "datawarga.xlsx"
+                        df_final_warga.to_excel(nama_file_simpan, index=False)
+                        st.cache_data.clear()
+                        st.success(f"✅ Data warga atas nama {nama} berhasil ditambahkan!")
+                        st.rerun()
+
+            st.markdown("---")
+            st.markdown("### 📋 Edit Langsung Tabel Data Warga")
+            ed = st.data_editor(df.drop(columns=["RT_FORMAT"], errors="ignore"), num_rows="dynamic", use_container_width=True, key="data_editor_warga_utama")
+            if st.button("💾 Simpan Perubahan Tabel Warga"):
                 df_baru = pd.DataFrame(ed)
                 df_terurut = urutkan_data_warga(df_baru)
-                df_terurut.to_excel("datawarga.xlsx", index=False)
+                nama_file_simpan = "data_warga.xlsx" if os.path.exists("data_warga.xlsx") else "datawarga.xlsx"
+                df_terurut.to_excel(nama_file_simpan, index=False)
                 st.cache_data.clear()
-                st.success("✅ Data warga disimpan!")
+                st.success("✅ Perubahan data warga berhasil disimpan!")
                 st.rerun()
-        else:
-            st.info("Pilih menu admin di atas sesuai kebutuhan.")
-    else:
-        st.warning("⚠️ Masukkan password admin di sidebar.")
